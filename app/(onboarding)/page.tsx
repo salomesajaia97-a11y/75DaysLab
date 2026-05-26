@@ -1,0 +1,188 @@
+'use client'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+import type { Goal, FocusArea, Gender } from '@/types'
+
+type Step = 'profile' | 'goals' | 'focus' | 'timeline'
+
+interface OnboardingData {
+  age: string
+  gender: Gender | ''
+  heightCm: string
+  weightKg: string
+  goal: Goal | ''
+  focusArea: FocusArea | ''
+  totalDays: string
+  startDate: string
+}
+
+const STEPS: Step[] = ['profile', 'goals', 'focus', 'timeline']
+
+export default function OnboardingPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<Step>('profile')
+  const [data, setData] = useState<OnboardingData>({
+    age: '', gender: '', heightCm: '', weightKg: '',
+    goal: '', focusArea: '', totalDays: '75',
+    startDate: new Date().toISOString().split('T')[0],
+  })
+
+  const stepIndex = STEPS.indexOf(step)
+  const progress = ((stepIndex + 1) / STEPS.length) * 100
+
+  function update(field: keyof OnboardingData, value: string) {
+    setData(prev => ({ ...prev, [field]: value }))
+  }
+
+  function next() {
+    const idx = STEPS.indexOf(step)
+    if (idx < STEPS.length - 1) setStep(STEPS[idx + 1])
+  }
+
+  function back() {
+    const idx = STEPS.indexOf(step)
+    if (idx > 0) setStep(STEPS[idx - 1])
+  }
+
+  function submit() {
+    // Phase 1: just redirect — no API call yet
+    router.push('/dashboard')
+  }
+
+  const genderOptions: { value: Gender; label: string }[] = [
+    { value: 'female', label: 'Female' },
+    { value: 'male', label: 'Male' },
+    { value: 'other', label: 'Other' },
+  ]
+
+  const goalOptions: { value: Goal; label: string; desc: string }[] = [
+    { value: 'lose', label: 'Lose Weight', desc: 'Caloric deficit, fat loss focus' },
+    { value: 'gain', label: 'Gain Muscle', desc: 'Caloric surplus, protein priority' },
+    { value: 'maintain', label: 'Maintain', desc: 'Balanced macros, body recomp' },
+  ]
+
+  const focusOptions: { value: FocusArea; label: string }[] = [
+    { value: 'nutrition', label: 'Nutrition' },
+    { value: 'workout', label: 'Workout' },
+    { value: 'sleep', label: 'Sleep' },
+    { value: 'other', label: 'Other' },
+  ]
+
+  return (
+    <Card className="w-full max-w-lg">
+      <CardHeader>
+        <div className="w-full bg-muted rounded-full h-2 mb-4">
+          <div
+            className="bg-primary h-2 rounded-full transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <CardTitle className="text-2xl">
+          {step === 'profile' && 'Tell us about yourself'}
+          {step === 'goals' && "What's your goal?"}
+          {step === 'focus' && 'Your biggest challenge?'}
+          {step === 'timeline' && 'Set your timeline'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {step === 'profile' && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Age</Label>
+                <Input type="number" placeholder="25" value={data.age} onChange={e => update('age', e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <div className="flex gap-2">
+                  {genderOptions.map(o => (
+                    <button
+                      key={o.value}
+                      onClick={() => update('gender', o.value)}
+                      className={cn(
+                        'flex-1 py-2 rounded-md border text-sm font-medium transition-colors',
+                        data.gender === o.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'
+                      )}
+                    >{o.label}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Height (cm)</Label>
+                <Input type="number" placeholder="170" value={data.heightCm} onChange={e => update('heightCm', e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Weight (kg)</Label>
+                <Input type="number" placeholder="70" value={data.weightKg} onChange={e => update('weightKg', e.target.value)} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {step === 'goals' && (
+          <div className="space-y-3">
+            {goalOptions.map(o => (
+              <button
+                key={o.value}
+                onClick={() => update('goal', o.value)}
+                className={cn(
+                  'w-full p-4 rounded-lg border text-left transition-colors',
+                  data.goal === o.value ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent'
+                )}
+              >
+                <div className="font-semibold">{o.label}</div>
+                <div className="text-sm text-muted-foreground">{o.desc}</div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {step === 'focus' && (
+          <div className="grid grid-cols-2 gap-3">
+            {focusOptions.map(o => (
+              <button
+                key={o.value}
+                onClick={() => update('focusArea', o.value)}
+                className={cn(
+                  'p-4 rounded-lg border font-medium transition-colors',
+                  data.focusArea === o.value ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent'
+                )}
+              >{o.label}</button>
+            ))}
+          </div>
+        )}
+
+        {step === 'timeline' && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Start Date</Label>
+              <Input type="date" value={data.startDate} onChange={e => update('startDate', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Total Days (default 75)</Label>
+              <Input type="number" min="1" max="365" value={data.totalDays} onChange={e => update('totalDays', e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          {stepIndex > 0 && (
+            <Button variant="outline" className="flex-1" onClick={back}>Back</Button>
+          )}
+          {step !== 'timeline' ? (
+            <Button className="flex-1" onClick={next}>Continue</Button>
+          ) : (
+            <Button className="flex-1" onClick={submit}>Start Challenge</Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
