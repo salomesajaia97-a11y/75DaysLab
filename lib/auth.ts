@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
+import { authConfig } from '@/lib/auth.config'
 
 declare module 'next-auth' {
   interface Session {
@@ -15,6 +16,7 @@ declare module 'next-auth' {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -48,11 +50,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  pages: {
-    signIn: '/login',
-  },
-  session: { strategy: 'jwt' },
   callbacks: {
+    ...authConfig.callbacks,
     jwt({ token, user }) {
       if (user) {
         token.id = user.id
@@ -64,16 +63,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) session.user.id = token.id as string
       if (token.name) session.user.name = token.name as string
       return session
-    },
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user
-      const isDashboard = nextUrl.pathname.startsWith('/dashboard')
-      const isOnboarding = nextUrl.pathname.startsWith('/onboarding')
-
-      if (isDashboard || isOnboarding) {
-        return isLoggedIn
-      }
-      return true
     },
   },
 })
