@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
+import mongoose from 'mongoose'
 
 export async function GET() {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
   const user = await User.findById(session.user.id).select('-passwordHash')
@@ -15,7 +17,8 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const updates = await req.json()
   const allowed = ['age', 'gender', 'heightCm', 'weightKg', 'goal', 'focusArea']

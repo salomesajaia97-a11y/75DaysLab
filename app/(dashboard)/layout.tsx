@@ -1,14 +1,19 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { auth, signOut } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { DashboardSidebar } from '@/components/shared/DashboardSidebar'
+import mongoose from 'mongoose'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
 
   if (!session?.user?.id) {
     redirect('/login')
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(session.user.id)) {
+    await signOut({ redirectTo: '/login' })
   }
 
   await connectDB()

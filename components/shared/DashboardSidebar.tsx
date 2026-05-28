@@ -1,8 +1,9 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard } from 'lucide-react'
+import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { signOut } from 'next-auth/react'
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,6 +37,15 @@ export function DashboardSidebar() {
           <span className="hidden md:block">{label}</span>
         </Link>
       ))}
+      <div className="mt-auto mb-4">
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg mx-2 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent w-full"
+        >
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span className="hidden md:block">Log out</span>
+        </button>
+      </div>
     </aside>
   )
 }
