@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface IUser extends Document {
   username: string
   email: string
-  passwordHash: string
+  passwordHash?: string
   age?: number
   gender?: 'male' | 'female' | 'other'
   heightCm?: number
@@ -19,7 +19,7 @@ const UserSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String },
     age: Number,
     gender: { type: String, enum: ['male', 'female', 'other'] },
     heightCm: Number,

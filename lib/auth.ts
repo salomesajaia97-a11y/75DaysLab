@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
+import Google from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
@@ -18,6 +19,10 @@ declare module 'next-auth' {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -31,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const user = await User.findOne({
             email: String(credentials.email).toLowerCase(),
           })
-          if (!user) return null
+          if (!user || !user.passwordHash) return null
 
           const passwordMatch = await bcrypt.compare(
             String(credentials.password),
@@ -52,10 +57,45 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     ...authConfig.callbacks,
-    jwt({ token, user }) {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        try {
+          await connectDB()
+          const existing = await User.findOne({ email: user.email })
+          if (!existing) {
+            const username = (user.name ?? user.email!.split('@')[0])
+              .replace(/\s+/g, '_')
+              .toLowerCase()
+            let finalUsername = username
+            let i = 1
+            while (await User.findOne({ username: finalUsername })) {
+              finalUsername = `${username}${i++}`
+            }
+            await User.create({
+              username: finalUsername,
+              email: user.email,
+              onboardingComplete: false,
+            })
+          }
+        } catch {
+          return false
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id
-        token.name = user.name
+        if (account?.provider === 'google') {
+          await connectDB()
+          const dbUser = await User.findOne({ email: token.email })
+          if (dbUser) {
+            token.id = dbUser._id.toString()
+            token.name = dbUser.username
+          }
+        } else {
+          token.id = user.id
+          token.name = user.name
+        }
       }
       return token
     },
