@@ -5,14 +5,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { saveProfile } from '@/lib/storage'
 import type { Goal, FocusArea, Gender } from '@/types'
 
-type Step = 'signup' | 'profile' | 'goals' | 'focus' | 'timeline'
+type Step = 'profile' | 'goals' | 'focus' | 'timeline'
 
 interface OnboardingData {
-  username: string
   age: string
   gender: Gender | ''
   heightCm: string
@@ -23,13 +22,15 @@ interface OnboardingData {
   startDate: string
 }
 
-const STEPS: Step[] = ['signup', 'profile', 'goals', 'focus', 'timeline']
+const STEPS: Step[] = ['profile', 'goals', 'focus', 'timeline']
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('signup')
+  const [step, setStep] = useState<Step>('profile')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [data, setData] = useState<OnboardingData>({
-    username: '', age: '', gender: '', heightCm: '', weightKg: '',
+    age: '', gender: '', heightCm: '', weightKg: '',
     goal: '', focusArea: '', totalDays: '75',
     startDate: new Date().toISOString().split('T')[0],
   })
@@ -52,26 +53,25 @@ export default function OnboardingPage() {
   }
 
   function canAdvance(): boolean {
-    if (step === 'signup') return data.username.trim().length >= 2
     if (step === 'profile') return !!data.age && !!data.gender && !!data.heightCm && !!data.weightKg
     if (step === 'goals') return !!data.goal
     if (step === 'focus') return !!data.focusArea
     return true
   }
 
-  function submit() {
-    saveProfile({
-      id: crypto.randomUUID(),
-      username: data.username.trim(),
-      age: parseInt(data.age, 10),
-      gender: data.gender as Gender,
-      heightCm: parseFloat(data.heightCm),
-      weightKg: parseFloat(data.weightKg),
-      goal: data.goal as Goal,
-      focusArea: data.focusArea as FocusArea,
-      startDate: data.startDate,
-      totalDays: parseInt(data.totalDays, 10),
+  async function submit() {
+    setError('')
+    setLoading(true)
+    const res = await fetch('/api/users/onboarding', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
     })
+    setLoading(false)
+    if (!res.ok) {
+      setError('Failed to save. Please try again.')
+      return
+    }
     router.push('/dashboard')
   }
 
@@ -95,7 +95,6 @@ export default function OnboardingPage() {
   ]
 
   const stepTitles: Record<Step, string> = {
-    signup: 'Create your account',
     profile: 'Tell us about yourself',
     goals: "What's your goal?",
     focus: 'Your biggest challenge?',
@@ -115,21 +114,6 @@ export default function OnboardingPage() {
         <CardTitle className="text-2xl">{stepTitles[step]}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-
-        {step === 'signup' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Username</Label>
-              <Input
-                placeholder="e.g. alex_fit"
-                value={data.username}
-                onChange={e => update('username', e.target.value)}
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">Min 2 characters. Used across the app.</p>
-            </div>
-          </div>
-        )}
 
         {step === 'profile' && (
           <>
@@ -209,25 +193,27 @@ export default function OnboardingPage() {
             <div className="space-y-2">
               <Label>Total Days <span className="text-muted-foreground font-normal">(default 75)</span></Label>
               <Input
-                type="number"
-                min="1"
-                max="365"
+                type="number" min="1" max="365"
                 value={data.totalDays}
                 onChange={e => update('totalDays', e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Adjust up or down — your challenge, your rules.</p>
             </div>
           </div>
         )}
 
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
         <div className="flex gap-3 pt-2">
           {stepIndex > 0 && (
-            <Button variant="outline" className="flex-1" onClick={back}>Back</Button>
+            <Button variant="outline" className="flex-1" onClick={back} disabled={loading}>Back</Button>
           )}
           {step !== 'timeline' ? (
             <Button className="flex-1" onClick={next} disabled={!canAdvance()}>Continue</Button>
           ) : (
-            <Button className="flex-1" onClick={submit}>Start Challenge</Button>
+            <Button className="flex-1" onClick={submit} disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Start Challenge
+            </Button>
           )}
         </div>
       </CardContent>
