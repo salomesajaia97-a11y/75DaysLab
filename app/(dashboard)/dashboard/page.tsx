@@ -1,11 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StreakCounter } from '@/components/streak/StreakCounter'
 import { WaterTracker } from '@/components/water/WaterTracker'
 import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Circle, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  getProfile,
+  getStreak,
+  getLastStreakDate,
+  saveStreak,
+  resetStreak,
+  getDailyState,
+  saveDailyState,
+  todayString,
+  yesterdayString,
+} from '@/lib/storage'
+import { calculateWaterGoal, calculateCurrentDay } from '@/lib/calculations'
+import type { UserProfile } from '@/types'
 
 interface Task {
   id: string
@@ -13,30 +26,95 @@ interface Task {
   done: boolean
 }
 
-const INITIAL_TASKS: Task[] = [
-  { id: 'water', label: 'Drink daily water goal', done: false },
-  { id: 'journal', label: 'Read 10 pages', done: false },
-  { id: 'workout', label: 'Complete workout', done: false },
-  { id: 'nutrition', label: 'Log all meals', done: false },
-  { id: 'photo', label: 'Upload progress photo', done: false },
+const TASK_DEFS = [
+  { id: 'water', label: 'Drink daily water goal' },
+  { id: 'journal', label: 'Read 10 pages' },
+  { id: 'workout', label: 'Complete workout' },
+  { id: 'nutrition', label: 'Log all meals' },
+  { id: 'photo', label: 'Upload progress photo' },
 ]
 
+const FALLBACK_WATER = 2500
+const FALLBACK_TOTAL = 75
+
 export default function DashboardPage() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS)
-  const streak = { day: 1, totalDays: 75 }
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [tasks, setTasks] = useState<Task[]>(TASK_DEFS.map(t => ({ ...t, done: false })))
+  const [streak, setStreak] = useState(0)
+  const today = todayString()
+
+  useEffect(() => {
+    const p = getProfile()
+    setProfile(p)
+
+    // Hard reset: if yesterday's tasks exist and were incomplete, reset streak
+    const yesterday = yesterdayString()
+    const lastDate = getLastStreakDate()
+    const yesterdayState = getDailyState(yesterday)
+    const currentStreak = getStreak()
+
+    if (yesterdayState) {
+      const allDoneYesterday = TASK_DEFS.every(t => yesterdayState.tasks[t.id])
+      if (!allDoneYesterday && lastDate !== today) {
+        resetStreak()
+        setStreak(0)
+      } else {
+        setStreak(currentStreak)
+      }
+    } else if (lastDate && lastDate < yesterday) {
+      // Missed yesterday entirely
+      resetStreak()
+      setStreak(0)
+    } else {
+      setStreak(currentStreak)
+    }
+
+    // Restore today's task state
+    const todayState = getDailyState(today)
+    if (todayState) {
+      setTasks(TASK_DEFS.map(t => ({ ...t, done: todayState.tasks[t.id] ?? false })))
+    }
+  }, [today])
+
+  function toggleTask(id: string) {
+    setTasks(prev => {
+      const next = prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
+      const taskMap = Object.fromEntries(next.map(t => [t.id, t.done]))
+      saveDailyState({ date: today, tasks: taskMap })
+
+      // Increment streak when all tasks first completed today
+      const allDone = next.every(t => t.done)
+      const lastDate = getLastStreakDate()
+      if (allDone && lastDate !== today) {
+        const newStreak = getStreak() + 1
+        saveStreak(newStreak, today)
+        setStreak(newStreak)
+      }
+
+      return next
+    })
+  }
+
   const completedCount = tasks.filter(t => t.done).length
   const allDone = completedCount === tasks.length
 
-  function toggleTask(id: string) {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
-  }
+  const totalDays = profile?.totalDays ?? FALLBACK_TOTAL
+  const currentDay = profile
+    ? calculateCurrentDay(profile.startDate, profile.totalDays)
+    : 1
+  const waterGoal = profile
+    ? calculateWaterGoal(profile.weightKg, profile.gender, profile.goal)
+    : FALLBACK_WATER
+  const displayName = profile?.username ?? 'there'
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Good morning</h1>
+          <h1 className="text-3xl font-bold">{greeting}, {displayName}</h1>
           <p className="text-muted-foreground mt-1">Stay consistent. Every day counts.</p>
           {allDone && (
             <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
@@ -44,10 +122,9 @@ export default function DashboardPage() {
             </Badge>
           )}
         </div>
-        <StreakCounter day={streak.day} totalDays={streak.totalDays} />
+        <StreakCounter day={currentDay} totalDays={totalDays} />
       </div>
 
-      {/* Progress bar */}
       <div className="space-y-1">
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>Daily Progress</span>
@@ -62,15 +139,13 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Water widget */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">Hydration</CardTitle></CardHeader>
           <CardContent className="flex justify-center py-2">
-            <WaterTracker consumedMl={0} goalMl={2500} />
+            <WaterTracker consumedMl={0} goalMl={waterGoal} />
           </CardContent>
         </Card>
 
-        {/* Task checklist */}
         <Card className="md:col-span-2">
           <CardHeader className="pb-2"><CardTitle className="text-base">Today&apos;s Tasks</CardTitle></CardHeader>
           <CardContent className="space-y-2">
@@ -98,12 +173,11 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Stats row */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Current Streak', value: '1 day', icon: '🔥' },
-          { label: 'Best Streak', value: '1 day', icon: '🏆' },
-          { label: 'Days Left', value: '74 days', icon: '📅' },
+          { label: 'Current Streak', value: `${streak} day${streak !== 1 ? 's' : ''}`, icon: '🔥' },
+          { label: 'Challenge Day', value: `Day ${currentDay}`, icon: '📅' },
+          { label: 'Days Left', value: `${totalDays - currentDay} days`, icon: '🏁' },
         ].map(stat => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4 text-center">

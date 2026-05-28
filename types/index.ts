@@ -11,6 +11,8 @@ export interface UserProfile {
   weightKg: number
   goal: Goal
   focusArea: FocusArea
+  startDate: string
+  totalDays: number
 }
 
 export interface MacroTargets {

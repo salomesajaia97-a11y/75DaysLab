@@ -1,16 +1,32 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MacroDashboard } from '@/components/nutrition/MacroDashboard'
 import { FoodLogger } from '@/components/nutrition/FoodLogger'
 import { Badge } from '@/components/ui/badge'
+import { getProfile } from '@/lib/storage'
+import { calculateMacros } from '@/lib/calculations'
 import type { FoodEntry, MacroTargets } from '@/types'
 
-const MOCK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
+const FALLBACK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
 
 export default function NutritionPage() {
+  const [targets, setTargets] = useState<MacroTargets>(FALLBACK_TARGETS)
   const [consumed, setConsumed] = useState<MacroTargets>({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([])
+
+  useEffect(() => {
+    const profile = getProfile()
+    if (profile) {
+      setTargets(calculateMacros(
+        profile.age,
+        profile.gender,
+        profile.heightCm,
+        profile.weightKg,
+        profile.goal,
+      ))
+    }
+  }, [])
 
   function handleLogged(entry: FoodEntry) {
     setFoodLog(prev => [entry, ...prev])
@@ -28,7 +44,7 @@ export default function NutritionPage() {
       <Card>
         <CardHeader><CardTitle>Daily Macros</CardTitle></CardHeader>
         <CardContent>
-          <MacroDashboard targets={MOCK_TARGETS} consumed={consumed} />
+          <MacroDashboard targets={targets} consumed={consumed} />
         </CardContent>
       </Card>
       <Card>

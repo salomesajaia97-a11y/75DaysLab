@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { saveProfile } from '@/lib/storage'
 import type { Goal, FocusArea, Gender } from '@/types'
 
-type Step = 'profile' | 'goals' | 'focus' | 'timeline'
+type Step = 'signup' | 'profile' | 'goals' | 'focus' | 'timeline'
 
 interface OnboardingData {
+  username: string
   age: string
   gender: Gender | ''
   heightCm: string
@@ -21,13 +23,13 @@ interface OnboardingData {
   startDate: string
 }
 
-const STEPS: Step[] = ['profile', 'goals', 'focus', 'timeline']
+const STEPS: Step[] = ['signup', 'profile', 'goals', 'focus', 'timeline']
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState<Step>('profile')
+  const [step, setStep] = useState<Step>('signup')
   const [data, setData] = useState<OnboardingData>({
-    age: '', gender: '', heightCm: '', weightKg: '',
+    username: '', age: '', gender: '', heightCm: '', weightKg: '',
     goal: '', focusArea: '', totalDays: '75',
     startDate: new Date().toISOString().split('T')[0],
   })
@@ -49,8 +51,27 @@ export default function OnboardingPage() {
     if (idx > 0) setStep(STEPS[idx - 1])
   }
 
+  function canAdvance(): boolean {
+    if (step === 'signup') return data.username.trim().length >= 2
+    if (step === 'profile') return !!data.age && !!data.gender && !!data.heightCm && !!data.weightKg
+    if (step === 'goals') return !!data.goal
+    if (step === 'focus') return !!data.focusArea
+    return true
+  }
+
   function submit() {
-    // Phase 1: just redirect — no API call yet
+    saveProfile({
+      id: crypto.randomUUID(),
+      username: data.username.trim(),
+      age: parseInt(data.age, 10),
+      gender: data.gender as Gender,
+      heightCm: parseFloat(data.heightCm),
+      weightKg: parseFloat(data.weightKg),
+      goal: data.goal as Goal,
+      focusArea: data.focusArea as FocusArea,
+      startDate: data.startDate,
+      totalDays: parseInt(data.totalDays, 10),
+    })
     router.push('/dashboard')
   }
 
@@ -73,6 +94,14 @@ export default function OnboardingPage() {
     { value: 'other', label: 'Other' },
   ]
 
+  const stepTitles: Record<Step, string> = {
+    signup: 'Create your account',
+    profile: 'Tell us about yourself',
+    goals: "What's your goal?",
+    focus: 'Your biggest challenge?',
+    timeline: 'Set your timeline',
+  }
+
   return (
     <Card className="w-full max-w-lg">
       <CardHeader>
@@ -82,14 +111,26 @@ export default function OnboardingPage() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <CardTitle className="text-2xl">
-          {step === 'profile' && 'Tell us about yourself'}
-          {step === 'goals' && "What's your goal?"}
-          {step === 'focus' && 'Your biggest challenge?'}
-          {step === 'timeline' && 'Set your timeline'}
-        </CardTitle>
+        <p className="text-xs text-muted-foreground">Step {stepIndex + 1} of {STEPS.length}</p>
+        <CardTitle className="text-2xl">{stepTitles[step]}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+
+        {step === 'signup' && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Username</Label>
+              <Input
+                placeholder="e.g. alex_fit"
+                value={data.username}
+                onChange={e => update('username', e.target.value)}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">Min 2 characters. Used across the app.</p>
+            </div>
+          </div>
+        )}
+
         {step === 'profile' && (
           <>
             <div className="grid grid-cols-2 gap-4">
@@ -166,8 +207,15 @@ export default function OnboardingPage() {
               <Input type="date" value={data.startDate} onChange={e => update('startDate', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Total Days (default 75)</Label>
-              <Input type="number" min="1" max="365" value={data.totalDays} onChange={e => update('totalDays', e.target.value)} />
+              <Label>Total Days <span className="text-muted-foreground font-normal">(default 75)</span></Label>
+              <Input
+                type="number"
+                min="1"
+                max="365"
+                value={data.totalDays}
+                onChange={e => update('totalDays', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Adjust up or down — your challenge, your rules.</p>
             </div>
           </div>
         )}
@@ -177,7 +225,7 @@ export default function OnboardingPage() {
             <Button variant="outline" className="flex-1" onClick={back}>Back</Button>
           )}
           {step !== 'timeline' ? (
-            <Button className="flex-1" onClick={next}>Continue</Button>
+            <Button className="flex-1" onClick={next} disabled={!canAdvance()}>Continue</Button>
           ) : (
             <Button className="flex-1" onClick={submit}>Start Challenge</Button>
           )}
