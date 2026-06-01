@@ -6,11 +6,10 @@ import { DashboardSidebar } from '@/components/shared/DashboardSidebar'
 import mongoose from 'mongoose'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
+  let session = null
+  try { session = await auth() } catch { redirect('/login') }
 
-  if (!session?.user?.id) {
-    redirect('/login')
-  }
+  if (!session?.user?.id) redirect('/login')
 
   if (!mongoose.Types.ObjectId.isValid(session.user.id)) {
     await signOut({ redirectTo: '/login' })

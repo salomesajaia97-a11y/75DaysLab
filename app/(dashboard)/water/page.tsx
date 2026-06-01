@@ -4,14 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WaterTracker } from '@/components/water/WaterTracker'
 import { getProfile } from '@/lib/storage'
 import { calculateWaterGoal } from '@/lib/calculations'
+import type { UserProfile } from '@/types'
 
 export default function WaterPage() {
   const [goalMl, setGoalMl] = useState(2500)
+  const [gender, setGender] = useState<UserProfile['gender'] | null>(null)
 
   useEffect(() => {
     const profile = getProfile()
     if (profile) {
       setGoalMl(calculateWaterGoal(profile.weightKg, profile.gender, profile.goal))
+      setGender(profile.gender ?? null)
     }
   }, [])
 
@@ -24,7 +27,7 @@ export default function WaterPage() {
           <p className="text-sm text-muted-foreground">Daily goal: {goalMl} ml — calculated from your profile</p>
         </CardHeader>
         <CardContent className="flex justify-center py-6">
-          <WaterTracker consumedMl={0} goalMl={goalMl} />
+          <WaterTracker consumedMl={0} goalMl={goalMl} gender={gender} />
         </CardContent>
       </Card>
     </div>
