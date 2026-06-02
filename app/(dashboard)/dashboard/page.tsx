@@ -20,6 +20,7 @@ import {
 import { calculateWaterGoal, calculateCurrentDay } from '@/lib/calculations'
 import type { UserProfile } from '@/types'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
+import { useLanguage } from '@/lib/i18n'
 
 interface Task {
   id: string
@@ -27,18 +28,20 @@ interface Task {
   done: boolean
 }
 
-const TASK_DEFS = [
-  { id: 'water', label: 'Drink daily water goal' },
-  { id: 'journal', label: 'Read 10 pages' },
-  { id: 'workout', label: 'Complete workout' },
-  { id: 'nutrition', label: 'Log all meals' },
-  { id: 'photo', label: 'Upload progress photo' },
-]
-
 const FALLBACK_WATER = 2500
 const FALLBACK_TOTAL = 75
 
 export default function DashboardPage() {
+  const { t } = useLanguage()
+
+  const TASK_DEFS = [
+    { id: 'water',     label: t('dashboard.task.water') },
+    { id: 'journal',   label: t('dashboard.task.journal') },
+    { id: 'workout',   label: t('dashboard.task.workout') },
+    { id: 'nutrition', label: t('dashboard.task.nutrition') },
+    { id: 'photo',     label: t('dashboard.task.photo') },
+  ]
+
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [tasks, setTasks] = useState<Task[]>(TASK_DEFS.map(t => ({ ...t, done: false })))
   const [streak, setStreak] = useState(0)
@@ -113,17 +116,23 @@ export default function DashboardPage() {
   }, [tasks, toggleTask])
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const greeting = hour < 12 ? t('dashboard.greeting.morning') : hour < 17 ? t('dashboard.greeting.afternoon') : t('dashboard.greeting.evening')
+
+  const stats = [
+    { label: t('dashboard.stat.streak'), value: streak !== 1 ? t('dashboard.stat.streak_value_plural', { n: streak }) : t('dashboard.stat.streak_value', { n: streak }), icon: '🔥' },
+    { label: t('dashboard.stat.day'),    value: t('dashboard.stat.day_value', { n: currentDay }), icon: '📅' },
+    { label: t('dashboard.stat.days_left'), value: t('dashboard.stat.days_left_value', { n: totalDays - currentDay }), icon: '🏁' },
+  ]
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">{greeting}, {displayName}</h1>
-          <p className="text-muted-foreground mt-1">Stay consistent. Every day counts.</p>
+          <p className="text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
           {allDone && (
             <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
-              <Flame className="h-3 w-3 mr-1" /> Day complete! 🎉
+              <Flame className="h-3 w-3 mr-1" /> {t('dashboard.day_complete')} 🎉
             </Badge>
           )}
         </div>
@@ -132,8 +141,8 @@ export default function DashboardPage() {
 
       <div className="space-y-1">
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>Daily Progress</span>
-          <span>{completedCount}/{tasks.length} tasks</span>
+          <span>{t('dashboard.progress')}</span>
+          <span>{t('dashboard.tasks_count', { done: completedCount, total: tasks.length })}</span>
         </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
           <div
@@ -145,7 +154,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Hydration</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.hydration')}</CardTitle></CardHeader>
           <CardContent className="flex justify-center py-2">
             <WaterTracker consumedMl={0} goalMl={waterGoal} />
           </CardContent>
@@ -154,7 +163,7 @@ export default function DashboardPage() {
         <WorkoutCard onBothComplete={autoCheckWorkout} />
 
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Today&apos;s Tasks</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.todays_tasks')}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {tasks.map(task => (
               <button
@@ -181,11 +190,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Current Streak', value: `${streak} day${streak !== 1 ? 's' : ''}`, icon: '🔥' },
-          { label: 'Challenge Day', value: `Day ${currentDay}`, icon: '📅' },
-          { label: 'Days Left', value: `${totalDays - currentDay} days`, icon: '🏁' },
-        ].map(stat => (
+        {stats.map(stat => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4 text-center">
               <div className="text-2xl mb-1">{stat.icon}</div>
