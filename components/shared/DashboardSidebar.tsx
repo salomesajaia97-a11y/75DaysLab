@@ -5,20 +5,24 @@ import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard,
 import { cn } from '@/lib/utils'
 import { signOut } from 'next-auth/react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
-
-const links = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/fitness',   label: 'Fitness',   icon: Dumbbell },
-  { href: '/water',     label: 'Water',     icon: Droplets },
-  { href: '/journal',   label: 'Journal',   icon: BookOpen },
-  { href: '/nutrition', label: 'Nutrition', icon: Utensils },
-  { href: '/cycle',     label: 'Cycle',     icon: Calendar },
-  { href: '/photos',    label: 'Photos',    icon: Camera },
-  { href: '/squads',    label: 'Squads',    icon: Users },
-]
+import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
+import { useLanguage } from '@/lib/i18n'
 
 export function DashboardSidebar() {
   const pathname = usePathname()
+  const { t } = useLanguage()
+
+  const links = [
+    { href: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+    { href: '/fitness',   labelKey: 'nav.fitness',   icon: Dumbbell },
+    { href: '/water',     labelKey: 'nav.water',     icon: Droplets },
+    { href: '/journal',   labelKey: 'nav.journal',   icon: BookOpen },
+    { href: '/nutrition', labelKey: 'nav.nutrition', icon: Utensils },
+    { href: '/cycle',     labelKey: 'nav.cycle',     icon: Calendar },
+    { href: '/photos',    labelKey: 'nav.photos',    icon: Camera },
+    { href: '/squads',    labelKey: 'nav.squads',    icon: Users },
+  ]
+
   return (
     <aside className="fixed left-0 top-0 h-full w-16 md:w-60 flex flex-col pt-7 gap-1 z-40">
       <div className="px-5 mb-7 hidden md:block">
@@ -31,7 +35,7 @@ export function DashboardSidebar() {
       </div>
 
       <div className="flex-1 flex flex-col gap-0.5 px-2">
-        {links.map(({ href, label, icon: Icon }) => {
+        {links.map(({ href, labelKey, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (
             <Link
@@ -45,7 +49,7 @@ export function DashboardSidebar() {
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span className="hidden md:block">{label}</span>
+              <span className="hidden md:block">{t(labelKey)}</span>
             </Link>
           )
         })}
@@ -55,8 +59,11 @@ export function DashboardSidebar() {
         <div className="flex items-center gap-2 px-1">
           <ThemeToggle />
           <span className="hidden md:block text-sm font-medium" style={{ color: 'var(--muted-foreground)' }}>
-            Theme
+            {t('nav.theme')}
           </span>
+        </div>
+        <div className="flex items-center gap-2 px-1">
+          <LanguageSwitcher />
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
@@ -64,7 +71,7 @@ export function DashboardSidebar() {
           style={{ color: 'var(--muted-foreground)' }}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          <span className="hidden md:block">Log out</span>
+          <span className="hidden md:block">{t('nav.logout')}</span>
         </button>
       </div>
     </aside>
