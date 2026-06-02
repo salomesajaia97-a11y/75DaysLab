@@ -310,3 +310,7 @@ main {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(45, 49, 66, 0.25);
 }
+
+.lang-ge {
+  font-family: var(--font-noto-georgian), sans-serif;
+}
