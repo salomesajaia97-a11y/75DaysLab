@@ -78,3 +78,18 @@ export interface SquadMember {
   currentStreak: number
   completedDays: number
 }
+
+export interface WorkoutSessionState {
+  done: boolean
+  timerRunning: boolean
+  timerSeconds: number
+  timerFinished: boolean
+  showConfirm: boolean
+  showVideos: boolean
+  intensity: 'low' | 'medium' | 'high'
+}
+
+export interface WorkoutTrackerState {
+  indoor: WorkoutSessionState
+  outdoor: WorkoutSessionState
+}
