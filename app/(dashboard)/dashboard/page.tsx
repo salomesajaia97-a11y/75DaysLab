@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StreakCounter } from '@/components/streak/StreakCounter'
 import { WaterTracker } from '@/components/water/WaterTracker'
@@ -19,6 +19,7 @@ import {
 } from '@/lib/storage'
 import { calculateWaterGoal, calculateCurrentDay } from '@/lib/calculations'
 import type { UserProfile } from '@/types'
+import { WorkoutCard } from '@/components/workout/WorkoutCard'
 
 interface Task {
   id: string
@@ -107,6 +108,11 @@ export default function DashboardPage() {
     : FALLBACK_WATER
   const displayName = profile?.username ?? 'there'
 
+  const autoCheckWorkout = useCallback(() => {
+    const workoutTask = tasks.find(t => t.id === 'workout')
+    if (workoutTask && !workoutTask.done) toggleTask('workout')
+  }, [tasks, toggleTask])
+
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
@@ -146,7 +152,9 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <WorkoutCard onBothComplete={autoCheckWorkout} />
+
+        <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">Today&apos;s Tasks</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {tasks.map(task => (
