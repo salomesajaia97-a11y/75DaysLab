@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PhotoUpload } from '@/components/photos/PhotoUpload'
 import { PhotoComparison } from '@/components/photos/PhotoComparison'
+import { useLanguage } from '@/lib/i18n'
 
 interface PhotoEntry {
   dayNumber: number
@@ -13,6 +14,7 @@ interface PhotoEntry {
 const PLACEHOLDER = 'https://placehold.co/400x600/1a1a2e/ffffff?text=No+Photo'
 
 export default function PhotosPage() {
+  const { t } = useLanguage()
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [compareA, setCompareA] = useState<number>(1)
   const [compareB, setCompareB] = useState<number>(2)
@@ -37,21 +39,21 @@ export default function PhotosPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Progress Photos</h1>
+      <h1 className="text-3xl font-bold">{t('photos.title')}</h1>
       <Tabs defaultValue="upload">
         <TabsList className="w-full">
-          <TabsTrigger value="upload" className="flex-1">Upload Today</TabsTrigger>
-          <TabsTrigger value="compare" className="flex-1">Compare</TabsTrigger>
-          <TabsTrigger value="vault" className="flex-1">Vault</TabsTrigger>
+          <TabsTrigger value="upload" className="flex-1">{t('photos.tab.upload')}</TabsTrigger>
+          <TabsTrigger value="compare" className="flex-1">{t('photos.tab.compare')}</TabsTrigger>
+          <TabsTrigger value="vault" className="flex-1">{t('photos.tab.vault')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload">
           <Card>
-            <CardHeader><CardTitle>Day {currentDay} Photo</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('photos.day_photo', { n: currentDay })}</CardTitle></CardHeader>
             <CardContent>
               <PhotoUpload dayNumber={currentDay} onUploaded={handleUploaded} />
               {photos.some(p => p.dayNumber === currentDay) && (
-                <p className="text-xs text-green-500 text-center mt-3">✓ Day {currentDay} photo saved</p>
+                <p className="text-xs text-green-500 text-center mt-3">{t('photos.day_saved', { n: currentDay })}</p>
               )}
             </CardContent>
           </Card>
@@ -60,12 +62,12 @@ export default function PhotosPage() {
         <TabsContent value="compare">
           <Card>
             <CardHeader>
-              <CardTitle>Side-by-Side Comparison</CardTitle>
+              <CardTitle>{t('photos.compare_title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Before (Day)</label>
+                  <label className="text-xs text-muted-foreground">{t('photos.before')}</label>
                   <input
                     type="number"
                     min={1}
@@ -75,7 +77,7 @@ export default function PhotosPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">After (Day)</label>
+                  <label className="text-xs text-muted-foreground">{t('photos.after')}</label>
                   <input
                     type="number"
                     min={1}
@@ -97,17 +99,17 @@ export default function PhotosPage() {
 
         <TabsContent value="vault">
           <Card>
-            <CardHeader><CardTitle>All Photos ({photos.length})</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('photos.vault_title', { n: photos.length })}</CardTitle></CardHeader>
             <CardContent>
               {photos.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-8">No photos uploaded yet. Start with Day 1!</p>
+                <p className="text-muted-foreground text-sm text-center py-8">{t('photos.empty')}</p>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {photos.map(p => (
                     <div key={p.dayNumber} className="relative aspect-square rounded-lg overflow-hidden border border-border">
                       <img src={p.url} alt={`Day ${p.dayNumber}`} className="w-full h-full object-cover" />
                       <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
-                        Day {p.dayNumber}
+                        {t('photos.day_label', { n: p.dayNumber })}
                       </div>
                     </div>
                   ))}

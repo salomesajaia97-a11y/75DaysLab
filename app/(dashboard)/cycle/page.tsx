@@ -1,5 +1,7 @@
+'use client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CycleCalendar } from '@/components/cycle/CycleCalendar'
+import { useLanguage } from '@/lib/i18n'
 
 function generateMockPredictions() {
   const today = new Date()
@@ -25,14 +27,15 @@ function generateMockPredictions() {
 }
 
 export default function CyclePage() {
+  const { t } = useLanguage()
   const predictions = generateMockPredictions()
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Cycle Tracker</h1>
+      <h1 className="text-3xl font-bold">{t('cycle.title')}</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Menstrual Calendar</CardTitle>
+          <CardTitle>{t('cycle.card_title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <CycleCalendar predictions={predictions} />

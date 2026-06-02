@@ -5,6 +5,7 @@ import { MacroDashboard } from '@/components/nutrition/MacroDashboard'
 import { FoodLogger } from '@/components/nutrition/FoodLogger'
 import { getProfile } from '@/lib/storage'
 import { calculateMacros } from '@/lib/calculations'
+import { useLanguage } from '@/lib/i18n'
 import type { FoodEntry, MacroTargets } from '@/types'
 
 const FALLBACK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
@@ -16,6 +17,7 @@ const MACRO_ACCENT: Record<string, string> = {
 }
 
 export default function NutritionPage() {
+  const { t } = useLanguage()
   const [targets, setTargets] = useState<MacroTargets>(FALLBACK_TARGETS)
   const [consumed, setConsumed] = useState<MacroTargets>({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([])
@@ -46,17 +48,17 @@ export default function NutritionPage() {
           className="text-4xl font-bold tracking-tight leading-none"
           style={{ fontFamily: 'var(--font-fraunces), Georgia, serif' }}
         >
-          Nutrition
+          {t('nutrition.title')}
         </h1>
         <span className="text-xs font-medium tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
-          Today
+          {t('nutrition.today')}
         </span>
       </div>
 
       {/* Daily Macros */}
       <section>
         <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
-          Daily Macros
+          {t('nutrition.daily_macros')}
         </p>
         <MacroDashboard targets={targets} consumed={consumed} />
       </section>
@@ -67,7 +69,7 @@ export default function NutritionPage() {
       {/* Log a Meal */}
       <section>
         <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          Log a Meal
+          {t('nutrition.log_meal')}
         </p>
         <FoodLogger onLogged={handleLogged} />
       </section>
@@ -82,7 +84,7 @@ export default function NutritionPage() {
           >
             <div className="h-px mb-6" style={{ background: 'var(--border)' }} />
             <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-              Today&apos;s Log
+              {t('nutrition.todays_log')}
             </p>
 
             <div className="space-y-2">
