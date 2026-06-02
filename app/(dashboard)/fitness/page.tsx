@@ -4,6 +4,7 @@ import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getWorkoutState, todayString } from '@/lib/storage'
 import type { WorkoutTrackerState } from '@/types'
+import { useLanguage } from '@/lib/i18n'
 
 function getPast7Days(): string[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -14,6 +15,7 @@ function getPast7Days(): string[] {
 }
 
 export default function FitnessPage() {
+  const { t } = useLanguage()
   const today = todayString()
   const [weekData] = useState<Record<string, WorkoutTrackerState | null>>(() => {
     if (typeof window === 'undefined') return {}
@@ -33,16 +35,22 @@ export default function FitnessPage() {
   const fullDays = Object.values(weekData).filter(s => s?.indoor.done && s?.outdoor.done).length
   const completionRate = Math.round((totalSessions / 14) * 100)
 
+  const fitnessStats = [
+    { label: t('fitness.stat.sessions'),   value: `${totalSessions}`, icon: '🏋️' },
+    { label: t('fitness.stat.full_days'),  value: `${fullDays}`,      icon: '✅' },
+    { label: t('fitness.stat.completion'), value: `${completionRate}%`, icon: '📊' },
+  ]
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold">Fitness</h1>
-        <p className="text-muted-foreground mt-1">Your 75 Hard workout progress</p>
+        <h1 className="text-3xl font-bold">{t('fitness.title')}</h1>
+        <p className="text-muted-foreground mt-1">{t('fitness.subtitle')}</p>
       </div>
 
       {/* Today's session status */}
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Today</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t('fitness.today')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(['indoor', 'outdoor'] as const).map(type => {
             const done = todayState?.[type].done ?? false
@@ -55,10 +63,10 @@ export default function FitnessPage() {
                   }
                   <div>
                     <p className="font-semibold text-sm">
-                      {type === 'indoor' ? '🏠 Indoor' : '🌤️ Outdoor'} · 45 min
+                      {type === 'indoor' ? `🏠 ${t('fitness.indoor')}` : `🌤️ ${t('fitness.outdoor')}`} · {t('fitness.min')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {done ? 'Completed today' : 'Not done yet'}
+                      {done ? t('fitness.done') : t('fitness.not_done')}
                     </p>
                   </div>
                 </CardContent>
@@ -71,7 +79,7 @@ export default function FitnessPage() {
       {/* 7-day grid */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">This Week</CardTitle>
+          <CardTitle className="text-base">{t('fitness.this_week')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-7 gap-2">
@@ -96,17 +104,13 @@ export default function FitnessPage() {
               )
             })}
           </div>
-          <p className="text-xs text-muted-foreground mt-3">Top dot = indoor · Bottom dot = outdoor</p>
+          <p className="text-xs text-muted-foreground mt-3">{t('fitness.dot_legend')}</p>
         </CardContent>
       </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Sessions This Week', value: `${totalSessions}`, icon: '🏋️' },
-          { label: 'Full Days This Week', value: `${fullDays}`, icon: '✅' },
-          { label: 'Completion Rate', value: `${completionRate}%`, icon: '📊' },
-        ].map(stat => (
+        {fitnessStats.map(stat => (
           <Card key={stat.label}>
             <CardContent className="pt-4 pb-4 text-center">
               <div className="text-2xl mb-1">{stat.icon}</div>
