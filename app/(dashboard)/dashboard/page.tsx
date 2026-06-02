@@ -77,13 +77,12 @@ export default function DashboardPage() {
     }
   }, [today])
 
-  function toggleTask(id: string) {
+  const toggleTask = useCallback((id: string) => {
     setTasks(prev => {
       const next = prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
       const taskMap = Object.fromEntries(next.map(t => [t.id, t.done]))
       saveDailyState({ date: today, tasks: taskMap })
 
-      // Increment streak when all tasks first completed today
       const allDone = next.every(t => t.done)
       const lastDate = getLastStreakDate()
       if (allDone && lastDate !== today) {
@@ -94,7 +93,7 @@ export default function DashboardPage() {
 
       return next
     })
-  }
+  }, [today])
 
   const completedCount = tasks.filter(t => t.done).length
   const allDone = completedCount === tasks.length
