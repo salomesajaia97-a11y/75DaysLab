@@ -1,13 +1,14 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut } from 'lucide-react'
+import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signOut } from 'next-auth/react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/fitness',   label: 'Fitness',   icon: Dumbbell },
   { href: '/water',     label: 'Water',     icon: Droplets },
   { href: '/journal',   label: 'Journal',   icon: BookOpen },
   { href: '/nutrition', label: 'Nutrition', icon: Utensils },
