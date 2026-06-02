@@ -86,7 +86,7 @@ export interface WorkoutSessionState {
   timerFinished: boolean
   showConfirm: boolean
   showVideos: boolean
-  intensity: 'low' | 'medium' | 'high'
+  intensity: 'low' | 'medium' | 'high'  // prep for calorie burn integration — unused in phase 1
 }
 
 export interface WorkoutTrackerState {
