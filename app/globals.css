@@ -311,6 +311,7 @@ main {
   background: rgba(45, 49, 66, 0.25);
 }
 
-.lang-ge {
+html.lang-ge,
+html.lang-ge body {
   font-family: var(--font-noto-georgian), sans-serif;
 }
