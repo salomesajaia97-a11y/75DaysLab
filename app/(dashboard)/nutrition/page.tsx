@@ -1,14 +1,19 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { motion, AnimatePresence } from 'framer-motion'
 import { MacroDashboard } from '@/components/nutrition/MacroDashboard'
 import { FoodLogger } from '@/components/nutrition/FoodLogger'
-import { Badge } from '@/components/ui/badge'
 import { getProfile } from '@/lib/storage'
 import { calculateMacros } from '@/lib/calculations'
 import type { FoodEntry, MacroTargets } from '@/types'
 
 const FALLBACK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
+
+const MACRO_ACCENT: Record<string, string> = {
+  protein: '#c07c5e',
+  carbs: '#c5a55a',
+  fat: '#7a9e7e',
+}
 
 export default function NutritionPage() {
   const [targets, setTargets] = useState<MacroTargets>(FALLBACK_TARGETS)
@@ -18,13 +23,7 @@ export default function NutritionPage() {
   useEffect(() => {
     const profile = getProfile()
     if (profile) {
-      setTargets(calculateMacros(
-        profile.age,
-        profile.gender,
-        profile.heightCm,
-        profile.weightKg,
-        profile.goal,
-      ))
+      setTargets(calculateMacros(profile.age, profile.gender, profile.heightCm, profile.weightKg, profile.goal))
     }
   }, [])
 
@@ -39,36 +38,93 @@ export default function NutritionPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">Nutrition</h1>
-      <Card>
-        <CardHeader><CardTitle>Daily Macros</CardTitle></CardHeader>
-        <CardContent>
-          <MacroDashboard targets={targets} consumed={consumed} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle>Log a Meal</CardTitle></CardHeader>
-        <CardContent>
-          <FoodLogger onLogged={handleLogged} />
-        </CardContent>
-      </Card>
-      {foodLog.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle>Today&apos;s Food Log</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            {foodLog.map(entry => (
-              <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                <div>
-                  <p className="text-sm font-medium">{entry.description}</p>
-                  <p className="text-xs text-muted-foreground">P: {entry.proteinG}g · C: {entry.carbsG}g · F: {entry.fatG}g</p>
-                </div>
-                <Badge variant="outline">{entry.calories} kcal</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+    <div className="max-w-lg mx-auto px-1 py-2 space-y-8">
+
+      {/* Header */}
+      <div className="flex items-end justify-between border-b pb-4" style={{ borderColor: 'var(--border)' }}>
+        <h1
+          className="text-4xl font-bold tracking-tight leading-none"
+          style={{ fontFamily: 'var(--font-fraunces), Georgia, serif' }}
+        >
+          Nutrition
+        </h1>
+        <span className="text-xs font-medium tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
+          Today
+        </span>
+      </div>
+
+      {/* Daily Macros */}
+      <section>
+        <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
+          Daily Macros
+        </p>
+        <MacroDashboard targets={targets} consumed={consumed} />
+      </section>
+
+      {/* Divider */}
+      <div className="h-px" style={{ background: 'var(--border)' }} />
+
+      {/* Log a Meal */}
+      <section>
+        <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+          Log a Meal
+        </p>
+        <FoodLogger onLogged={handleLogged} />
+      </section>
+
+      {/* Food Log */}
+      <AnimatePresence>
+        {foodLog.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="h-px mb-6" style={{ background: 'var(--border)' }} />
+            <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+              Today&apos;s Log
+            </p>
+
+            <div className="space-y-2">
+              <AnimatePresence>
+                {foodLog.map((entry, i) => (
+                  <motion.div
+                    key={entry.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: i === 0 ? 0 : 0 }}
+                    className="flex items-center justify-between rounded-xl px-4 py-3"
+                    style={{
+                      background: 'var(--card)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <div className="min-w-0 mr-4">
+                      <p className="text-sm font-medium truncate">{entry.description}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
+                        <span style={{ color: MACRO_ACCENT.protein }}>P {entry.proteinG}g</span>
+                        {' · '}
+                        <span style={{ color: MACRO_ACCENT.carbs }}>C {entry.carbsG}g</span>
+                        {' · '}
+                        <span style={{ color: MACRO_ACCENT.fat }}>F {entry.fatG}g</span>
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p
+                        className="text-sm font-semibold"
+                        style={{ fontFamily: 'var(--font-fraunces), Georgia, serif' }}
+                      >
+                        {entry.calories}
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>kcal</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
