@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/lib/i18n'
 import type { Goal, FocusArea, Gender } from '@/types'
 
 type Step = 'profile' | 'goals' | 'focus' | 'timeline'
@@ -26,6 +27,7 @@ const STEPS: Step[] = ['profile', 'goals', 'focus', 'timeline']
 
 export default function OnboardingPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [step, setStep] = useState<Step>('profile')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -69,36 +71,36 @@ export default function OnboardingPage() {
     })
     setLoading(false)
     if (!res.ok) {
-      setError('Failed to save. Please try again.')
+      setError(t('onboarding.error_save'))
       return
     }
     router.push('/dashboard')
   }
 
-  const genderOptions: { value: Gender; label: string }[] = [
-    { value: 'female', label: 'Female' },
-    { value: 'male', label: 'Male' },
-    { value: 'other', label: 'Other' },
+  const genderOptions: { value: Gender; labelKey: string }[] = [
+    { value: 'female', labelKey: 'onboarding.profile.female' },
+    { value: 'male', labelKey: 'onboarding.profile.male' },
+    { value: 'other', labelKey: 'onboarding.profile.other' },
   ]
 
-  const goalOptions: { value: Goal; label: string; desc: string }[] = [
-    { value: 'lose', label: 'Lose Weight', desc: 'Caloric deficit, fat loss focus' },
-    { value: 'gain', label: 'Gain Muscle', desc: 'Caloric surplus, protein priority' },
-    { value: 'maintain', label: 'Maintain', desc: 'Balanced macros, body recomp' },
+  const goalOptions: { value: Goal; labelKey: string; descKey: string }[] = [
+    { value: 'lose', labelKey: 'onboarding.goals.lose_label', descKey: 'onboarding.goals.lose_desc' },
+    { value: 'gain', labelKey: 'onboarding.goals.gain_label', descKey: 'onboarding.goals.gain_desc' },
+    { value: 'maintain', labelKey: 'onboarding.goals.maintain_label', descKey: 'onboarding.goals.maintain_desc' },
   ]
 
-  const focusOptions: { value: FocusArea; label: string }[] = [
-    { value: 'nutrition', label: 'Nutrition' },
-    { value: 'workout', label: 'Workout' },
-    { value: 'sleep', label: 'Sleep' },
-    { value: 'other', label: 'Other' },
+  const focusOptions: { value: FocusArea; labelKey: string }[] = [
+    { value: 'nutrition', labelKey: 'onboarding.focus.nutrition' },
+    { value: 'workout', labelKey: 'onboarding.focus.workout' },
+    { value: 'sleep', labelKey: 'onboarding.focus.sleep' },
+    { value: 'other', labelKey: 'onboarding.focus.other' },
   ]
 
-  const stepTitles: Record<Step, string> = {
-    profile: 'Tell us about yourself',
-    goals: "What's your goal?",
-    focus: 'Your biggest challenge?',
-    timeline: 'Set your timeline',
+  const stepTitleKeys: Record<Step, string> = {
+    profile: 'onboarding.profile.title',
+    goals: 'onboarding.goals.title',
+    focus: 'onboarding.focus.title',
+    timeline: 'onboarding.timeline.title',
   }
 
   return (
@@ -110,8 +112,10 @@ export default function OnboardingPage() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="text-xs text-muted-foreground">Step {stepIndex + 1} of {STEPS.length}</p>
-        <CardTitle className="text-2xl">{stepTitles[step]}</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          {t('onboarding.step_of', { current: stepIndex + 1, total: STEPS.length })}
+        </p>
+        <CardTitle className="text-2xl">{t(stepTitleKeys[step])}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
 
@@ -119,11 +123,11 @@ export default function OnboardingPage() {
           <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Age</Label>
+                <Label>{t('onboarding.profile.age')}</Label>
                 <Input type="number" placeholder="25" value={data.age} onChange={e => update('age', e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label>{t('onboarding.profile.gender')}</Label>
                 <div className="flex gap-2">
                   {genderOptions.map(o => (
                     <button
@@ -133,18 +137,18 @@ export default function OnboardingPage() {
                         'flex-1 py-2 rounded-md border text-sm font-medium transition-colors',
                         data.gender === o.value ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-accent'
                       )}
-                    >{o.label}</button>
+                    >{t(o.labelKey)}</button>
                   ))}
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Height (cm)</Label>
+                <Label>{t('onboarding.profile.height')}</Label>
                 <Input type="number" placeholder="170" value={data.heightCm} onChange={e => update('heightCm', e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Weight (kg)</Label>
+                <Label>{t('onboarding.profile.weight')}</Label>
                 <Input type="number" placeholder="70" value={data.weightKg} onChange={e => update('weightKg', e.target.value)} />
               </div>
             </div>
@@ -162,8 +166,8 @@ export default function OnboardingPage() {
                   data.goal === o.value ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent'
                 )}
               >
-                <div className="font-semibold">{o.label}</div>
-                <div className="text-sm text-muted-foreground">{o.desc}</div>
+                <div className="font-semibold">{t(o.labelKey)}</div>
+                <div className="text-sm text-muted-foreground">{t(o.descKey)}</div>
               </button>
             ))}
           </div>
@@ -179,7 +183,7 @@ export default function OnboardingPage() {
                   'p-4 rounded-lg border font-medium transition-colors',
                   data.focusArea === o.value ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent'
                 )}
-              >{o.label}</button>
+              >{t(o.labelKey)}</button>
             ))}
           </div>
         )}
@@ -187,11 +191,14 @@ export default function OnboardingPage() {
         {step === 'timeline' && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>{t('onboarding.timeline.start_date')}</Label>
               <Input type="date" value={data.startDate} onChange={e => update('startDate', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Total Days <span className="text-muted-foreground font-normal">(default 75)</span></Label>
+              <Label>
+                {t('onboarding.timeline.total_days')}{' '}
+                <span className="text-muted-foreground font-normal">{t('onboarding.timeline.total_days_hint')}</span>
+              </Label>
               <Input
                 type="number" min="1" max="365"
                 value={data.totalDays}
@@ -205,14 +212,14 @@ export default function OnboardingPage() {
 
         <div className="flex gap-3 pt-2">
           {stepIndex > 0 && (
-            <Button variant="outline" className="flex-1" onClick={back} disabled={loading}>Back</Button>
+            <Button variant="outline" className="flex-1" onClick={back} disabled={loading}>{t('onboarding.back')}</Button>
           )}
           {step !== 'timeline' ? (
-            <Button className="flex-1" onClick={next} disabled={!canAdvance()}>Continue</Button>
+            <Button className="flex-1" onClick={next} disabled={!canAdvance()}>{t('onboarding.continue')}</Button>
           ) : (
             <Button className="flex-1" onClick={submit} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Start Challenge
+              {t('onboarding.start')}
             </Button>
           )}
         </div>
