@@ -1,4 +1,5 @@
 import type { UserProfile } from '@/types'
+import type { WorkoutTrackerState } from '@/types'
 
 const PROFILE_KEY = '75lab_profile'
 const STREAK_KEY = '75lab_streak'
@@ -66,4 +67,17 @@ export function yesterdayString(): string {
   const d = new Date()
   d.setDate(d.getDate() - 1)
   return d.toISOString().split('T')[0]
+}
+
+const WORKOUT_KEY = '75lab_workout'
+
+export function getWorkoutState(date: string): WorkoutTrackerState | null {
+  if (!isBrowser()) return null
+  const raw = localStorage.getItem(`${WORKOUT_KEY}_${date}`)
+  return raw ? (JSON.parse(raw) as WorkoutTrackerState) : null
+}
+
+export function saveWorkoutState(date: string, state: WorkoutTrackerState): void {
+  if (!isBrowser()) return
+  localStorage.setItem(`${WORKOUT_KEY}_${date}`, JSON.stringify(state))
 }
