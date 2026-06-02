@@ -46,7 +46,7 @@ export function WorkoutSession({
     >
       {/* Header row */}
       <div className="flex items-center gap-2 mb-3">
-        <button onClick={onManualToggle} className="shrink-0">
+        <button onClick={onManualToggle} className="shrink-0" aria-label={`Mark ${type} workout ${session.done ? 'incomplete' : 'complete'}`}>
           {session.done
             ? <CheckCircle2 className="h-5 w-5 text-primary" />
             : <Circle className="h-5 w-5 text-muted-foreground" />
@@ -74,6 +74,7 @@ export function WorkoutSession({
           <button
             onClick={onToggleTimer}
             disabled={timerComplete}
+            aria-label={session.timerRunning ? 'Pause timer' : timerComplete ? 'Timer finished' : 'Start timer'}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-semibold transition-colors',
               'bg-foreground text-background hover:opacity-90 disabled:opacity-40'
@@ -87,6 +88,7 @@ export function WorkoutSession({
           {showReset && (
             <button
               onClick={onResetTimer}
+              aria-label="Reset timer"
               className="px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-accent transition-colors"
             >
               <RotateCcw className="h-3 w-3" />
@@ -121,6 +123,8 @@ export function WorkoutSession({
       {/* AI suggestions toggle */}
       <button
         onClick={onToggleVideos}
+        aria-expanded={session.showVideos}
+        aria-label={session.showVideos ? 'Hide workout suggestions' : 'Show AI workout suggestions'}
         className="w-full border border-dashed border-border rounded-lg py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
       >
         {session.showVideos ? '▲ Hide suggestions' : '✨ Get AI Suggestions'}
