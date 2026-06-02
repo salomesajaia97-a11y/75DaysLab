@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getWorkoutState, todayString } from '@/lib/storage'
@@ -14,17 +14,16 @@ function getPast7Days(): string[] {
 }
 
 export default function FitnessPage() {
-  const [weekData, setWeekData] = useState<Record<string, WorkoutTrackerState | null>>({})
   const today = todayString()
-
-  useEffect(() => {
+  const [weekData] = useState<Record<string, WorkoutTrackerState | null>>(() => {
+    if (typeof window === 'undefined') return {}
     const days = getPast7Days()
     const data: Record<string, WorkoutTrackerState | null> = {}
     for (const day of days) {
       data[day] = getWorkoutState(day)
     }
-    setWeekData(data)
-  }, [])
+    return data
+  })
 
   const todayState = weekData[today]
   const totalSessions = Object.values(weekData).reduce((acc, s) => {
