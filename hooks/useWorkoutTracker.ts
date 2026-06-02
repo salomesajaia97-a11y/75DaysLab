@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { WorkoutTrackerState, WorkoutSessionState } from '@/types'
 import { getWorkoutState, saveWorkoutState, todayString } from '@/lib/storage'
 
@@ -21,18 +21,25 @@ const DEFAULT_STATE: WorkoutTrackerState = {
 export function useWorkoutTracker() {
   const [state, setState] = useState<WorkoutTrackerState>(DEFAULT_STATE)
   const [hydrated, setHydrated] = useState(false)
+  const todayRef = useRef(todayString())
 
   // Load from localStorage after mount (avoids SSR hydration mismatch)
   useEffect(() => {
-    const saved = getWorkoutState(todayString())
-    if (saved) setState(saved)
+    const saved = getWorkoutState(todayRef.current)
+    if (saved) {
+      // Pause any running timers on reload (elapsed time not tracked)
+      setState({
+        indoor: { ...saved.indoor, timerRunning: false },
+        outdoor: { ...saved.outdoor, timerRunning: false },
+      })
+    }
     setHydrated(true)
   }, [])
 
   // Persist whenever state changes, but only after initial load
   useEffect(() => {
     if (!hydrated) return
-    saveWorkoutState(todayString(), state)
+    saveWorkoutState(todayRef.current, state)
   }, [state, hydrated])
 
   // Countdown tick — uses functional setState to avoid stale closure
@@ -59,16 +66,17 @@ export function useWorkoutTracker() {
   }, [state.indoor.timerRunning, state.outdoor.timerRunning])
 
   const toggleTimer = useCallback((type: 'indoor' | 'outdoor') => {
-    setState(prev => ({
-      ...prev,
-      [type]: { ...prev[type], timerRunning: !prev[type].timerRunning },
-    }))
+    setState(prev => {
+      const s = prev[type]
+      if (s.timerFinished || s.timerSeconds === 0) return prev
+      return { ...prev, [type]: { ...s, timerRunning: !s.timerRunning } }
+    })
   }, [])
 
   const resetTimer = useCallback((type: 'indoor' | 'outdoor') => {
     setState(prev => ({
       ...prev,
-      [type]: { ...prev[type], timerSeconds: 2700, timerRunning: false, timerFinished: false, showConfirm: false },
+      [type]: { ...prev[type], done: false, timerSeconds: 2700, timerRunning: false, timerFinished: false, showConfirm: false },
     }))
   }, [])
 
@@ -94,10 +102,14 @@ export function useWorkoutTracker() {
   }, [])
 
   const manualToggleDone = useCallback((type: 'indoor' | 'outdoor') => {
-    setState(prev => ({
-      ...prev,
-      [type]: { ...prev[type], done: !prev[type].done },
-    }))
+    setState(prev => {
+      const s = prev[type]
+      const done = !s.done
+      return {
+        ...prev,
+        [type]: { ...s, done, ...(done ? { timerRunning: false } : {}) },
+      }
+    })
   }, [])
 
   const bothDone = state.indoor.done && state.outdoor.done
