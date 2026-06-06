@@ -86,11 +86,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === 'google') {
-          await connectDB()
-          const dbUser = await User.findOne({ email: token.email })
-          if (dbUser) {
-            token.id = dbUser._id.toString()
-            token.name = dbUser.username
+          try {
+            await connectDB()
+            const dbUser = await User.findOne({ email: token.email })
+            if (dbUser) {
+              token.id = dbUser._id.toString()
+              token.name = dbUser.username
+            }
+          } catch {
+            // DB error during JWT creation — token proceeds without DB-sourced fields
           }
         } else {
           token.id = user.id

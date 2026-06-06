@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n'
+import { saveProfile } from '@/lib/storage'
 import type { Goal, FocusArea, Gender } from '@/types'
 
 type Step = 'profile' | 'goals' | 'focus' | 'timeline'
@@ -74,6 +75,8 @@ export default function OnboardingPage() {
       setError(t('onboarding.error_save'))
       return
     }
+    const json = await res.json()
+    if (json.profile) saveProfile(json.profile)
     router.push('/dashboard')
   }
 

@@ -13,17 +13,13 @@ export async function POST(req: NextRequest) {
 
   await connectDB()
 
-  await User.findByIdAndUpdate(session.user.id, {
-    age: Number(age),
-    gender,
-    heightCm: Number(heightCm),
-    weightKg: Number(weightKg),
-    goal,
-    focusArea,
-    onboardingComplete: true,
-  })
+  const user = await User.findByIdAndUpdate(
+    session.user.id,
+    { age: Number(age), gender, heightCm: Number(heightCm), weightKg: Number(weightKg), goal, focusArea, onboardingComplete: true },
+    { new: true }
+  )
 
-  await Challenge.findOneAndUpdate(
+  const challenge = await Challenge.findOneAndUpdate(
     { userId: session.user.id, isActive: true },
     {
       userId: session.user.id,
@@ -36,5 +32,19 @@ export async function POST(req: NextRequest) {
     { upsert: true, new: true }
   )
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: true,
+    profile: {
+      id: String(user!._id),
+      username: user!.username,
+      age: user!.age,
+      gender: user!.gender,
+      heightCm: user!.heightCm,
+      weightKg: user!.weightKg,
+      goal: user!.goal,
+      focusArea: user!.focusArea,
+      startDate: challenge.startDate.toISOString().split('T')[0],
+      totalDays: challenge.totalDays,
+    },
+  })
 }

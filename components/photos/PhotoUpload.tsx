@@ -13,18 +13,25 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string>()
 
-  const onDrop = useCallback((files: File[]) => {
+  const onDrop = useCallback(async (files: File[]) => {
     const file = files[0]
     if (!file) return
-    const objectUrl = URL.createObjectURL(file)
-    setPreview(objectUrl)
+    setPreview(URL.createObjectURL(file))
     setUploading(true)
-    // Phase 1: mock upload delay
-    setTimeout(() => {
+    try {
+      const form = new FormData()
+      form.append('photo', file)
+      form.append('dayNumber', String(dayNumber))
+      const res = await fetch('/api/photos', { method: 'POST', body: form })
+      if (!res.ok) throw new Error(await res.text())
+      const { url } = await res.json()
+      onUploaded(url)
+    } catch (err) {
+      console.error('Upload failed:', err)
+    } finally {
       setUploading(false)
-      onUploaded(objectUrl)
-    }, 1000)
-  }, [onUploaded])
+    }
+  }, [dayNumber, onUploaded])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

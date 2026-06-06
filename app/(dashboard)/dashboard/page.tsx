@@ -8,6 +8,7 @@ import { CheckCircle2, Circle, Flame } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   getProfile,
+  saveProfile,
   getStreak,
   getLastStreakDate,
   saveStreak,
@@ -49,7 +50,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const p = getProfile()
-    setProfile(p)
+    if (p) {
+      setProfile(p)
+    } else {
+      fetch('/api/users/me')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && !data.error) {
+            saveProfile(data)
+            setProfile(data)
+          }
+        })
+        .catch(() => {})
+    }
 
     // Hard reset: if yesterday's tasks exist and were incomplete, reset streak
     const yesterday = yesterdayString()
