@@ -8,7 +8,7 @@ export interface IUser extends Document {
   gender?: 'male' | 'female' | 'other'
   heightCm?: number
   weightKg?: number
-  goal?: 'lose' | 'gain' | 'maintain'
+  goal?: 'lose' | 'gain' | 'maintain' | 'healthy'
   focusArea?: 'nutrition' | 'workout' | 'sleep' | 'other'
   onboardingComplete: boolean
   createdAt: Date
@@ -24,7 +24,7 @@ const UserSchema = new Schema<IUser>(
     gender: { type: String, enum: ['male', 'female', 'other'] },
     heightCm: Number,
     weightKg: Number,
-    goal: { type: String, enum: ['lose', 'gain', 'maintain'] },
+    goal: { type: String, enum: ['lose', 'gain', 'maintain', 'healthy'] },
     focusArea: { type: String, enum: ['nutrition', 'workout', 'sleep', 'other'] },
     onboardingComplete: { type: Boolean, default: false },
   },

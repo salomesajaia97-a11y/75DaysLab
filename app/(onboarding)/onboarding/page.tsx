@@ -90,6 +90,7 @@ export default function OnboardingPage() {
     { value: 'lose', labelKey: 'onboarding.goals.lose_label', descKey: 'onboarding.goals.lose_desc' },
     { value: 'gain', labelKey: 'onboarding.goals.gain_label', descKey: 'onboarding.goals.gain_desc' },
     { value: 'maintain', labelKey: 'onboarding.goals.maintain_label', descKey: 'onboarding.goals.maintain_desc' },
+    { value: 'healthy', labelKey: 'onboarding.goals.healthy_label', descKey: 'onboarding.goals.healthy_desc' },
   ]
 
   const focusOptions: { value: FocusArea; labelKey: string }[] = [
@@ -159,18 +160,18 @@ export default function OnboardingPage() {
         )}
 
         {step === 'goals' && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {goalOptions.map(o => (
               <button
                 key={o.value}
                 onClick={() => update('goal', o.value)}
                 className={cn(
-                  'w-full p-4 rounded-lg border text-left transition-colors',
+                  'w-full px-4 py-3 rounded-lg border text-left transition-colors',
                   data.goal === o.value ? 'border-primary bg-primary/10' : 'border-border hover:bg-accent'
                 )}
               >
-                <div className="font-semibold">{t(o.labelKey)}</div>
-                <div className="text-sm text-muted-foreground">{t(o.descKey)}</div>
+                <div className="font-semibold text-sm">{t(o.labelKey)}</div>
+                <div className="text-xs text-muted-foreground">{t(o.descKey)}</div>
               </button>
             ))}
           </div>

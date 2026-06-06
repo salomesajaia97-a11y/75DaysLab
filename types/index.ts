@@ -1,4 +1,4 @@
-export type Goal = 'lose' | 'gain' | 'maintain'
+export type Goal = 'lose' | 'gain' | 'maintain' | 'healthy'
 export type FocusArea = 'nutrition' | 'workout' | 'sleep' | 'other'
 export type Gender = 'male' | 'female' | 'other'
 
