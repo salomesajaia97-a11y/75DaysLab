@@ -1,12 +1,24 @@
 import type { Goal, Gender, MacroTargets } from '@/types'
 
-// 35ml/kg baseline; female -200ml; gain +500ml; lose +300ml (hydration aids fat loss)
-export function calculateWaterGoal(weightKg: number, gender: Gender, goal: Goal): number {
-  let base = Math.round(weightKg * 35)
+// Base 35ml/kg; age-adjusted (younger +150ml, older -200ml);
+// height-adjusted vs 170cm baseline (4ml per cm diff);
+// gender/goal adjustments preserved.
+export function calculateWaterGoal(
+  age: number,
+  weightKg: number,
+  heightCm: number,
+  gender: Gender,
+  goal: Goal,
+): number {
+  let base = weightKg * 35
+  if (age < 25) base += 150
+  else if (age > 55) base -= 200
+  base += (heightCm - 170) * 4
   if (gender === 'female') base -= 200
   if (goal === 'gain') base += 500
   if (goal === 'lose') base += 300
-  return Math.max(base, 1500)
+  if (goal === 'healthy') base += 200
+  return Math.max(Math.round(base), 1500)
 }
 
 // Mifflin-St Jeor BMR × 1.55 (moderate activity) ± goal adjustment
@@ -29,8 +41,11 @@ export function calculateMacros(
   else if (goal === 'gain') calories = Math.round(tdee + 300)
   else calories = tdee
 
-  const proteinG = Math.round(weightKg * 2.2)
-  const fatG = Math.round((calories * 0.25) / 9)
+  const proteinG = goal === 'healthy'
+    ? Math.round(weightKg * 1.6)   // moderate — WHO-aligned
+    : Math.round(weightKg * 2.2)   // high — muscle/deficit needs
+  const fatPct = goal === 'healthy' ? 0.30 : 0.25
+  const fatG = Math.round((calories * fatPct) / 9)
   const carbsG = Math.max(Math.round((calories - proteinG * 4 - fatG * 9) / 4), 50)
 
   return { calories, proteinG, carbsG, fatG }

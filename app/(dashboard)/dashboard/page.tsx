@@ -119,7 +119,7 @@ export default function DashboardPage() {
     ? calculateCurrentDay(profile.startDate, profile.totalDays)
     : 1
   const waterGoal = profile
-    ? calculateWaterGoal(profile.weightKg, profile.gender, profile.goal)
+    ? calculateWaterGoal(profile.age, profile.weightKg, profile.heightCm, profile.gender, profile.goal)
     : FALLBACK_WATER
   const displayName = profile?.username ?? 'there'
 

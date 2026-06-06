@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MacroDashboard } from '@/components/nutrition/MacroDashboard'
 import { FoodLogger } from '@/components/nutrition/FoodLogger'
-import { getProfile } from '@/lib/storage'
+import { getProfile, saveProfile } from '@/lib/storage'
 import { calculateMacros } from '@/lib/calculations'
 import { useLanguage } from '@/lib/i18n'
-import type { FoodEntry, MacroTargets } from '@/types'
+import type { FoodEntry, MacroTargets, UserProfile } from '@/types'
 
 const FALLBACK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
 
@@ -23,9 +23,23 @@ export default function NutritionPage() {
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([])
 
   useEffect(() => {
-    const profile = getProfile()
-    if (profile) {
+    function applyProfile(profile: UserProfile) {
       setTargets(calculateMacros(profile.age, profile.gender, profile.heightCm, profile.weightKg, profile.goal))
+    }
+
+    const cached = getProfile()
+    if (cached) {
+      applyProfile(cached)
+    } else {
+      fetch('/api/users/me')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && !data.error) {
+            saveProfile(data)
+            applyProfile(data)
+          }
+        })
+        .catch(() => {})
     }
   }, [])
 

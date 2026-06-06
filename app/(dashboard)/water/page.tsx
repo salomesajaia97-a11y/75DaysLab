@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WaterTracker } from '@/components/water/WaterTracker'
-import { getProfile } from '@/lib/storage'
+import { getProfile, saveProfile } from '@/lib/storage'
 import { calculateWaterGoal } from '@/lib/calculations'
 import { useLanguage } from '@/lib/i18n'
 import type { UserProfile } from '@/types'
@@ -13,10 +13,24 @@ export default function WaterPage() {
   const [gender, setGender] = useState<UserProfile['gender'] | null>(null)
 
   useEffect(() => {
-    const profile = getProfile()
-    if (profile) {
-      setGoalMl(calculateWaterGoal(profile.weightKg, profile.gender, profile.goal))
+    function applyProfile(profile: UserProfile) {
+      setGoalMl(calculateWaterGoal(profile.age, profile.weightKg, profile.heightCm, profile.gender, profile.goal))
       setGender(profile.gender ?? null)
+    }
+
+    const cached = getProfile()
+    if (cached) {
+      applyProfile(cached)
+    } else {
+      fetch('/api/users/me')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && !data.error) {
+            saveProfile(data)
+            applyProfile(data)
+          }
+        })
+        .catch(() => {})
     }
   }, [])
 
