@@ -18,7 +18,10 @@ const MACRO_ACCENT: Record<string, string> = {
 
 export default function NutritionPage() {
   const { t } = useLanguage()
-  const [targets, setTargets] = useState<MacroTargets>(FALLBACK_TARGETS)
+  const [targets, setTargets] = useState<MacroTargets>(() => {
+    const p = getProfile()
+    return p ? calculateMacros(p.age, p.gender, p.heightCm, p.weightKg, p.goal) : FALLBACK_TARGETS
+  })
   const [consumed, setConsumed] = useState<MacroTargets>({ calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([])
 

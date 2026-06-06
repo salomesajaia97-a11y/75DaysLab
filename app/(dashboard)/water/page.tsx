@@ -9,8 +9,11 @@ import type { UserProfile } from '@/types'
 
 export default function WaterPage() {
   const { t } = useLanguage()
-  const [goalMl, setGoalMl] = useState(2500)
-  const [gender, setGender] = useState<UserProfile['gender'] | null>(null)
+  const [goalMl, setGoalMl] = useState(() => {
+    const p = getProfile()
+    return p ? calculateWaterGoal(p.age, p.weightKg, p.heightCm, p.gender, p.goal) : 2500
+  })
+  const [gender, setGender] = useState<UserProfile['gender'] | null>(() => getProfile()?.gender ?? null)
 
   useEffect(() => {
     function applyProfile(profile: UserProfile) {

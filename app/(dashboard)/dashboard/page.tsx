@@ -43,7 +43,7 @@ export default function DashboardPage() {
     { id: 'photo',     label: t('dashboard.task.photo') },
   ]
 
-  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [profile, setProfile] = useState<UserProfile | null>(() => getProfile())
   const [tasks, setTasks] = useState<Task[]>(TASK_DEFS.map(t => ({ ...t, done: false })))
   const [streak, setStreak] = useState(0)
   const today = todayString()
