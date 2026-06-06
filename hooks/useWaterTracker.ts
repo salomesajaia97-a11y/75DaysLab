@@ -7,14 +7,12 @@ interface WaterState {
   goalMl: number
 }
 
-export function useWaterTracker(initial: WaterState) {
+export function useWaterTracker({ consumedMl, goalMl }: WaterState) {
   const today = todayString()
-  const [consumed, setConsumed] = useState(initial.consumedMl)
-  const [goalMl] = useState(initial.goalMl)
+  const [consumed, setConsumed] = useState(consumedMl)
 
   useEffect(() => {
-    const saved = getWaterConsumed(today)
-    if (saved > 0) setConsumed(saved)
+    setConsumed(getWaterConsumed(today))
   }, [today])
 
   const addWater = useCallback((amountMl: number) => {
@@ -25,8 +23,9 @@ export function useWaterTracker(initial: WaterState) {
     })
   }, [today])
 
+  // goalMl from prop — always current (no stale useState capture)
   const percent = Math.min((consumed / goalMl) * 100, 100)
   const remainingMl = Math.max(goalMl - consumed, 0)
 
-  return { consumed, goalMl, percent, remainingMl, addWater }
+  return { consumed, percent, remainingMl, addWater }
 }
