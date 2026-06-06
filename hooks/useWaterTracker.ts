@@ -1,6 +1,5 @@
 'use client'
 import { useState, useCallback, useEffect } from 'react'
-import { getWaterConsumed, saveWaterConsumed, todayString } from '@/lib/storage'
 
 interface WaterState {
   consumedMl: number
@@ -8,22 +7,31 @@ interface WaterState {
 }
 
 export function useWaterTracker({ consumedMl, goalMl }: WaterState) {
-  const today = todayString()
   const [consumed, setConsumed] = useState(consumedMl)
 
   useEffect(() => {
-    setConsumed(getWaterConsumed(today))
-  }, [today])
+    const today = new Date().toISOString().split('T')[0]
+    fetch(`/api/water?date=${today}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.totalMl !== undefined) {
+          setConsumed(data.totalMl)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const addWater = useCallback((amountMl: number) => {
-    setConsumed(prev => {
-      const next = prev + amountMl
-      saveWaterConsumed(today, next)
-      return next
+    setConsumed(prev => Math.min(prev + amountMl, goalMl * 1.5))
+    fetch('/api/water', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amountMl }),
+    }).catch(() => {
+      setConsumed(prev => Math.max(prev - amountMl, 0))
     })
-  }, [today])
+  }, [goalMl])
 
-  // goalMl from prop — always current (no stale useState capture)
   const percent = Math.min((consumed / goalMl) * 100, 100)
   const remainingMl = Math.max(goalMl - consumed, 0)
 
