@@ -81,3 +81,15 @@ export function saveWorkoutState(date: string, state: WorkoutTrackerState): void
   if (!isBrowser()) return
   localStorage.setItem(`${WORKOUT_KEY}_${date}`, JSON.stringify(state))
 }
+
+const WATER_KEY = '75lab_water'
+
+export function getWaterConsumed(date: string): number {
+  if (!isBrowser()) return 0
+  return parseInt(localStorage.getItem(`${WATER_KEY}_${date}`) || '0', 10)
+}
+
+export function saveWaterConsumed(date: string, ml: number): void {
+  if (!isBrowser()) return
+  localStorage.setItem(`${WATER_KEY}_${date}`, String(ml))
+}

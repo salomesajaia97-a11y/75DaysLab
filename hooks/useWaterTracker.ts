@@ -1,5 +1,6 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
+import { getWaterConsumed, saveWaterConsumed, todayString } from '@/lib/storage'
 
 interface WaterState {
   consumedMl: number
@@ -7,15 +8,25 @@ interface WaterState {
 }
 
 export function useWaterTracker(initial: WaterState) {
-  const [state, setState] = useState(initial)
+  const today = todayString()
+  const [consumed, setConsumed] = useState(initial.consumedMl)
+  const [goalMl] = useState(initial.goalMl)
+
+  useEffect(() => {
+    const saved = getWaterConsumed(today)
+    if (saved > 0) setConsumed(saved)
+  }, [today])
 
   const addWater = useCallback((amountMl: number) => {
-    setState(prev => ({ ...prev, consumedMl: Math.min(prev.consumedMl + amountMl, prev.goalMl * 1.5) }))
-    // Phase 1: no API call
-  }, [])
+    setConsumed(prev => {
+      const next = prev + amountMl
+      saveWaterConsumed(today, next)
+      return next
+    })
+  }, [today])
 
-  const percent = Math.min((state.consumedMl / state.goalMl) * 100, 100)
-  const remainingMl = Math.max(state.goalMl - state.consumedMl, 0)
+  const percent = Math.min((consumed / goalMl) * 100, 100)
+  const remainingMl = Math.max(goalMl - consumed, 0)
 
-  return { consumed: state.consumedMl, goalMl: state.goalMl, percent, remainingMl, addWater }
+  return { consumed, goalMl, percent, remainingMl, addWater }
 }
