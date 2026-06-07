@@ -9,6 +9,10 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
+      const role = (auth?.user as { role?: string })?.role
+
+      const isAdminRoute =
+        nextUrl.pathname === '/admin' || nextUrl.pathname.startsWith('/admin/')
       const isProtected = [
         '/dashboard', '/water', '/journal', '/nutrition',
         '/cycle', '/photos', '/squads', '/onboarding',
@@ -17,6 +21,11 @@ export const authConfig: NextAuthConfig = {
         (p) => nextUrl.pathname === p || nextUrl.pathname.startsWith(p + '/')
       )
 
+      if (isAdminRoute) {
+        if (!isLoggedIn) return Response.redirect(new URL('/login', nextUrl))
+        if (role !== 'admin') return Response.redirect(new URL('/dashboard', nextUrl))
+        return true
+      }
       if (isProtected && !isLoggedIn) return Response.redirect(new URL('/login', nextUrl))
       if (isAuthPage && isLoggedIn) return Response.redirect(new URL('/dashboard', nextUrl))
       return true

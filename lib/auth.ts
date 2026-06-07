@@ -7,14 +7,19 @@ import { User } from '@/models/User'
 import { authConfig } from '@/lib/auth.config'
 
 declare module 'next-auth' {
+  interface User {
+    role?: 'user' | 'admin'
+  }
   interface Session {
     user: {
       id: string
       email: string
       name: string
+      role: 'user' | 'admin'
     }
   }
 }
+
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -48,6 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             id: user._id.toString(),
             email: user.email,
             name: user.username,
+            role: user.role ?? 'user',
           }
         } catch {
           return null
@@ -92,6 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (dbUser) {
               token.id = dbUser._id.toString()
               token.name = dbUser.username
+              ;(token as Record<string, unknown>).role = dbUser.role ?? 'user'
             }
           } catch {
             // DB error during JWT creation — token proceeds without DB-sourced fields
@@ -99,6 +106,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         } else {
           token.id = user.id
           token.name = user.name
+          ;(token as Record<string, unknown>).role = user.role ?? 'user'
         }
       }
       return token
@@ -106,6 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string
       if (token.name) session.user.name = token.name as string
+      session.user.role = ((token as Record<string, unknown>).role ?? 'user') as 'user' | 'admin'
       return session
     },
   },

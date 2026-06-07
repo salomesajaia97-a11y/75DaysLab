@@ -11,6 +11,7 @@ export interface IUser extends Document {
   goal?: 'lose' | 'gain' | 'maintain' | 'healthy'
   focusArea?: 'nutrition' | 'workout' | 'sleep' | 'other'
   onboardingComplete: boolean
+  role: 'user' | 'admin'
   createdAt: Date
   updatedAt: Date
 }
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>(
     goal: { type: String, enum: ['lose', 'gain', 'maintain', 'healthy'] },
     focusArea: { type: String, enum: ['nutrition', 'workout', 'sleep', 'other'] },
     onboardingComplete: { type: Boolean, default: false },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
   },
   { timestamps: true }
 )
