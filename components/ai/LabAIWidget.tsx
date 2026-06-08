@@ -6,6 +6,7 @@ import { ChatMessage } from '@/components/ai/ChatMessage'
 import type { MacroData, ProgressContext } from '@/lib/ai'
 
 interface Message {
+  id: string
   role: 'user' | 'ai'
   content: string
   macros?: MacroData
@@ -49,11 +50,13 @@ export function LabAIWidget() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     async function init() {
       try {
         const [meRes, nutritionRes] = await Promise.all([
-          fetch('/api/users/me'),
-          fetch(`/api/nutrition?date=${new Date().toISOString().split('T')[0]}`),
+          fetch('/api/users/me', { signal: controller.signal }),
+          fetch(`/api/nutrition?date=${new Date().toISOString().split('T')[0]}`, { signal: controller.signal }),
         ])
 
         if (meRes.ok) {
@@ -70,11 +73,14 @@ export function LabAIWidget() {
           const nutrition = await nutritionRes.json()
           setTodayCalories(nutrition.totals?.calories ?? 0)
         }
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         // silently degrade — widget works without this data
       }
     }
+
     init()
+    return () => controller.abort()
   }, [])
 
   useEffect(() => {
@@ -87,7 +93,7 @@ export function LabAIWidget() {
     const text = input.trim()
     if (!text || loading) return
 
-    const userMsg: Message = { role: 'user', content: text }
+    const userMsg: Message = { id: `${Date.now()}-user`, role: 'user', content: text }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
@@ -112,11 +118,11 @@ export function LabAIWidget() {
       const data = await res.json()
 
       if (!res.ok) {
-        setMessages(prev => [...prev, { role: 'ai', content: data.error ?? 'Something went wrong.' }])
+        setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: data.error ?? 'Something went wrong.' }])
         return
       }
 
-      const aiMsg: Message = { role: 'ai', content: data.message, macros: data.macros ?? undefined }
+      const aiMsg: Message = { id: `${Date.now()}-ai`, role: 'ai', content: data.message, macros: data.macros ?? undefined }
       setMessages(prev => [...prev, aiMsg])
 
       if (data.macros) {
@@ -132,12 +138,12 @@ export function LabAIWidget() {
             carbsG: m.carbsG,
             fatG: m.fatG,
           }),
-        })
+        }).catch(err => console.error('[LabAI] Nutrition POST failed:', err))
       }
     } catch {
       setMessages(prev => [
         ...prev,
-        { role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' },
+        { id: `${Date.now()}-ai`, role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' },
       ])
     } finally {
       setLoading(false)
@@ -204,8 +210,8 @@ export function LabAIWidget() {
                 Ask about nutrition, workouts, or recipes. I know your goal.
               </p>
             )}
-            {messages.map((msg, i) => (
-              <div key={i}>
+            {messages.map((msg) => (
+              <div key={msg.id}>
                 <ChatMessage role={msg.role} content={msg.content} />
                 {msg.macros && <MacroCard macros={msg.macros} />}
               </div>
