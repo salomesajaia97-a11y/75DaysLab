@@ -10,6 +10,7 @@ export interface IUser extends Document {
   weightKg?: number
   goal?: 'lose' | 'gain' | 'maintain' | 'healthy'
   focusArea?: 'nutrition' | 'workout' | 'sleep' | 'other'
+  city?: string
   onboardingComplete: boolean
   role: 'user' | 'admin'
   createdAt: Date
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>(
     weightKg: Number,
     goal: { type: String, enum: ['lose', 'gain', 'maintain', 'healthy'] },
     focusArea: { type: String, enum: ['nutrition', 'workout', 'sleep', 'other'] },
+    city: { type: String },
     onboardingComplete: { type: Boolean, default: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
   },
