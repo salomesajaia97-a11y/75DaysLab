@@ -3,6 +3,7 @@ import { auth, signOut } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { DashboardSidebar } from '@/components/shared/DashboardSidebar'
+import { LabAIWidget } from '@/components/ai/LabAIWidget'
 import mongoose from 'mongoose'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="flex-1 ml-16 md:ml-56 p-6">
         {children}
       </main>
+      <LabAIWidget />
     </div>
   )
 }
