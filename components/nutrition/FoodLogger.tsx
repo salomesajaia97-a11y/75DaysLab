@@ -10,25 +10,52 @@ interface FoodLoggerProps {
 export function FoodLogger({ onLogged }: FoodLoggerProps) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  function logFood() {
-    if (!description.trim()) return
+  async function logFood() {
+    const text = description.trim()
+    if (!text) return
     setLoading(true)
-    setTimeout(() => {
+    setError(null)
+    try {
+      const aiRes = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, mode: 'food_log' }),
+      })
+      const aiData = await aiRes.json()
+      const macros = aiData.macros ?? { food: text, calories: 0, proteinG: 0, carbsG: 0, fatG: 0 }
+
+      const saveRes = await fetch('/api/nutrition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: macros.food || text,
+          calories: macros.calories,
+          proteinG: macros.proteinG,
+          carbsG: macros.carbsG,
+          fatG: macros.fatG,
+        }),
+      })
+      const saved = await saveRes.json()
+
       const entry: FoodEntry = {
-        id: Date.now().toString(),
-        description,
-        calories: Math.floor(Math.random() * 400 + 100),
-        proteinG: Math.floor(Math.random() * 30 + 5),
-        carbsG: Math.floor(Math.random() * 50 + 10),
-        fatG: Math.floor(Math.random() * 20 + 3),
+        id: saved._id ?? Date.now().toString(),
+        description: macros.food || text,
+        calories: macros.calories,
+        proteinG: macros.proteinG,
+        carbsG: macros.carbsG,
+        fatG: macros.fatG,
         loggedAt: new Date().toISOString(),
       }
       onLogged(entry)
       setDescription('')
+    } catch {
+      setError('Failed to log food. Try again.')
+    } finally {
       setLoading(false)
-    }, 800)
+    }
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -86,6 +113,7 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
         </div>
       </div>
       <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }

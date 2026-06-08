@@ -1,9 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PhotoUpload } from '@/components/photos/PhotoUpload'
 import { PhotoComparison } from '@/components/photos/PhotoComparison'
+import { getProfile, saveProfile } from '@/lib/storage'
+import { calculateCurrentDay } from '@/lib/calculations'
 import { useLanguage } from '@/lib/i18n'
 
 interface PhotoEntry {
@@ -18,8 +20,36 @@ export default function PhotosPage() {
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const [compareA, setCompareA] = useState<number>(1)
   const [compareB, setCompareB] = useState<number>(2)
+  const [currentDay, setCurrentDay] = useState(1)
 
-  const currentDay = 1
+  useEffect(() => {
+    const cached = getProfile()
+    if (cached) {
+      setCurrentDay(calculateCurrentDay(cached.startDate, cached.totalDays))
+    } else {
+      fetch('/api/users/me')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && !data.error) {
+            saveProfile(data)
+            setCurrentDay(calculateCurrentDay(data.startDate, data.totalDays))
+          }
+        })
+        .catch(() => {})
+    }
+
+    fetch('/api/photos')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPhotos(data.map((p: { dayNumber: number; url: string }) => ({
+            dayNumber: p.dayNumber,
+            url: p.url,
+          })))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function handleUploaded(url: string) {
     setPhotos(prev => {

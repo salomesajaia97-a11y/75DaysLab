@@ -44,15 +44,37 @@ export default function NutritionPage() {
         })
         .catch(() => {})
     }
+
+    const today = new Date().toISOString().split('T')[0]
+    fetch(`/api/nutrition?date=${today}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data) return
+        const entries: FoodEntry[] = (data.logs ?? []).map((l: {
+          _id: string; description: string; calories: number
+          proteinG: number; carbsG: number; fatG: number; loggedAt?: string
+        }) => ({
+          id: l._id,
+          description: l.description,
+          calories: l.calories,
+          proteinG: l.proteinG,
+          carbsG: l.carbsG,
+          fatG: l.fatG,
+          loggedAt: l.loggedAt ?? new Date().toISOString(),
+        }))
+        setFoodLog(entries)
+        setConsumed(data.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 })
+      })
+      .catch(() => {})
   }, [])
 
   function handleLogged(entry: FoodEntry) {
     setFoodLog(prev => [entry, ...prev])
     setConsumed(prev => ({
-      calories: prev.calories + entry.calories,
-      proteinG: prev.proteinG + entry.proteinG,
-      carbsG: prev.carbsG + entry.carbsG,
-      fatG: prev.fatG + entry.fatG,
+      calories: prev.calories + (entry.calories ?? 0),
+      proteinG: prev.proteinG + (entry.proteinG ?? 0),
+      carbsG: prev.carbsG + (entry.carbsG ?? 0),
+      fatG: prev.fatG + (entry.fatG ?? 0),
     }))
   }
 

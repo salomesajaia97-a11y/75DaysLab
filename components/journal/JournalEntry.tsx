@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,18 +17,46 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
   const [notes, setNotes] = useState(existingEntry?.notes ?? '')
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    fetch(`/api/journal?date=${today}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.bookTitle) {
+          setBookTitle(data.bookTitle)
+          setPagesRead(String(data.pagesRead ?? ''))
+          setNotes(data.notes ?? '')
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const pages = parseInt(pagesRead) || 0
   const isComplete = bookTitle.trim() && pages >= 10
 
-  function save() {
+  async function save() {
     setLoading(true)
-    // Phase 1: mock save
-    setTimeout(() => {
-      setLoading(false)
+    setError(null)
+    try {
+      const res = await fetch('/api/journal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookTitle: bookTitle.trim(), pagesRead: pages, notes }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setError(data.error ?? 'Failed to save')
+        return
+      }
       setSaved(true)
       onSaved()
-    }, 600)
+    } catch {
+      setError('Failed to save. Try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (saved) {
@@ -66,6 +94,7 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
         <Label>Notes (optional)</Label>
         <Textarea placeholder="Key insights, quotes, reflections..." value={notes} onChange={e => setNotes(e.target.value)} rows={4} />
       </div>
+      {error && <p className="text-xs text-destructive">{error}</p>}
       <Button className="w-full" onClick={save} disabled={!isComplete || loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
         Save Reading Log
