@@ -16,7 +16,7 @@ async function fetchWeather(city: string): Promise<WeatherContext | null> {
     const data = await res.json()
     const mainCondition: string = (data.weather?.[0]?.main ?? '').toLowerCase()
     return {
-      temp: Math.round(data.main.temp),
+      temp: Math.round(data.main?.temp ?? 0),
       condition: data.weather?.[0]?.description ?? 'unknown',
       precipitation: ['rain', 'drizzle', 'snow', 'thunderstorm'].includes(mainCondition),
     }
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
   }
 
   const [weather, usdaContext] = await Promise.all([
-    user.city ? fetchWeather(user.city) : Promise.resolve(null),
+    user.city?.trim() ? fetchWeather(user.city.trim()) : Promise.resolve(null),
     mode === 'food_log' ? fetchUsdaContext(message) : Promise.resolve(null),
   ])
 
@@ -113,6 +113,9 @@ export async function POST(req: NextRequest) {
       max_tokens: 512,
     })
     rawText = completion.choices[0]?.message?.content ?? ''
+    if (!rawText) {
+      console.error('[LabAI] Empty response from OpenRouter')
+    }
   } catch (err) {
     console.error('[LabAI] OpenRouter error:', err)
     return NextResponse.json(
