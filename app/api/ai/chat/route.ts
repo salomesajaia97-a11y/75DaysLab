@@ -115,6 +115,7 @@ export async function POST(req: NextRequest) {
     rawText = completion.choices[0]?.message?.content ?? ''
     if (!rawText) {
       console.error('[LabAI] Empty response from OpenRouter')
+      return NextResponse.json({ error: 'LabAI is unavailable, try again.' }, { status: 502 })
     }
   } catch (err) {
     console.error('[LabAI] OpenRouter error:', err)

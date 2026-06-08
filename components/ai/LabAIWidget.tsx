@@ -93,7 +93,7 @@ export function LabAIWidget() {
     const text = input.trim()
     if (!text || loading) return
 
-    const userMsg: Message = { id: `${Date.now()}-user`, role: 'user', content: text }
+    const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content: text }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
@@ -118,11 +118,11 @@ export function LabAIWidget() {
       const data = await res.json()
 
       if (!res.ok) {
-        setMessages(prev => [...prev, { id: `${Date.now()}-ai`, role: 'ai', content: data.error ?? 'Something went wrong.' }])
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: data.error ?? 'Something went wrong.' }])
         return
       }
 
-      const aiMsg: Message = { id: `${Date.now()}-ai`, role: 'ai', content: data.message, macros: data.macros ?? undefined }
+      const aiMsg: Message = { id: crypto.randomUUID(), role: 'ai', content: data.message, macros: data.macros ?? undefined }
       setMessages(prev => [...prev, aiMsg])
 
       if (data.macros) {
@@ -143,7 +143,7 @@ export function LabAIWidget() {
     } catch {
       setMessages(prev => [
         ...prev,
-        { id: `${Date.now()}-ai`, role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' },
+        { id: crypto.randomUUID(), role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' },
       ])
     } finally {
       setLoading(false)
