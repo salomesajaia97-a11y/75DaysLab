@@ -1,0 +1,95 @@
+<h2>Workout Card — Component Design</h2>
+<p class="subtitle">How the card looks in the 3-col grid. Does this match your vision?</p>
+
+<div style="margin-top:20px;max-width:360px;background:var(--card-bg,#fff);border:1.5px solid var(--border,#e5e7eb);border-radius:16px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+
+  <!-- Card header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <span style="font-size:14px;font-weight:700;letter-spacing:-.01em">Workouts</span>
+    <span style="font-size:11px;background:#fef9c3;color:#854d0e;border-radius:20px;padding:3px 8px;font-weight:600">0 / 2 done</span>
+  </div>
+
+  <!-- Weather mock banner -->
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:9px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:18px">☀️</span>
+    <span style="font-size:11px;color:#166534;line-height:1.4">Perfect sunny weather! Your outdoor session is highly recommended today.</span>
+  </div>
+
+  <!-- Indoor session -->
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:13px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">🏠 Indoor Workout</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:1px">45 min session</div>
+      </div>
+    </div>
+    <!-- Timer -->
+    <div style="background:#f9fafb;border-radius:8px;padding:10px;text-align:center;margin-bottom:8px">
+      <div style="font-size:22px;font-weight:700;letter-spacing:.05em;font-variant-numeric:tabular-nums">45:00</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">Countdown timer</div>
+    </div>
+    <button style="width:100%;background:#2d3142;color:#f5f3ef;border:none;border-radius:8px;padding:7px;font-size:12px;font-weight:600;cursor:pointer">▶ Start Timer</button>
+    <!-- Videos collapsed -->
+    <button style="width:100%;border:1px dashed #d1d5db;border-radius:8px;padding:6px;font-size:11px;color:#6b7280;margin-top:6px;background:transparent;cursor:pointer">✨ Get AI Suggestions →</button>
+  </div>
+
+  <!-- Outdoor session -->
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:13px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="width:20px;height:20px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">🌤️ Outdoor Workout</div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:1px">45 min session</div>
+      </div>
+    </div>
+    <div style="background:#f9fafb;border-radius:8px;padding:10px;text-align:center;margin-bottom:8px">
+      <div style="font-size:22px;font-weight:700;letter-spacing:.05em;font-variant-numeric:tabular-nums">45:00</div>
+      <div style="font-size:10px;color:#9ca3af;margin-top:2px">Countdown timer</div>
+    </div>
+    <button style="width:100%;background:#2d3142;color:#f5f3ef;border:none;border-radius:8px;padding:7px;font-size:12px;font-weight:600;cursor:pointer">▶ Start Timer</button>
+    <button style="width:100%;border:1px dashed #d1d5db;border-radius:8px;padding:6px;font-size:11px;color:#6b7280;margin-top:6px;background:transparent;cursor:pointer">✨ Get AI Suggestions →</button>
+  </div>
+
+</div>
+
+<div style="margin-top:20px;max-width:360px">
+  <h3 style="font-size:13px;margin-bottom:8px">After timer hits 0 — confirmation state:</h3>
+  <div style="border:1px solid #bbf7d0;background:#f0fdf4;border-radius:12px;padding:13px">
+    <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:8px">⏰ Timer complete! Did you finish your Indoor workout?</div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;background:#16a34a;color:white;border:none;border-radius:8px;padding:7px;font-size:12px;font-weight:600;cursor:pointer">✓ Yes, mark done</button>
+      <button style="flex:1;background:transparent;border:1px solid #d1d5db;border-radius:8px;padding:7px;font-size:12px;color:#6b7280;cursor:pointer">Keep going</button>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px;max-width:360px">
+  <h3 style="font-size:13px;margin-bottom:8px">AI Suggestions expanded (after clicking button):</h3>
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:13px;display:flex;flex-direction:column;gap:8px">
+    <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em">Suggested for today · Indoor</div>
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;background:#f9fafb;border-radius:8px;padding:9px">
+      <div style="width:36px;height:36px;background:#fee2e2;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔥</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#111">45-Min Full Body HIIT</div>
+        <div style="font-size:10px;color:#9ca3af">Sydney Cummings · YouTube ↗</div>
+      </div>
+    </a>
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;background:#f9fafb;border-radius:8px;padding:9px">
+      <div style="width:36px;height:36px;background:#e0e7ff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🧘</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#111">45-Min Yoga Flow</div>
+        <div style="font-size:10px;color:#9ca3af">Yoga with Adriene · YouTube ↗</div>
+      </div>
+    </a>
+    <a href="#" style="display:flex;align-items:center;gap:10px;text-decoration:none;background:#f9fafb;border-radius:8px;padding:9px">
+      <div style="width:36px;height:36px;background:#dcfce7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💪</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#111">45-Min Strength Training</div>
+        <div style="font-size:10px;color:#9ca3af">MuscleWatchers · YouTube ↗</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<p style="margin-top:16px;font-size:12px;opacity:.5;text-align:center">Check http://localhost:56484 · Tell me in terminal if this looks right</p>

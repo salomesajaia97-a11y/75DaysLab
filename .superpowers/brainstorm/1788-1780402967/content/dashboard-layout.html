@@ -1,0 +1,96 @@
+<h2>Dashboard Grid Layout</h2>
+<p class="subtitle">Where should the Workout widget live? Pick the layout that feels right.</p>
+
+<div style="display:flex;flex-direction:column;gap:24px;margin-top:16px">
+
+  <!-- Option A -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="display:block;padding:20px 24px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="letter" style="position:static;flex-shrink:0">A</div>
+      <div>
+        <h3 style="margin:0">Stacked Left Column</h3>
+        <p style="margin:4px 0 0;font-size:13px;opacity:.7">Hydration + Workout stacked vertically, Tasks stay wide on the right</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;text-align:center;font-size:12px;font-weight:600">
+          💧 Hydration
+        </div>
+        <div style="background:var(--accent,#f0f0f0);border:1.5px dashed #888;border-radius:10px;padding:14px;text-align:center;font-size:12px;font-weight:600">
+          🏋️ Workout<br><span style="font-weight:400;font-size:11px;opacity:.7">Indoor · Outdoor · Timer</span>
+        </div>
+      </div>
+      <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;font-size:12px;font-weight:600">
+        ✅ Today's Tasks<br>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+          <div style="background:white;border-radius:6px;padding:5px 8px;font-weight:400;font-size:11px;opacity:.8">💧 Drink daily water goal</div>
+          <div style="background:white;border-radius:6px;padding:5px 8px;font-weight:400;font-size:11px;opacity:.8">📖 Read 10 pages</div>
+          <div style="background:white;border-radius:6px;padding:5px 8px;font-weight:400;font-size:11px;opacity:.8">🥗 Log all meals</div>
+          <div style="background:white;border-radius:6px;padding:5px 8px;font-weight:400;font-size:11px;opacity:.8">📷 Upload progress photo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="display:block;padding:20px 24px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="letter" style="position:static;flex-shrink:0">B</div>
+      <div>
+        <h3 style="margin:0">Workout Below — Full Width</h3>
+        <p style="margin:4px 0 0;font-size:13px;opacity:.7">Keep existing top row (Hydration + Tasks), add full-width Workout card below as its own section</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:8px">
+        <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;text-align:center;font-size:12px;font-weight:600">
+          💧 Hydration
+        </div>
+        <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;font-size:12px;font-weight:600">
+          ✅ Today's Tasks
+        </div>
+      </div>
+      <div style="background:var(--accent,#f0f0f0);border:2px dashed #888;border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="font-size:12px;font-weight:600;grid-column:1/-1;margin-bottom:4px">🏋️ Workouts — Today's Sessions</div>
+        <div style="background:white;border-radius:8px;padding:10px;font-size:11px">
+          <div style="font-weight:600;margin-bottom:4px">🏠 Indoor · 45 min</div>
+          <div style="opacity:.7">Timer · AI suggestion · Videos</div>
+        </div>
+        <div style="background:white;border-radius:8px;padding:10px;font-size:11px">
+          <div style="font-weight:600;margin-bottom:4px">🌤 Outdoor · 45 min</div>
+          <div style="opacity:.7">Weather check · AI suggestion · Videos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)" style="display:block;padding:20px 24px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="letter" style="position:static;flex-shrink:0">C</div>
+      <div>
+        <h3 style="margin:0">3-Column Equal Grid</h3>
+        <p style="margin:4px 0 0;font-size:13px;opacity:.7">Hydration · Workout · Tasks each get equal 1/3 columns. Tasks loses its wide layout but grid stays balanced.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;text-align:center;font-size:12px;font-weight:600">
+        💧 Hydration
+      </div>
+      <div style="background:var(--accent,#f0f0f0);border:1.5px dashed #888;border-radius:10px;padding:14px;text-align:center;font-size:12px;font-weight:600">
+        🏋️ Workout<br>
+        <span style="font-weight:400;font-size:11px;opacity:.7">Dual timer<br>AI weather tip</span>
+      </div>
+      <div style="background:var(--accent,#f0f0f0);border:1.5px solid var(--border,#ddd);border-radius:10px;padding:14px;font-size:12px;font-weight:600">
+        ✅ Tasks<br>
+        <div style="margin-top:6px;font-weight:400;font-size:11px;opacity:.7;line-height:1.6">
+          💧 Water<br>📖 Journal<br>🥗 Nutrition<br>📷 Photo
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top:20px;font-size:13px;opacity:.6;text-align:center">Click a layout to select it, then tell me your choice in the terminal</p>

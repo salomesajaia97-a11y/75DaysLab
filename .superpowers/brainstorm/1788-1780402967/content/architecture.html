@@ -1,0 +1,102 @@
+<h2>Component Architecture & Data Flow</h2>
+<p class="subtitle">Files created, files modified, and how state flows. Does this look right?</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+
+  <!-- New files -->
+  <div>
+    <div class="label" style="margin-bottom:10px">NEW FILES</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <div style="border:1.5px dashed #6366f1;border-radius:10px;padding:12px;background:#eef2ff">
+        <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:4px">hooks/useWorkoutTracker.ts</div>
+        <div style="font-size:11px;color:#4338ca;line-height:1.5">All timer state per session<br>toggleTimer, confirmDone, toggleVideos<br>Persists to localStorage<br>Exposes bothDone for streak</div>
+      </div>
+
+      <div style="border:1.5px dashed #6366f1;border-radius:10px;padding:12px;background:#eef2ff">
+        <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:4px">components/workout/WorkoutSession.tsx</div>
+        <div style="font-size:11px;color:#4338ca;line-height:1.5">One indoor OR outdoor block<br>Timer display + Start/Pause btn<br>Confirm modal on timer end<br>AI video cards (collapsed)</div>
+      </div>
+
+      <div style="border:1.5px dashed #6366f1;border-radius:10px;padding:12px;background:#eef2ff">
+        <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:4px">components/workout/WorkoutCard.tsx</div>
+        <div style="font-size:11px;color:#4338ca;line-height:1.5">Weather mock banner<br>Renders 2× WorkoutSession<br>Calls onBothComplete() callback<br>when indoor + outdoor both done</div>
+      </div>
+
+      <div style="border:1.5px dashed #6366f1;border-radius:10px;padding:12px;background:#eef2ff">
+        <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:4px">app/(dashboard)/fitness/page.tsx</div>
+        <div style="font-size:11px;color:#4338ca;line-height:1.5">Today's status summary<br>7-day completion grid<br>Stats placeholders<br>(reads from localStorage)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modified files -->
+  <div>
+    <div class="label" style="margin-bottom:10px">MODIFIED FILES</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <div style="border:1.5px solid #f59e0b;border-radius:10px;padding:12px;background:#fffbeb">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">app/(dashboard)/dashboard/page.tsx</div>
+        <div style="font-size:11px;color:#92400e;line-height:1.5">Grid: 1-col → 3-col equal<br>Add WorkoutCard in col 2<br>"Complete workout" task auto-checked<br>when WorkoutCard.onBothComplete fires</div>
+      </div>
+
+      <div style="border:1.5px solid #f59e0b;border-radius:10px;padding:12px;background:#fffbeb">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">components/shared/DashboardSidebar.tsx</div>
+        <div style="font-size:11px;color:#92400e;line-height:1.5">Add Fitness link → /fitness<br>Dumbbell icon from lucide-react</div>
+      </div>
+
+      <div style="border:1.5px solid #f59e0b;border-radius:10px;padding:12px;background:#fffbeb">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">types/index.ts</div>
+        <div style="font-size:11px;color:#92400e;line-height:1.5">Add WorkoutSessionState type<br>Add WorkoutTrackerState type</div>
+      </div>
+
+      <div style="border:1.5px solid #f59e0b;border-radius:10px;padding:12px;background:#fffbeb">
+        <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:4px">lib/storage.ts</div>
+        <div style="font-size:11px;color:#92400e;line-height:1.5">Add getWorkoutState(date)<br>Add saveWorkoutState(date, state)</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Data flow -->
+<div style="margin-top:24px">
+  <div class="label" style="margin-bottom:10px">STATE / DATA FLOW</div>
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;font-size:12px;line-height:2;background:var(--card-bg,#fff)">
+
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:3px 8px;font-weight:600;color:#4338ca">useWorkoutTracker</span>
+      <span style="color:#9ca3af">↓ state + handlers</span>
+      <span style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-weight:600">WorkoutCard</span>
+      <span style="color:#9ca3af">↓ per-session props</span>
+      <span style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-weight:600">WorkoutSession ×2</span>
+    </div>
+
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-weight:600">WorkoutCard</span>
+      <span style="color:#9ca3af">→ onBothComplete() →</span>
+      <span style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-weight:600;color:#92400e">DashboardPage</span>
+      <span style="color:#9ca3af">→ toggleTask('workout')</span>
+      <span style="color:#6b7280;font-size:11px">(auto-checks streak task)</span>
+    </div>
+
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:3px 8px;font-weight:600;color:#4338ca">useWorkoutTracker</span>
+      <span style="color:#9ca3af">→ saveWorkoutState() →</span>
+      <span style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:3px 8px;font-weight:600;color:#166534">localStorage</span>
+      <span style="color:#9ca3af">← read by →</span>
+      <span style="background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-weight:600">/fitness page</span>
+    </div>
+
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px dashed #e5e7eb">
+      <span style="font-size:11px;color:#9ca3af">Calorie burn prep:</span>
+      <span style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:6px;padding:3px 8px;font-weight:600;color:#7c3aed">WorkoutSessionState</span>
+      <span style="color:#9ca3af;font-size:11px">includes type + intensity field (unused now, ready for MacroCalculator later)</span>
+    </div>
+
+  </div>
+</div>
+
+<p style="margin-top:16px;font-size:12px;opacity:.5;text-align:center">Tell me in terminal if the architecture looks good</p>
