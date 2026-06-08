@@ -21,22 +21,11 @@ declare module 'next-auth' {
 }
 
 
-const cookieOpts = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  path: '/',
-  secure: process.env.NODE_ENV === 'production',
-}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   trustHost: true,
-  cookies: {
-    state: { name: 'authjs.state', options: cookieOpts },
-    nonce: { name: 'authjs.nonce', options: cookieOpts },
-    callbackUrl: { name: 'authjs.callback-url', options: cookieOpts },
-    sessionToken: { name: 'authjs.session-token', options: cookieOpts },
-  },
+  debug: true,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
