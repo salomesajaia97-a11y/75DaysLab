@@ -1,10 +1,5 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  webpack: (config, { isServer }) => {
-    if (!isServer) config.resolve.fallback = { ...config.resolve.fallback, 'node:dns': false, dns: false }
-    return config
-  },
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
