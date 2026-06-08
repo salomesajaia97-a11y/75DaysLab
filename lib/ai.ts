@@ -103,7 +103,17 @@ export function parseMacros(responseText: string): { message: string; macros: Ma
   if (!match) return { message: responseText.trim(), macros: null }
 
   try {
-    const macros = JSON.parse(match[1]) as MacroData
+    const parsed = JSON.parse(match[1])
+    if (
+      typeof parsed.calories !== 'number' ||
+      typeof parsed.proteinG !== 'number' ||
+      typeof parsed.carbsG !== 'number' ||
+      typeof parsed.fatG !== 'number' ||
+      typeof parsed.food !== 'string'
+    ) {
+      return { message: responseText.trim(), macros: null }
+    }
+    const macros = parsed as MacroData
     const message = responseText.replace(/<macros>[\s\S]*?<\/macros>/, '').trim()
     return { message, macros }
   } catch {
