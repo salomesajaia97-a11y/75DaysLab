@@ -16,6 +16,7 @@ export const authConfig: NextAuthConfig = {
       const isProtected = [
         '/dashboard', '/water', '/journal', '/nutrition',
         '/cycle', '/photos', '/squads', '/onboarding',
+        '/fitness', '/ai', '/setup-admin',
       ].some((p) => nextUrl.pathname === p || nextUrl.pathname.startsWith(p + '/'))
       const isAuthPage = ['/login', '/register'].some(
         (p) => nextUrl.pathname === p || nextUrl.pathname.startsWith(p + '/')

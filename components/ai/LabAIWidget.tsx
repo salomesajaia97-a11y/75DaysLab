@@ -162,11 +162,12 @@ export function LabAIWidget() {
       {/* Floating toggle button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95"
         style={{ background: 'var(--foreground)', color: 'var(--background)' }}
         aria-label={open ? 'Close LabAI' : 'Open LabAI coach'}
       >
-        {open ? <X className="h-5 w-5" /> : <Bot className="h-6 w-6" />}
+        {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
+        <span className="text-sm font-semibold">{open ? 'Close' : 'LabAI'}</span>
       </button>
 
       {/* Chat panel */}

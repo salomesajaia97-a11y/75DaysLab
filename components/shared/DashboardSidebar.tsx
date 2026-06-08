@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield } from 'lucide-react'
+import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signOut, useSession } from 'next-auth/react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
@@ -23,6 +23,7 @@ export function DashboardSidebar() {
     { href: '/cycle',     labelKey: 'nav.cycle',     icon: Calendar },
     { href: '/photos',    labelKey: 'nav.photos',    icon: Camera },
     { href: '/squads',    labelKey: 'nav.squads',    icon: Users },
+    { href: '/ai',        labelKey: 'nav.ai',        icon: Bot },
   ]
 
   const adminLink = { href: '/admin', label: 'Admin', icon: Shield }
