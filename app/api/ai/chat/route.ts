@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   let rawText: string
   try {
     const completion = await openRouterClient.chat.completions.create({
-      model: 'nvidia/nemotron-3-nano-30b-a3b:free',
+      model: 'meta-llama/llama-3.1-8b-instruct:free',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
@@ -118,9 +118,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'LabAI is unavailable, try again.' }, { status: 502 })
     }
   } catch (err) {
-    console.error('[LabAI] OpenRouter error:', err)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[LabAI] OpenRouter error:', msg)
+    const isDev = process.env.NODE_ENV !== 'production'
     return NextResponse.json(
-      { error: 'LabAI is unavailable, try again.' },
+      { error: isDev ? `LabAI error: ${msg}` : 'LabAI is unavailable, try again.' },
       { status: 502 }
     )
   }

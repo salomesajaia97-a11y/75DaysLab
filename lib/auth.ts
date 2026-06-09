@@ -31,7 +31,6 @@ const cookieOpts = {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   trustHost: true,
-  debug: true,
   cookies: {
     state: { name: 'authjs.state', options: cookieOpts },
     nonce: { name: 'authjs.nonce', options: cookieOpts },
@@ -43,7 +42,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      checks: ['state'],
     }),
     Credentials({
       credentials: {
