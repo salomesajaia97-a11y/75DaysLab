@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { Calendar } from '@/components/ui/calendar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
 interface CyclePrediction {
@@ -13,6 +12,13 @@ interface CyclePrediction {
 interface CycleCalendarProps {
   predictions: CyclePrediction
 }
+
+const PHASES = [
+  { label: 'Period (predicted)', bg: '#fbeef1', color: '#c4637a' },
+  { label: 'Fertile window',     bg: '#e3f2fd', color: '#3a84b0' },
+  { label: 'Ovulation',         bg: '#f3eaff', color: '#7c4fc9' },
+  { label: 'Logged',            bg: '#e8f5e9', color: '#2e8a5e' },
+]
 
 export function CycleCalendar({ predictions }: CycleCalendarProps) {
   const [selected, setSelected] = useState<Date | undefined>()
@@ -26,37 +32,48 @@ export function CycleCalendar({ predictions }: CycleCalendarProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 flex-wrap">
-        <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Period (predicted)</Badge>
-        <Badge className="bg-pink-500/20 text-pink-400 border-pink-500/30">Fertile window</Badge>
-        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">Ovulation</Badge>
-        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Logged</Badge>
+      <div>
+        <p className="text-sm font-semibold mb-3">Menstrual Calendar</p>
+        <div className="flex gap-2 flex-wrap">
+          {PHASES.map(({ label, bg, color }) => (
+            <span
+              key={label}
+              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+              style={{ backgroundColor: bg, color }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
+
       <Calendar
         mode="single"
         selected={selected}
         onSelect={setSelected}
         modifiers={{
-          period: predictions.periodDates,
-          fertile: predictions.fertileDates,
+          period:    predictions.periodDates,
+          fertile:   predictions.fertileDates,
           ovulation: [predictions.ovulationDate].filter(Boolean),
-          logged: loggedDates,
+          logged:    loggedDates,
         }}
         modifiersClassNames={{
-          period: 'bg-red-500/20 text-red-400 rounded-full',
-          fertile: 'bg-pink-500/20 text-pink-400 rounded-full',
-          ovulation: 'bg-purple-500/30 text-purple-400 rounded-full ring-1 ring-purple-400',
-          logged: 'bg-green-500/30 text-green-400 rounded-full',
+          period:    '!bg-[#fbeef1] !text-[#c4637a] rounded-[var(--radius-md)]',
+          fertile:   '!bg-[#e3f2fd] !text-[#3a84b0] rounded-[var(--radius-md)]',
+          ovulation: '!bg-[#f3eaff] !text-[#7c4fc9] rounded-[var(--radius-md)]',
+          logged:    '!bg-[#e8f5e9] !text-[#2e8a5e] rounded-[var(--radius-md)]',
         }}
-        className="rounded-lg border border-border"
+        classNames={{
+          today: '!bg-primary rounded-[var(--radius-md)] [&_button]:!text-primary-foreground',
+          outside: '!bg-transparent [&_button]:!bg-transparent [&_button]:!text-muted-foreground [&_button]:opacity-30 pointer-events-none',
+        }}
+        className="w-full"
       />
+
       {selected && (
-        <Button onClick={logPeriodStart} variant="outline" className="w-full">
+        <Button onClick={logPeriodStart} variant="outline" className="w-full text-sm">
           Log Period Start: {selected.toLocaleDateString()}
         </Button>
-      )}
-      {loggedDates.length > 0 && (
-        <p className="text-xs text-muted-foreground">{loggedDates.length} period date(s) logged this session</p>
       )}
     </div>
   )

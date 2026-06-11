@@ -47,16 +47,21 @@ export function LabAIWidget() {
   const [loading, setLoading] = useState(false)
   const [challengeDay, setChallengeDay] = useState<number | null>(null)
   const [todayCalories, setTodayCalories] = useState(0)
+  const [waterMl, setWaterMl] = useState(0)
+  const [workoutDone, setWorkoutDone] = useState(false)
+  const [calorieTarget, setCalorieTarget] = useState(2000)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const controller = new AbortController()
+    const today = new Date().toISOString().split('T')[0]
 
     async function init() {
       try {
-        const [meRes, nutritionRes] = await Promise.all([
+        const [meRes, nutritionRes, progressRes] = await Promise.all([
           fetch('/api/users/me', { signal: controller.signal }),
-          fetch(`/api/nutrition?date=${new Date().toISOString().split('T')[0]}`, { signal: controller.signal }),
+          fetch(`/api/nutrition?date=${today}`, { signal: controller.signal }),
+          fetch(`/api/daily-progress?date=${today}`, { signal: controller.signal }),
         ])
 
         if (meRes.ok) {
@@ -73,9 +78,15 @@ export function LabAIWidget() {
           const nutrition = await nutritionRes.json()
           setTodayCalories(nutrition.totals?.calories ?? 0)
         }
+
+        if (progressRes.ok) {
+          const progress = await progressRes.json()
+          setWaterMl(progress.waterMl ?? 0)
+          setWorkoutDone(progress.workoutCompleted ?? false)
+          setCalorieTarget(progress.calorieTarget ?? 2000)
+        }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return
-        // silently degrade — widget works without this data
       }
     }
 
@@ -101,11 +112,11 @@ export function LabAIWidget() {
     const mode = detectMode(text)
     const progress: ProgressContext = {
       streak_day: challengeDay ?? 1,
-      water_intake_ml: 0,
-      workout_1_completed: false,
+      water_intake_ml: waterMl,
+      workout_1_completed: workoutDone,
       workout_2_completed: false,
       calories_consumed: todayCalories,
-      daily_calorie_target: 2000,
+      daily_calorie_target: calorieTarget,
     }
 
     try {
@@ -127,7 +138,7 @@ export function LabAIWidget() {
 
       if (data.macros) {
         const m = data.macros as MacroData
-        setTodayCalories(prev => prev + m.calories)
+        setTodayCalories(prev => prev + (m.calories ?? 0))
         await fetch('/api/nutrition', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
