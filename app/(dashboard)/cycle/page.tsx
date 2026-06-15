@@ -1,18 +1,30 @@
 'use client'
+import { useState, useCallback, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { CycleCalendar } from '@/components/cycle/CycleCalendar'
+import { CycleCalendar, LS_KEY } from '@/components/cycle/CycleCalendar'
 import { useLanguage } from '@/lib/i18n'
 import { Heart } from 'lucide-react'
 
-function generateMockPredictions() {
+const CYCLE_LENGTH = 28
+const PERIOD_LENGTH = 5
+
+function buildPredictions(fromStart?: Date) {
   const today = new Date()
-  const nextPeriod = new Date(today)
-  nextPeriod.setDate(today.getDate() + 7)
+  today.setHours(0, 0, 0, 0)
+
+  let nextPeriod: Date
+  if (fromStart) {
+    nextPeriod = new Date(fromStart)
+    nextPeriod.setDate(fromStart.getDate() + CYCLE_LENGTH)
+  } else {
+    nextPeriod = new Date(today)
+    nextPeriod.setDate(today.getDate() + 7)
+  }
 
   const ovulation = new Date(nextPeriod)
   ovulation.setDate(nextPeriod.getDate() - 14)
 
-  const periodDates = Array.from({ length: 5 }, (_, i) => {
+  const periodDates = Array.from({ length: PERIOD_LENGTH }, (_, i) => {
     const d = new Date(nextPeriod)
     d.setDate(nextPeriod.getDate() + i)
     return d
@@ -24,14 +36,14 @@ function generateMockPredictions() {
     return d
   })
 
-  return { periodDates, ovulationDate: ovulation, fertileDates, daysUntilPeriod: 7 }
+  const msPerDay = 1000 * 60 * 60 * 24
+  const daysUntilPeriod = Math.max(0, Math.round((nextPeriod.getTime() - today.getTime()) / msPerDay))
+
+  return { periodDates, ovulationDate: ovulation, fertileDates, daysUntilPeriod }
 }
 
-const CYCLE_LENGTH = 28
-const PERIOD_LENGTH = 5
-
 function getTrainingTip(daysUntil: number): string {
-  if (daysUntil <= 5) return "You're in your menstrual phase — rest and gentle movement recommended."
+  if (daysUntil <= 5)  return "You're in your menstrual phase — rest and gentle movement recommended."
   if (daysUntil <= 13) return "You're in the follicular phase — great time for high-intensity workouts!"
   if (daysUntil <= 16) return "You're in the ovulation phase — peak energy, push your limits!"
   return "You're in the luteal phase — focus on strength and moderate cardio."
@@ -39,7 +51,25 @@ function getTrainingTip(daysUntil: number): string {
 
 export default function CyclePage() {
   const { t } = useLanguage()
-  const predictions = generateMockPredictions()
+  const [predictions, setPredictions] = useState(() => buildPredictions())
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY)
+      if (!saved) return
+      const { start } = JSON.parse(saved)
+      setPredictions(buildPredictions(new Date(start)))
+    } catch {}
+  }, [])
+
+  const handlePeriodLogged = useCallback((start: Date) => {
+    setPredictions(buildPredictions(start))
+  }, [])
+
+  const handlePeriodCleared = useCallback(() => {
+    setPredictions(buildPredictions())
+  }, [])
+
   const tip = getTrainingTip(predictions.daysUntilPeriod)
 
   return (
@@ -49,9 +79,22 @@ export default function CyclePage() {
         <h1 className="text-2xl font-semibold">{t('cycle.title')}</h1>
       </div>
 
-      <Card>
+      <Card
+        className="border-0"
+        style={{
+          background: 'rgba(255,255,255,0.68)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          boxShadow: '0 2px 24px rgba(0,0,0,0.06)',
+          borderRadius: 24,
+        }}
+      >
         <CardContent className="pt-5 pb-4">
-          <CycleCalendar predictions={predictions} />
+          <CycleCalendar
+            predictions={predictions}
+            onPeriodLogged={handlePeriodLogged}
+            onPeriodCleared={handlePeriodCleared}
+          />
         </CardContent>
       </Card>
 

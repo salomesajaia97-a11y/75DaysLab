@@ -172,14 +172,14 @@ aside {
 }
 
 /* ─── Buttons ────────────────────────────────────────────────── */
-[data-slot="button"][class*="bg-primary"] {
+[data-slot="button"][class~="bg-primary"] {
   background: var(--primary) !important;
   color: var(--primary-foreground) !important;
   box-shadow: 0 4px 14px -4px rgba(45, 49, 66, 0.3);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-[data-slot="button"][class*="bg-primary"]:hover {
+[data-slot="button"][class~="bg-primary"]:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px -4px rgba(45, 49, 66, 0.4);
 }
