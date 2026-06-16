@@ -1,0 +1,13 @@
+export default function AdminAnalyticsPage() {
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <p className="text-sm text-gray-500 mt-1">Detailed platform analytics.</p>
+      </div>
+      <div className="bg-white rounded-2xl p-12 shadow-sm text-center text-gray-400 text-sm">
+        Coming soon
+      </div>
+    </div>
+  )
+}
