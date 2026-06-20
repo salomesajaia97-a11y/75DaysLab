@@ -12,7 +12,15 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Trash2, Users } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface AdminUser {
   id: string
@@ -21,6 +29,13 @@ interface AdminUser {
   role: 'user' | 'admin'
   onboardingComplete: boolean
   createdAt: string
+  planId?: string
+}
+
+interface Plan {
+  _id: string
+  name: string
+  slug: string
 }
 
 export function UsersTable() {
@@ -30,9 +45,11 @@ export function UsersTable() {
   const [error, setError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [plans, setPlans] = useState<Plan[]>([])
 
   useEffect(() => {
     fetchUsers()
+    fetch('/api/admin/plans').then((r) => r.json()).then((d) => setPlans(d.plans ?? []))
   }, [])
 
   async function fetchUsers() {
@@ -48,6 +65,24 @@ export function UsersTable() {
       setError('Failed to load users')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handlePlanChange(userId: string, planId: string | null) {
+    if (planId === null) return
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: planId === 'none' ? null : planId }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, planId: planId === 'none' ? undefined : planId } : u))
+      )
+      toast.success('Plan updated')
+    } catch {
+      toast.error('Failed to update plan')
     }
   }
 
@@ -105,12 +140,13 @@ export function UsersTable() {
       <div className="rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--border)' }}>
         {/* Header */}
         <div
-          className="grid grid-cols-[1fr_1fr_80px_100px_48px] gap-4 px-4 py-3 text-xs font-medium uppercase tracking-wide"
+          className="grid grid-cols-[1fr_1fr_80px_120px_100px_48px] gap-4 px-4 py-3 text-xs font-medium uppercase tracking-wide"
           style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}
         >
           <span>User</span>
           <span>Email</span>
           <span>Role</span>
+          <span>Plan</span>
           <span>Joined</span>
           <span />
         </div>
@@ -124,7 +160,7 @@ export function UsersTable() {
           users.map((user, i) => (
             <div
               key={user.id}
-              className="grid grid-cols-[1fr_1fr_80px_100px_48px] gap-4 px-4 py-3 items-center text-sm"
+              className="grid grid-cols-[1fr_1fr_80px_120px_100px_48px] gap-4 px-4 py-3 items-center text-sm"
               style={{
                 borderTop: i > 0 ? '1px solid var(--border)' : undefined,
                 background: 'var(--background)',
@@ -159,6 +195,22 @@ export function UsersTable() {
               <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                 {user.role}
               </Badge>
+
+              {/* Plan */}
+              <Select
+                value={user.planId ?? 'none'}
+                onValueChange={(v) => handlePlanChange(user.id, v)}
+              >
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="No plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No plan</SelectItem>
+                  {plans.map((p) => (
+                    <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* Joined date */}
               <span style={{ color: 'var(--muted-foreground)' }}>

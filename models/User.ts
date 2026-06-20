@@ -13,6 +13,8 @@ export interface IUser extends Document {
   city?: string
   onboardingComplete: boolean
   role: 'user' | 'admin'
+  planId?: mongoose.Types.ObjectId
+  planAssignedAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -31,6 +33,8 @@ const UserSchema = new Schema<IUser>(
     city: { type: String },
     onboardingComplete: { type: Boolean, default: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    planId: { type: Schema.Types.ObjectId, ref: 'Plan', default: null },
+    planAssignedAt: { type: Date },
   },
   { timestamps: true }
 )

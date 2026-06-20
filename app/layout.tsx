@@ -6,6 +6,7 @@ import { SuppressNextThemesWarning } from '@/components/shared/SuppressNextTheme
 import { LanguageProvider } from '@/components/shared/LanguageProvider'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { getSiteConfig, buildThemeStyle } from '@/lib/site-config'
 import './globals.css'
 
 const jakarta = Plus_Jakarta_Sans({
@@ -41,13 +42,19 @@ export const metadata: Metadata = {
   description: 'Your customizable 75-day challenge tracker',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = await getSiteConfig()
+  const themeStyle = buildThemeStyle(theme)
+
   return (
     <html
       lang="en"
       className={`${jakarta.variable} ${fraunces.variable} ${nunito.variable} ${notoGeorgian.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: themeStyle }} />
+      </head>
       <body className="bg-background text-foreground antialiased">
         <SuppressNextThemesWarning />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>

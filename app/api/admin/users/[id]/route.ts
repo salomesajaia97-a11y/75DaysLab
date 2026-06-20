@@ -13,6 +13,41 @@ import { Squad } from '@/models/Squad'
 import { v2 as cloudinary } from 'cloudinary'
 import mongoose from 'mongoose'
 
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await auth()
+  if (!session?.user || session.user.role !== 'admin')
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const { id } = await params
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return NextResponse.json({ error: 'Invalid user id' }, { status: 400 })
+
+  const body = await req.json()
+  const { planId, role } = body
+
+  await connectDB()
+
+  const update: Record<string, unknown> = {}
+  if (planId !== undefined) {
+    update.planId = planId === null ? null : new mongoose.Types.ObjectId(planId)
+    update.planAssignedAt = new Date()
+  }
+  if (role && ['user', 'admin'].includes(role)) {
+    update.role = role
+  }
+
+  const user = await User.findByIdAndUpdate(id, update, { new: true })
+    .select('username email role planId planAssignedAt')
+    .lean()
+
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+  return NextResponse.json({ user })
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

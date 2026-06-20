@@ -5,6 +5,7 @@ import { User } from '@/models/User'
 import { Photo } from '@/models/Photo'
 import { Challenge } from '@/models/Challenge'
 import { DailyLog } from '@/models/DailyLog'
+import { Plan } from '@/models/Plan'
 
 export async function GET() {
   const session = await auth()
@@ -60,9 +61,76 @@ export async function GET() {
     { name: 'Photo', count: comp.photo },
   ]
 
+  // User signups over last 30 days
+  const signupsRaw = await User.aggregate([
+    { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ])
+  const signupsMap: Record<string, number> = {}
+  signupsRaw.forEach((d) => { signupsMap[d._id] = d.count })
+  const signupsOverTime = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(thirtyDaysAgo)
+    d.setDate(d.getDate() + i)
+    const key = d.toISOString().slice(0, 10)
+    const label = `${d.toLocaleString('en', { month: 'short' })} ${d.getDate()}`
+    return { date: label, count: signupsMap[key] ?? 0 }
+  })
+
+  // Users by plan
+  const plans = await Plan.find({}).lean()
+  const planCountsRaw = await User.aggregate([
+    { $group: { _id: '$planId', count: { $sum: 1 } } },
+  ])
+  const planCountMap: Record<string, number> = {}
+  planCountsRaw.forEach((p) => { planCountMap[String(p._id)] = p.count })
+
+  const usersByPlan = [
+    ...plans.map((p) => ({
+      name: p.name,
+      count: planCountMap[String(p._id)] ?? 0,
+    })),
+    { name: 'No Plan', count: planCountMap['null'] ?? (await User.countDocuments({ planId: null })) },
+  ]
+
+  // Top challenges by currentDay (progress)
+  const topChallenges = await Challenge.aggregate([
+    { $match: { isActive: true } },
+    { $group: { _id: '$totalDays', participants: { $sum: 1 } } },
+    { $sort: { participants: -1 } },
+    { $limit: 5 },
+    { $project: { name: { $concat: ['$_id', ' Day Challenge'] }, participants: 1, _id: 0 } },
+  ])
+  // Fallback label since totalDays is a number not string in concat
+  const topChallengesFormatted = topChallenges.map((c) => ({
+    name: `${c._id ?? '?'}-Day`,
+    participants: c.participants,
+  }))
+
+  // Revenue by plan (price × user count, monthly)
+  const revenueByPlan = plans
+    .map((p) => ({
+      name: p.name,
+      revenue: Math.round(((planCountMap[String(p._id)] ?? 0) * p.price) / 100),
+    }))
+    .filter((r) => r.revenue > 0)
+
+  // Active today
+  const today = new Date().toISOString().slice(0, 10)
+  const activeToday = await DailyLog.distinct('userId', { date: today })
+
+  // Pro users
+  const proPlans = plans.filter((p) => p.price > 0).map((p) => String(p._id))
+  const proUsers = await User.countDocuments({ planId: { $in: proPlans } })
+
   // Recent users
   const recentUsers = await User.find({})
-    .select('username email role createdAt onboardingComplete')
+    .select('username email role createdAt onboardingComplete planId')
     .sort({ createdAt: -1 })
     .limit(5)
     .lean()
@@ -72,8 +140,14 @@ export async function GET() {
     totalPhotos,
     activeChallenges,
     totalLogs,
+    activeToday: activeToday.length,
+    proUsers,
     dauTrend,
     completionByType,
+    signupsOverTime,
+    usersByPlan,
+    topChallenges: topChallengesFormatted,
+    revenueByPlan,
     recentUsers: recentUsers.map((u) => ({
       id: String(u._id),
       username: u.username,

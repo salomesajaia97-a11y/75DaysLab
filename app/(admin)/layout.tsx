@@ -10,12 +10,20 @@ import {
   BarChart2,
   Flag,
   ArrowLeft,
+  Palette,
+  FileText,
+  Database,
+  CreditCard,
 } from 'lucide-react'
 import { AdminNavItem } from './AdminNavItem'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/theme', label: 'Theme', icon: Palette },
+  { href: '/admin/content', label: 'Content', icon: FileText },
+  { href: '/admin/collections', label: 'Collections', icon: Database },
+  { href: '/admin/pricing', label: 'Pricing', icon: CreditCard },
   { href: '/admin/photos', label: 'Photos', icon: ImageIcon },
   { href: '/admin/challenges', label: 'Challenges', icon: Trophy },
   { href: '/admin/logs', label: 'Daily Logs', icon: ClipboardList },
