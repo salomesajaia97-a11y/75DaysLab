@@ -32,12 +32,14 @@ export function DashboardSidebar() {
   return (
     <aside className="fixed left-0 top-0 h-full w-16 md:w-60 flex flex-col pt-7 gap-1 z-40">
       <div className="px-5 mb-7 hidden md:block">
-        <span
-          className="font-bold text-xl tracking-tight"
-          style={{ fontFamily: 'var(--font-fraunces), Georgia, serif', color: 'var(--foreground)' }}
-        >
-          75DaysLab
-        </span>
+        <Link href="/dashboard">
+          <span
+            className="font-bold text-xl tracking-tight"
+            style={{ fontFamily: 'var(--font-fraunces), Georgia, serif', color: 'var(--foreground)' }}
+          >
+            75DaysLab
+          </span>
+        </Link>
       </div>
 
       <div className="flex-1 flex flex-col gap-0.5 px-2">
