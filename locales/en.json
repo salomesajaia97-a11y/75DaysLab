@@ -147,5 +147,30 @@
 
   "common.loading": "Loading...",
   "common.save": "Save",
-  "common.cancel": "Cancel"
+  "common.cancel": "Cancel",
+
+  "nav.recipes": "Recipes",
+
+  "recipes.title": "Recipes",
+  "recipes.featured": "Featured Recipe",
+  "recipes.kcal": "kcal",
+  "recipes.min": "min",
+  "recipes.see_all": "See all",
+  "recipes.add_dish": "Add Dish",
+  "recipes.filter.all": "All",
+  "recipes.filter.200cal": "200 cal",
+  "recipes.filter.300cal": "300 cal",
+  "recipes.filter.400cal": "400 cal",
+  "recipes.filter.protein": "Protein",
+  "recipes.cat.low_cal": "Low Calorie",
+  "recipes.cat.budget": "Budget",
+  "recipes.cat.protein": "High Protein",
+  "recipes.add.text": "By Text",
+  "recipes.add.text_desc": "Describe a dish",
+  "recipes.add.camera": "Camera",
+  "recipes.add.camera_desc": "Take a photo",
+  "recipes.add.gallery": "Gallery",
+  "recipes.add.gallery_desc": "Pick from gallery",
+  "recipes.add.favorites": "Favorites",
+  "recipes.add.favorites_desc": "Your saved dishes"
 }

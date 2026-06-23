@@ -147,5 +147,30 @@
 
   "common.loading": "იტვირთება...",
   "common.save": "შენახვა",
-  "common.cancel": "გაუქმება"
+  "common.cancel": "გაუქმება",
+
+  "nav.recipes": "რეცეპტები",
+
+  "recipes.title": "რეცეპტები",
+  "recipes.featured": "რჩეული რეცეპტი",
+  "recipes.kcal": "კალ",
+  "recipes.min": "წთ",
+  "recipes.see_all": "ყველა",
+  "recipes.add_dish": "კერძის დამატება",
+  "recipes.filter.all": "ყველა",
+  "recipes.filter.200cal": "200კალ",
+  "recipes.filter.300cal": "300კალ",
+  "recipes.filter.400cal": "400კალ",
+  "recipes.filter.protein": "პროტეინი",
+  "recipes.cat.low_cal": "დაბალკალორიული",
+  "recipes.cat.budget": "ბიუჯეტური",
+  "recipes.cat.protein": "მაღალი პროტეინი",
+  "recipes.add.text": "ტექსტით",
+  "recipes.add.text_desc": "შავე",
+  "recipes.add.camera": "კამერა",
+  "recipes.add.camera_desc": "გადაუღე ფოტო",
+  "recipes.add.gallery": "გალერეა",
+  "recipes.add.gallery_desc": "აირჩიე ფოტო",
+  "recipes.add.favorites": "ფავორიტები",
+  "recipes.add.favorites_desc": "შენი კერძები"
 }
