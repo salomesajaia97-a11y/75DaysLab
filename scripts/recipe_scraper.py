@@ -27,10 +27,11 @@ from typing import Optional
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 SCRAPE_INTERVAL_HOURS = 12      # change to adjust run frequency
 BATCH_PER_SITE        = 20      # max new recipes saved per site per run
-REQUEST_DELAY_MIN     = 1.0     # min seconds between page requests
-REQUEST_DELAY_MAX     = 2.0     # max seconds between page requests
+REQUEST_DELAY_MIN     = 0.5     # min seconds between page requests
+REQUEST_DELAY_MAX     = 1.5     # max seconds between page requests
 MAX_PAGES_CATEGORY    = 50      # max paginated category pages to walk per site
 MAX_WORKERS           = 6       # parallel threads for recipe page fetching
+MAX_URL_WORKERS       = 4       # parallel threads for URL-collection (sitemaps/pages)
 DB_PATH               = "seen_urls.db"
 
 API_URL    = os.getenv("SITE_API_URL", "http://localhost:3000/api/external/recipes")
@@ -251,6 +252,33 @@ def ordered_dedup(lst: list) -> list:
     seen = set()
     return [x for x in lst if not (x in seen or seen.add(x))]
 
+def _fetch_sitemap(url: str) -> tuple:
+    time.sleep(random.uniform(0.3, 1.0))
+    return url, fetch(url)
+
+def fetch_sitemaps_parallel(urls: list) -> list:
+    """Fetch multiple sitemap URLs concurrently. Returns list of (url, soup) for non-None."""
+    results = []
+    with ThreadPoolExecutor(max_workers=MAX_URL_WORKERS) as pool:
+        for url, soup in pool.map(_fetch_sitemap, urls):
+            if soup:
+                results.append((url, soup))
+    return results
+
+def fetch_pages_parallel(page_urls: list) -> list:
+    """Fetch multiple HTML pages concurrently. Returns list of (url, soup)."""
+    results = []
+    with ThreadPoolExecutor(max_workers=MAX_URL_WORKERS) as pool:
+        futures = {pool.submit(_fetch_sitemap, u): u for u in page_urls}
+        for future in as_completed(futures):
+            try:
+                url, soup = future.result()
+                if soup:
+                    results.append((url, soup))
+            except Exception:
+                pass
+    return results
+
 # ─── SITE 1: kulinaria.ge ─────────────────────────────────────────────────────
 def get_urls_kulinaria() -> list:
     urls = []
@@ -260,9 +288,14 @@ def get_urls_kulinaria() -> list:
             u = loc.get_text(strip=True)
             if "kulinaria.ge" in u and u.count("/") >= 4:
                 urls.append(u)
-        for sub in [l.get_text(strip=True) for l in sitemap_soup.find_all("loc") if "sitemap" in l.get_text()]:
-            polite_delay()
-            for u in locs_from_sitemap(sub):
+        sub_sitemaps = [
+            l.get_text(strip=True)
+            for l in sitemap_soup.find_all("loc")
+            if "sitemap" in l.get_text()
+        ]
+        for _url, soup in fetch_sitemaps_parallel(sub_sitemaps):
+            for loc in soup.find_all("loc"):
+                u = loc.get_text(strip=True)
                 if "kulinaria.ge" in u and u.count("/") >= 4:
                     urls.append(u)
 
@@ -271,26 +304,20 @@ def get_urls_kulinaria() -> list:
         return ordered_dedup(urls)
 
     CATEGORIES = ["/receptebi/", "/sadilis/", "/salatebi/", "/desert/", "/sauzme/"]
+    page_urls = []
     for cat in CATEGORIES:
         for page in range(1, MAX_PAGES_CATEGORY + 1):
-            page_url = (
+            page_urls.append(
                 f"https://kulinaria.ge{cat}"
                 if page == 1
                 else f"https://kulinaria.ge{cat}page/{page}/"
             )
-            polite_delay()
-            soup = fetch(page_url)
-            if not soup:
-                break
-            found_any = False
-            for a in soup.find_all("a", href=True):
-                h = a["href"]
-                full = h if h.startswith("http") else f"https://kulinaria.ge{h}"
-                if "kulinaria.ge" in full and full.count("/") >= 4:
-                    urls.append(full)
-                    found_any = True
-            if not found_any:
-                break
+    for _url, soup in fetch_pages_parallel(page_urls):
+        for a in soup.find_all("a", href=True):
+            h = a["href"]
+            full = h if h.startswith("http") else f"https://kulinaria.ge{h}"
+            if "kulinaria.ge" in full and full.count("/") >= 4:
+                urls.append(full)
 
     log.info(f"kulinaria: {len(urls)} from category pages")
     return ordered_dedup(urls)
@@ -332,33 +359,28 @@ def get_urls_eatingwell() -> list:
     urls = []
     sub_maps = all_sub_sitemaps("https://www.eatingwell.com/sitemap_index.xml")
     log.info(f"eatingwell: {len(sub_maps)} sub-sitemaps")
-    for sm in sub_maps:
-        polite_delay()
-        for u in locs_from_sitemap(sm):
+    for _url, soup in fetch_sitemaps_parallel(sub_maps):
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
             if "/recipe/" in u:
                 urls.append(u)
     if not urls:
-        for path in ["/recipes/", "/recipes/healthy-dinner-recipes/",
-                     "/recipes/healthy-chicken-recipes/", "/recipes/healthy-soup-recipes/"]:
+        PATHS = ["/recipes/", "/recipes/healthy-dinner-recipes/",
+                 "/recipes/healthy-chicken-recipes/", "/recipes/healthy-soup-recipes/"]
+        page_urls = []
+        for path in PATHS:
             for page in range(1, MAX_PAGES_CATEGORY + 1):
-                page_url = (
+                page_urls.append(
                     f"https://www.eatingwell.com{path}"
                     if page == 1
                     else f"https://www.eatingwell.com{path}?page={page}"
                 )
-                polite_delay()
-                soup = fetch(page_url)
-                if not soup:
-                    break
-                found = False
-                for a in soup.find_all("a", href=True):
-                    h = a["href"]
-                    if "/recipe/" in h:
-                        full = h if h.startswith("http") else f"https://www.eatingwell.com{h}"
-                        urls.append(full)
-                        found = True
-                if not found:
-                    break
+        for _url, soup in fetch_pages_parallel(page_urls):
+            for a in soup.find_all("a", href=True):
+                h = a["href"]
+                if "/recipe/" in h:
+                    full = h if h.startswith("http") else f"https://www.eatingwell.com{h}"
+                    urls.append(full)
     log.info(f"eatingwell: {len(urls)} candidates")
     return ordered_dedup(urls)
 
@@ -373,14 +395,19 @@ def parse_eatingwell(url: str) -> Optional[dict]:
 def get_urls_skinnytaste() -> list:
     SKIP = {"cookbook", "vacation", "remodel", "guides", "tips-for",
             "how-to", "about", "contact", "shop", "category", "round-up"}
+    sitemap_list = [
+        "https://www.skinnytaste.com/post-sitemap.xml",
+        "https://www.skinnytaste.com/post-sitemap2.xml",
+        "https://www.skinnytaste.com/post-sitemap3.xml",
+        "https://www.skinnytaste.com/post-sitemap4.xml",
+        "https://www.skinnytaste.com/post-sitemap5.xml",
+    ]
     urls = []
-    for sm in ["https://www.skinnytaste.com/post-sitemap.xml",
-               "https://www.skinnytaste.com/post-sitemap2.xml",
-               "https://www.skinnytaste.com/post-sitemap3.xml",
-               "https://www.skinnytaste.com/post-sitemap4.xml",
-               "https://www.skinnytaste.com/post-sitemap5.xml"]:
-        polite_delay()
-        for u in locs_from_sitemap(sm):
+    for _url, soup in fetch_sitemaps_parallel(sitemap_list):
+        if not soup:
+            continue
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
             if "skinnytaste.com" in u and not any(sk in u for sk in SKIP):
                 urls.append(u.rstrip("/"))
     log.info(f"skinnytaste: {len(urls)} candidates")
@@ -398,9 +425,9 @@ def get_urls_seriouseats() -> list:
     urls = []
     sub_maps = all_sub_sitemaps("https://www.seriouseats.com/sitemap_index.xml")
     log.info(f"seriouseats: {len(sub_maps)} sub-sitemaps")
-    for sm in sub_maps:
-        polite_delay()
-        for u in locs_from_sitemap(sm):
+    for _url, soup in fetch_sitemaps_parallel(sub_maps):
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
             if "/recipes/" in u:
                 urls.append(u)
     log.info(f"seriouseats: {len(urls)} candidates")
@@ -418,9 +445,9 @@ def get_urls_spruceeats() -> list:
     urls = []
     sub_maps = all_sub_sitemaps("https://www.thespruceeats.com/sitemap_index.xml")
     log.info(f"spruceeats: {len(sub_maps)} sub-sitemaps")
-    for sm in sub_maps:
-        polite_delay()
-        for u in locs_from_sitemap(sm):
+    for _url, soup in fetch_sitemaps_parallel(sub_maps):
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
             if "thespruceeats.com" in u and "/recipe" in u:
                 urls.append(u)
     log.info(f"spruceeats: {len(urls)} candidates")

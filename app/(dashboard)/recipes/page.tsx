@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Clock, Flame, Plus, X, Type, Camera, Image as ImageIcon, Star, RefreshCw } from 'lucide-react'
 import NextImage from 'next/image'
@@ -187,6 +188,9 @@ export default function RecipesPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [scraping, setScraping] = useState(false)
   const [scrapeResult, setScrapeResult] = useState<{ saved: number; skipped: number } | null>(null)
+  const [portalMounted, setPortalMounted] = useState(false)
+
+  useEffect(() => { setPortalMounted(true) }, [])
 
   useEffect(() => {
     fetch('/api/recipes')
@@ -393,57 +397,63 @@ export default function RecipesPage() {
         </motion.section>
       ))}
 
-      {/* Add Dish Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-            onClick={() => setShowAddModal(false)}
-          >
+      {/* Add Dish Modal — rendered at document.body to escape any stacking context */}
+      {portalMounted && createPortal(
+        <AnimatePresence>
+          {showAddModal && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="w-full max-w-sm rounded-3xl p-6 shadow-2xl"
-              style={{ background: 'var(--background)' }}
-              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+              onClick={() => setShowAddModal(false)}
             >
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{t('recipes.add_dish')}</h2>
-                <button onClick={() => setShowAddModal(false)} className="h-8 w-8 rounded-full flex items-center justify-center transition-all hover:opacity-70" style={{ background: 'var(--muted)' }}>
-                  <X className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
-                </button>
-              </div>
-              <div className="space-y-3">
-                {ADD_OPTIONS.map(opt => {
-                  const Icon = opt.icon
-                  return (
-                    <motion.button
-                      key={opt.key}
-                      whileHover={{ x: 2 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full flex items-center gap-4 p-4 rounded-2xl ${opt.bg}`}
-                      onClick={() => setShowAddModal(false)}
-                    >
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${opt.iconBg}`}>
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-semibold text-gray-800">{t(opt.labelKey)}</p>
-                        <p className="text-xs text-gray-500">{t(opt.descKey)}</p>
-                      </div>
-                    </motion.button>
-                  )
-                })}
-              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="w-full max-w-sm rounded-3xl p-6"
+                style={{
+                  background: 'var(--card, #ffffff)',
+                  boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{t('recipes.add_dish')}</h2>
+                  <button onClick={() => setShowAddModal(false)} className="h-8 w-8 rounded-full flex items-center justify-center transition-all hover:opacity-70" style={{ background: 'var(--muted)' }}>
+                    <X className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {ADD_OPTIONS.map(opt => {
+                    const Icon = opt.icon
+                    return (
+                      <motion.button
+                        key={opt.key}
+                        whileHover={{ x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className={`w-full flex items-center gap-4 p-4 rounded-2xl ${opt.bg}`}
+                        onClick={() => setShowAddModal(false)}
+                      >
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0 ${opt.iconBg}`}>
+                          <Icon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{t(opt.labelKey)}</p>
+                          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{t(opt.descKey)}</p>
+                        </div>
+                      </motion.button>
+                    )
+                  })}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <button
         onClick={() => setShowAddModal(true)}
