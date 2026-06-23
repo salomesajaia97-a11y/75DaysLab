@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { connectDB } from '@/lib/mongoose'
 import { SiteConfig, ISiteConfig } from '@/models/SiteConfig'
 
@@ -32,7 +33,7 @@ const RADIUS_MAP: Record<string, string> = {
   full: '9999px',
 }
 
-export async function getSiteConfig(): Promise<ISiteConfig['theme']> {
+async function _fetchSiteConfig(): Promise<ISiteConfig['theme']> {
   try {
     await connectDB()
     const doc = await SiteConfig.findOne({}).lean()
@@ -42,6 +43,12 @@ export async function getSiteConfig(): Promise<ISiteConfig['theme']> {
     return DEFAULT_THEME
   }
 }
+
+export const getSiteConfig = unstable_cache(
+  _fetchSiteConfig,
+  ['site-config'],
+  { revalidate: 60, tags: ['site-config'] }
+)
 
 export function buildThemeCssVars(theme: ISiteConfig['theme']): Record<string, string> {
   const radius = RADIUS_MAP[theme.borderRadius] ?? '0.5rem'

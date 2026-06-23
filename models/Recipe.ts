@@ -6,6 +6,9 @@ export interface IRecipe extends Document {
   sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
   imageUrl?: string
   calories?: number
+  protein?: number
+  carbs?: number
+  fat?: number
   cookTimeMin?: number
   prepTimeMin?: number
   totalTimeMin?: number
@@ -24,6 +27,9 @@ const RecipeSchema = new Schema<IRecipe>({
   sourceSite:   { type: String, enum: ['seriouseats', 'skinnytaste', 'allrecipes', 'eatingwell', 'kulinaria', 'spruceeats'], required: true },
   imageUrl:     String,
   calories:     Number,
+  protein:      Number,
+  carbs:        Number,
+  fat:          Number,
   cookTimeMin:  Number,
   prepTimeMin:  Number,
   totalTimeMin: Number,

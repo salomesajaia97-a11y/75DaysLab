@@ -12,6 +12,9 @@ interface FullRecipe {
   sourceSite: string
   imageUrl?: string
   calories?: number
+  protein?: number
+  carbs?: number
+  fat?: number
   cookTimeMin?: number
   prepTimeMin?: number
   totalTimeMin?: number
@@ -123,7 +126,7 @@ export default function RecipeDetailPage() {
       {/* Stats */}
       {(recipe.calories || recipe.totalTimeMin || recipe.servings) && (
         <div
-          className="flex items-center gap-5 py-4 border-y"
+          className="flex items-center gap-5 py-4 border-t"
           style={{ borderColor: 'var(--border)' }}
         >
           {recipe.calories && (
@@ -142,6 +145,33 @@ export default function RecipeDetailPage() {
             <div className="flex items-center gap-1.5 text-sm">
               <Users className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
               <span style={{ color: 'var(--foreground)' }}>{recipe.servings} servings</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Macros */}
+      {(recipe.protein || recipe.carbs || recipe.fat) && (
+        <div
+          className="grid grid-cols-3 gap-3 py-4 border-b"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          {recipe.protein !== undefined && (
+            <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.protein}g</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Protein</span>
+            </div>
+          )}
+          {recipe.carbs !== undefined && (
+            <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.carbs}g</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Carbs</span>
+            </div>
+          )}
+          {recipe.fat !== undefined && (
+            <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.fat}g</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Fat</span>
             </div>
           )}
         </div>

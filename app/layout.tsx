@@ -12,28 +12,28 @@ import './globals.css'
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-jakarta',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 })
 
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-fraunces',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '700'],
   display: 'swap',
 })
 
 const nunito = Nunito({
   subsets: ['latin'],
   variable: '--font-caveat',
-  weight: ['300', '400', '500', '600'],
+  weight: ['400', '600'],
   display: 'swap',
 })
 
 const notoGeorgian = Noto_Sans_Georgian({
   subsets: ['georgian'],
   variable: '--font-noto-georgian',
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500'],
   display: 'swap',
 })
 

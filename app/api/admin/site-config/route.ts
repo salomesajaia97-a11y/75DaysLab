@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { SiteConfig } from '@/models/SiteConfig'
@@ -32,5 +33,6 @@ export async function PATCH(req: Request) {
     { upsert: true, new: true }
   )
 
+  revalidateTag('site-config')
   return NextResponse.json({ theme: doc.theme })
 }

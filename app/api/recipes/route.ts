@@ -26,5 +26,8 @@ export async function GET(req: NextRequest) {
     .limit(limit)
     .lean()
 
-  return NextResponse.json({ recipes, total: recipes.length })
+  return NextResponse.json(
+    { recipes, total: recipes.length },
+    { headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' } }
+  )
 }

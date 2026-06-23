@@ -12,9 +12,12 @@ interface Recipe {
   _id: string
   title: string
   sourceUrl: string
-  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes'
+  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
   imageUrl?: string
   calories?: number
+  protein?: number
+  carbs?: number
+  fat?: number
   cookTimeMin?: number
   prepTimeMin?: number
   totalTimeMin?: number
@@ -88,7 +91,7 @@ function RecipeCard({ recipe, favorite, onToggle }: {
             alt={recipe.title}
             fill
             className="object-cover"
-            sizes="144px"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
         ) : (
@@ -100,15 +103,9 @@ function RecipeCard({ recipe, favorite, onToggle }: {
         >
           <Heart className={cn('h-3 w-3', favorite ? 'fill-rose-500 text-rose-500' : 'text-gray-400')} />
         </button>
-        {recipe.sourceSite === 'seriouseats' && (
-          <span className="absolute top-2 left-2 text-[9px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded-full z-10">SE</span>
-        )}
-        {recipe.sourceSite === 'skinnytaste' && (
-          <span className="absolute top-2 left-2 text-[9px] font-bold bg-green-600/80 text-white px-1.5 py-0.5 rounded-full z-10">ST</span>
-        )}
-        {recipe.sourceSite === 'allrecipes' && (
-          <span className="absolute top-2 left-2 text-[9px] font-bold bg-red-600/80 text-white px-1.5 py-0.5 rounded-full z-10">AR</span>
-        )}
+        <span className="absolute top-2 left-2 text-[9px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded-full z-10">
+          {recipe.sourceSite.slice(0, 2).toUpperCase()}
+        </span>
       </div>
 
       <div className="p-2.5">
@@ -156,15 +153,26 @@ const ADD_OPTIONS = [
 
 type GroupedRecipes = { label: string; site: string; recipes: Recipe[] }[]
 
+const SITE_LABELS: Record<string, string> = {
+  seriouseats: 'Serious Eats',
+  skinnytaste: 'Skinnytaste',
+  allrecipes:  'AllRecipes',
+  eatingwell:  'Eating Well',
+  kulinaria:   'Kulinaria',
+  spruceeats:  'The Spruce Eats',
+}
+
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
-  const se = recipes.filter(r => r.sourceSite === 'seriouseats')
-  const st = recipes.filter(r => r.sourceSite === 'skinnytaste')
-  const ar = recipes.filter(r => r.sourceSite === 'allrecipes')
-  const groups: GroupedRecipes = []
-  if (se.length) groups.push({ label: 'Serious Eats', site: 'seriouseats', recipes: se })
-  if (st.length) groups.push({ label: 'Skinnytaste', site: 'skinnytaste', recipes: st })
-  if (ar.length) groups.push({ label: 'AllRecipes', site: 'allrecipes', recipes: ar })
-  return groups
+  const map = new Map<string, Recipe[]>()
+  for (const r of recipes) {
+    if (!map.has(r.sourceSite)) map.set(r.sourceSite, [])
+    map.get(r.sourceSite)!.push(r)
+  }
+  return Array.from(map.entries()).map(([site, recs]) => ({
+    label: SITE_LABELS[site] ?? site,
+    site,
+    recipes: recs,
+  }))
 }
 
 export default function RecipesPage() {
@@ -207,7 +215,7 @@ export default function RecipesPage() {
     })
   }
 
-  async function triggerScrape(site: 'skinnytaste' | 'allrecipes' = 'skinnytaste') {
+  async function triggerScrape(site: string = 'skinnytaste') {
     setScraping(true)
     setScrapeResult(null)
     try {
@@ -293,7 +301,7 @@ export default function RecipesPage() {
           className={`relative rounded-3xl overflow-hidden h-48 block cursor-pointer bg-gradient-to-br ${cardGradient(featured._id)}`}
         >
           {featured.imageUrl && (
-            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="900px" />
+            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="(max-width: 896px) 100vw, 896px" priority />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-5">
             <p className="text-xs text-white/70 mb-1">{t('recipes.featured')}</p>
