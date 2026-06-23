@@ -43,24 +43,26 @@ export async function getSiteConfig(): Promise<ISiteConfig['theme']> {
   }
 }
 
-export function buildThemeStyle(theme: ISiteConfig['theme']): string {
+export function buildThemeCssVars(theme: ISiteConfig['theme']): Record<string, string> {
+  const radius = RADIUS_MAP[theme.borderRadius] ?? '0.5rem'
   const font = FONT_MAP[theme.fontFamily] ?? FONT_MAP.fraunces
   const fontSize = FONT_SIZE_MAP[theme.fontSize] ?? '16px'
-  const radius = RADIUS_MAP[theme.borderRadius] ?? '0.5rem'
 
-  return `
-    :root {
-      --background: ${theme.backgroundColor};
-      --foreground: ${theme.textColor};
-      --primary: ${theme.primaryColor};
-      --primary-foreground: #ffffff;
-      --accent: ${theme.accentColor};
-      --accent-foreground: ${theme.textColor};
-      --radius: ${radius};
-    }
-    body {
-      font-family: ${font};
-      font-size: ${fontSize};
-    }
-  `.trim()
+  return {
+    '--background': theme.backgroundColor,
+    '--foreground': theme.textColor,
+    '--primary': theme.primaryColor,
+    '--primary-foreground': '#ffffff',
+    '--accent': theme.accentColor,
+    '--accent-foreground': theme.textColor,
+    '--radius': radius,
+    '--theme-font': font,
+    '--theme-size': fontSize,
+  }
+}
+
+/** @deprecated use buildThemeCssVars */
+export function buildThemeStyle(theme: ISiteConfig['theme']): string {
+  const vars = buildThemeCssVars(theme)
+  return `:root{${Object.entries(vars).map(([k,v])=>`${k}:${v}`).join(';')}}`
 }

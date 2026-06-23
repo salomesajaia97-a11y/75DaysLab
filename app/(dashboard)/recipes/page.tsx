@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Clock, Flame, Plus, X, Type, Camera, Image as ImageIcon, Star, ExternalLink, RefreshCw } from 'lucide-react'
+import { Heart, Clock, Flame, Plus, X, Type, Camera, Image as ImageIcon, Star, RefreshCw } from 'lucide-react'
 import NextImage from 'next/image'
+import Link from 'next/link'
 import { useLanguage } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
@@ -11,7 +12,7 @@ interface Recipe {
   _id: string
   title: string
   sourceUrl: string
-  sourceSite: 'seriouseats' | 'skinnytaste'
+  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes'
   imageUrl?: string
   calories?: number
   cookTimeMin?: number
@@ -73,13 +74,11 @@ function RecipeCard({ recipe, favorite, onToggle }: {
   const emoji = cardEmoji(recipe._id)
 
   return (
-    <motion.a
-      href={recipe.sourceUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link href={`/recipes/${recipe._id}`} className="block">
+    <motion.div
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2 }}
-      className="flex-shrink-0 w-36 rounded-2xl overflow-hidden cursor-pointer block"
+      className="rounded-2xl overflow-hidden cursor-pointer h-full"
       style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
     >
       <div className={`relative h-28 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
@@ -107,6 +106,9 @@ function RecipeCard({ recipe, favorite, onToggle }: {
         {recipe.sourceSite === 'skinnytaste' && (
           <span className="absolute top-2 left-2 text-[9px] font-bold bg-green-600/80 text-white px-1.5 py-0.5 rounded-full z-10">ST</span>
         )}
+        {recipe.sourceSite === 'allrecipes' && (
+          <span className="absolute top-2 left-2 text-[9px] font-bold bg-red-600/80 text-white px-1.5 py-0.5 rounded-full z-10">AR</span>
+        )}
       </div>
 
       <div className="p-2.5">
@@ -128,13 +130,14 @@ function RecipeCard({ recipe, favorite, onToggle }: {
           )}
         </div>
       </div>
-    </motion.a>
+    </motion.div>
+    </Link>
   )
 }
 
 function SkeletonCard() {
   return (
-    <div className="flex-shrink-0 w-36 rounded-2xl overflow-hidden animate-pulse" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+    <div className="rounded-2xl overflow-hidden animate-pulse" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
       <div className="h-28 bg-gray-200 dark:bg-gray-700" />
       <div className="p-2.5 space-y-2">
         <div className="h-3 rounded bg-gray-200 dark:bg-gray-700 w-full" />
@@ -156,9 +159,11 @@ type GroupedRecipes = { label: string; site: string; recipes: Recipe[] }[]
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
   const se = recipes.filter(r => r.sourceSite === 'seriouseats')
   const st = recipes.filter(r => r.sourceSite === 'skinnytaste')
+  const ar = recipes.filter(r => r.sourceSite === 'allrecipes')
   const groups: GroupedRecipes = []
   if (se.length) groups.push({ label: 'Serious Eats', site: 'seriouseats', recipes: se })
   if (st.length) groups.push({ label: 'Skinnytaste', site: 'skinnytaste', recipes: st })
+  if (ar.length) groups.push({ label: 'AllRecipes', site: 'allrecipes', recipes: ar })
   return groups
 }
 
@@ -183,6 +188,17 @@ export default function RecipesPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Auto-refresh every 60s to pick up cron-scraped recipes
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch('/api/recipes')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setRecipes(data.recipes ?? []) })
+        .catch(() => {})
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [])
+
   function toggleFavorite(id: string) {
     setFavorites(prev => {
       const next = new Set(prev)
@@ -191,14 +207,13 @@ export default function RecipesPage() {
     })
   }
 
-  async function triggerScrape() {
+  async function triggerScrape(site: 'skinnytaste' | 'allrecipes' = 'skinnytaste') {
     setScraping(true)
     setScrapeResult(null)
     try {
-      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({}), headers: { 'Content-Type': 'application/json' } })
+      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({ site }), headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       setScrapeResult({ saved: data.saved, skipped: data.skipped })
-      // Reload recipes
       const r = await fetch('/api/recipes').then(r => r.json())
       setRecipes(r.recipes ?? [])
     } catch { /* ignore */ }
@@ -219,16 +234,28 @@ export default function RecipesPage() {
         </h1>
         <div className="flex items-center gap-2">
           {isAdmin && (
-            <button
-              onClick={triggerScrape}
-              disabled={scraping}
-              className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
-              style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-              title="Scrape new recipes (admin)"
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
-              {scraping ? 'Scraping…' : 'Scrape'}
-            </button>
+            <>
+              <button
+                onClick={() => triggerScrape('skinnytaste')}
+                disabled={scraping}
+                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+                title="Scrape SkinnyTaste recipes"
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
+                SkinnyTaste
+              </button>
+              <button
+                onClick={() => triggerScrape('allrecipes')}
+                disabled={scraping}
+                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
+                style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+                title="Scrape AllRecipes recipes"
+              >
+                <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
+                AllRecipes
+              </button>
+            </>
           )}
           <button
             onClick={() => setShowAddModal(true)}
@@ -258,10 +285,8 @@ export default function RecipesPage() {
 
       {/* Featured banner */}
       {featured && (
-        <motion.a
-          href={featured.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link href={`/recipes/${featured._id}`}>
+        <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -284,12 +309,11 @@ export default function RecipesPage() {
                   <Clock className="h-3.5 w-3.5" /> {featured.totalTimeMin} {t('recipes.min')}
                 </span>
               )}
-              <span className="flex items-center gap-1 text-white/60 text-xs ml-auto">
-                <ExternalLink className="h-3 w-3" /> {featured.sourceSite}
-              </span>
+              <span className="text-white/60 text-xs ml-auto">{featured.sourceSite}</span>
             </div>
           </div>
-        </motion.a>
+        </motion.div>
+        </Link>
       )}
 
       {/* Empty state — no recipes yet */}
@@ -325,8 +349,8 @@ export default function RecipesPage() {
           {[0, 1].map(i => (
             <div key={i}>
               <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700 animate-pulse mb-3" />
-              <div className="flex gap-3 overflow-hidden">
-                {[0, 1, 2, 3, 4].map(j => <SkeletonCard key={j} />)}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {[0, 1, 2, 3, 4, 5].map(j => <SkeletonCard key={j} />)}
               </div>
             </div>
           ))}
@@ -348,7 +372,7 @@ export default function RecipesPage() {
             <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{group.recipes.length} recipes</span>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {group.recipes.map(recipe => (
               <RecipeCard
                 key={recipe._id}

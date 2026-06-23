@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio'
 export interface ScrapedRecipe {
   title: string
   sourceUrl: string
-  sourceSite: 'seriouseats' | 'skinnytaste'
+  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
   imageUrl?: string
   calories?: number
   cookTimeMin?: number
@@ -14,6 +14,7 @@ export interface ScrapedRecipe {
   category?: string
   tags: string[]
   ingredients?: string[]
+  instructions?: string[]
 }
 
 const HEADERS = {
@@ -86,7 +87,7 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
 
 export async function scrapeRecipePage(
   url: string,
-  site: 'seriouseats' | 'skinnytaste'
+  site: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
 ): Promise<ScrapedRecipe | null> {
   const html = await fetchHtml(url)
   if (!html) return null
@@ -125,13 +126,38 @@ export async function scrapeRecipePage(
 
   const rawIngredients = ld['recipeIngredient']
   const ingredients: string[] = Array.isArray(rawIngredients)
-    ? (rawIngredients as string[]).slice(0, 20)
+    ? (rawIngredients as string[]).slice(0, 30)
     : []
+
+  // recipeInstructions: string | HowToStep[] | HowToSection[]
+  const rawInstructions = ld['recipeInstructions']
+  const instructions: string[] = []
+  if (typeof rawInstructions === 'string') {
+    instructions.push(rawInstructions)
+  } else if (Array.isArray(rawInstructions)) {
+    for (const step of rawInstructions) {
+      if (typeof step === 'string') {
+        instructions.push(step)
+      } else if (step && typeof step === 'object') {
+        const s = step as Record<string, unknown>
+        if (s['@type'] === 'HowToSection') {
+          const items = s['itemListElement'] as unknown[] ?? []
+          for (const sub of items) {
+            const t = (sub as Record<string, unknown>)?.['text'] as string
+            if (t) instructions.push(t)
+          }
+        } else {
+          const t = (s['text'] ?? s['name']) as string
+          if (t) instructions.push(t)
+        }
+      }
+    }
+  }
 
   return {
     title, sourceUrl: url, sourceSite: site,
     imageUrl, calories, cookTimeMin, prepTimeMin, totalTimeMin,
-    servings, description, category, tags, ingredients,
+    servings, description, category, tags, ingredients, instructions,
   }
 }
 
@@ -155,6 +181,59 @@ export async function getRecipeUrlsSkinnyTaste(sitemapUrl: string, limit = 15): 
       }
       if (urls.length >= limit) break
     }
+    return urls
+  } catch {
+    return []
+  }
+}
+
+/** Get recipe URLs from AllRecipes sitemaps */
+export async function getRecipeUrlsAllRecipes(limit = 15): Promise<string[]> {
+  const SITEMAP_INDEX = 'https://www.allrecipes.com/sitemap.xml'
+  const RECIPE_RE = /allrecipes\.com\/recipe\/\d+\//
+
+  try {
+    // 1. Fetch sitemap index to find sub-sitemaps
+    const idxRes = await fetch(SITEMAP_INDEX, {
+      headers: { 'User-Agent': HEADERS['User-Agent'] },
+      signal: AbortSignal.timeout(10000),
+    })
+    if (!idxRes.ok) return []
+    const idxXml = await idxRes.text()
+
+    // Extract sub-sitemap URLs
+    const subSitemaps: string[] = []
+    const locMatches = idxXml.matchAll(/<loc>([^<]+)<\/loc>/g)
+    for (const m of locMatches) {
+      const u = m[1].trim()
+      if (u.includes('sitemap') && !subSitemaps.includes(u)) {
+        subSitemaps.push(u)
+      }
+    }
+
+    // 2. Pull recipe URLs from sub-sitemaps until we hit limit
+    const urls: string[] = []
+    for (const sm of subSitemaps) {
+      if (urls.length >= limit) break
+      try {
+        const smRes = await fetch(sm, {
+          headers: { 'User-Agent': HEADERS['User-Agent'] },
+          signal: AbortSignal.timeout(10000),
+        })
+        if (!smRes.ok) continue
+        const smXml = await smRes.text()
+        const recipeMatches = smXml.matchAll(/<loc>([^<]+)<\/loc>/g)
+        for (const m of recipeMatches) {
+          const u = m[1].trim()
+          if (RECIPE_RE.test(u)) {
+            // Normalize: strip trailing slash
+            urls.push(u.replace(/\/$/, ''))
+          }
+          if (urls.length >= limit) break
+        }
+      } catch { /* skip bad sub-sitemap */ }
+    }
+
     return urls
   } catch {
     return []

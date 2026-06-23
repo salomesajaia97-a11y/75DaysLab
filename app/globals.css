@@ -120,8 +120,8 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-size: 15px;
+    font-family: var(--theme-font, var(--font-fraunces), Georgia, serif);
+    font-size: var(--theme-size, 15px);
     line-height: 1.6;
   }
 

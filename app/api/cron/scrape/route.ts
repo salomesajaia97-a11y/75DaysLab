@@ -1,0 +1,52 @@
+import { NextResponse } from 'next/server'
+import { connectDB } from '@/lib/mongoose'
+import { Recipe } from '@/models/Recipe'
+import { scrapeRecipePage, getRecipeUrlsSkinnyTaste, delay } from '@/lib/scrapers'
+
+export const maxDuration = 300
+
+const ST_SITEMAPS = [
+  'https://www.skinnytaste.com/post-sitemap.xml',
+  'https://www.skinnytaste.com/post-sitemap2.xml',
+  'https://www.skinnytaste.com/post-sitemap3.xml',
+]
+
+export async function GET(req: Request) {
+  const auth = req.headers.get('authorization')
+  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  await connectDB()
+  const results = { saved: 0, skipped: 0, errors: 0 }
+
+  const candidateUrls: string[] = []
+  for (const sm of ST_SITEMAPS) {
+    const urls = await getRecipeUrlsSkinnyTaste(sm, 40)
+    candidateUrls.push(...urls)
+  }
+
+  const seen = new Set<string>()
+  const uniqueUrls = candidateUrls.filter(u => {
+    if (seen.has(u)) return false
+    seen.add(u)
+    return true
+  })
+
+  for (const url of uniqueUrls) {
+    if (results.saved >= 20) break
+    const existing = await Recipe.findOne({ sourceUrl: url })
+    if (existing) { results.skipped++; continue }
+    const scraped = await scrapeRecipePage(url, 'skinnytaste')
+    await delay(500)
+    if (!scraped) { results.errors++; continue }
+    try {
+      await Recipe.create({ ...scraped, scrapedAt: new Date() })
+      results.saved++
+    } catch {
+      results.errors++
+    }
+  }
+
+  return NextResponse.json({ ok: true, ...results })
+}
