@@ -33,6 +33,6 @@ export async function PATCH(req: Request) {
     { upsert: true, new: true }
   )
 
-  revalidateTag('site-config')
+  revalidateTag('site-config', 'max')
   return NextResponse.json({ theme: doc.theme })
 }
