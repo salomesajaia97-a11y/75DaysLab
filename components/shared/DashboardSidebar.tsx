@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot, ChefHat } from 'lucide-react'
+import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { signOut, useSession } from 'next-auth/react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
@@ -20,7 +20,6 @@ export function DashboardSidebar() {
     { href: '/water',     labelKey: 'nav.water',     icon: Droplets },
     { href: '/journal',   labelKey: 'nav.journal',   icon: BookOpen },
     { href: '/nutrition', labelKey: 'nav.nutrition', icon: Utensils },
-    { href: '/recipes',   labelKey: 'nav.recipes',   icon: ChefHat },
     { href: '/cycle',     labelKey: 'nav.cycle',     icon: Calendar },
     { href: '/photos',    labelKey: 'nav.photos',    icon: Camera },
     { href: '/squads',    labelKey: 'nav.squads',    icon: Users },
