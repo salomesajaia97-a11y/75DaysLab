@@ -13,7 +13,7 @@ interface Recipe {
   _id: string
   title: string
   sourceUrl: string
-  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
+  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats' | 'minimalistbaker' | 'loveandlemons'
   imageUrl?: string
   calories?: number
   protein?: number
@@ -26,26 +26,55 @@ interface Recipe {
   description?: string
   category?: string
   tags: string[]
+  ingredientCount?: number
+  isOnePot?: boolean
+  dietTags?: string[]
 }
 
-type FilterKey = 'all' | '200cal' | '300cal' | '400cal' | 'protein'
+type PillKey =
+  | 'maxIngr10' | 'onePot' | 'quick'        // Minimal
+  | 'highProtein' | 'lowCarb' | 'lowCal'    // Goal
+  | 'vegan' | 'vegetarian' | 'wholeFood'    // Plant-Forward
 
-const FILTERS: { key: FilterKey; labelKey: string }[] = [
-  { key: 'all',      labelKey: 'recipes.filter.all' },
-  { key: '200cal',   labelKey: 'recipes.filter.200cal' },
-  { key: '300cal',   labelKey: 'recipes.filter.300cal' },
-  { key: '400cal',   labelKey: 'recipes.filter.400cal' },
-  { key: 'protein',  labelKey: 'recipes.filter.protein' },
+type LensKey = 'all' | 'minimal' | 'goal' | 'plant'
+
+const LENSES: { key: LensKey; labelKey: string; fallback: string; pills: PillKey[] }[] = [
+  { key: 'all',     labelKey: 'recipes.lens.all',     fallback: 'All',           pills: [] },
+  { key: 'minimal', labelKey: 'recipes.lens.minimal', fallback: 'Minimal',       pills: ['maxIngr10', 'onePot', 'quick'] },
+  { key: 'goal',    labelKey: 'recipes.lens.goal',    fallback: 'Goal',          pills: ['highProtein', 'lowCarb', 'lowCal'] },
+  { key: 'plant',   labelKey: 'recipes.lens.plant',   fallback: 'Plant-Forward', pills: ['vegan', 'vegetarian', 'wholeFood'] },
 ]
 
-function passesFilter(recipe: Recipe, filter: FilterKey): boolean {
-  const cal = recipe.calories
-  if (filter === 'all') return true
-  if (filter === '200cal') return !!cal && cal <= 200
-  if (filter === '300cal') return !!cal && cal > 200 && cal <= 300
-  if (filter === '400cal') return !!cal && cal > 300 && cal <= 400
-  if (filter === 'protein') return !!cal && cal >= 300
-  return true
+const PILL_LABELS: Record<PillKey, string> = {
+  maxIngr10: '≤10 ingredients', onePot: 'One-pot', quick: '≤30 min',
+  highProtein: 'High-protein', lowCarb: 'Low-carb', lowCal: '≤400 cal',
+  vegan: 'Vegan', vegetarian: 'Vegetarian', wholeFood: 'Whole-food',
+}
+
+// Maps an active pill to GET query params
+const PILL_PARAMS: Record<PillKey, [string, string]> = {
+  maxIngr10:   ['maxIngredients', '10'],
+  onePot:      ['onePot', 'true'],
+  quick:       ['maxTime', '30'],
+  highProtein: ['minProtein', '20'],
+  lowCarb:     ['maxCarbs', '20'],
+  lowCal:      ['maxCal', '400'],
+  vegan:       ['diet', 'vegan'],
+  vegetarian:  ['diet', 'vegetarian'],
+  wholeFood:   ['diet', 'whole-food'],
+}
+
+function buildQuery(pills: Set<PillKey>): string {
+  const params = new URLSearchParams()
+  const diets: string[] = []
+  for (const p of pills) {
+    const [k, v] = PILL_PARAMS[p]
+    if (k === 'diet') diets.push(v)
+    else params.set(k, v)
+  }
+  if (diets.length) params.set('diet', diets.join(','))
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
 }
 
 const GRADIENT_POOL = [
@@ -161,6 +190,8 @@ const SITE_LABELS: Record<string, string> = {
   eatingwell:  'Eating Well',
   kulinaria:   'Kulinaria',
   spruceeats:  'The Spruce Eats',
+  minimalistbaker: 'Minimalist Baker',
+  loveandlemons:   'Love & Lemons',
 }
 
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
@@ -183,7 +214,8 @@ export default function RecipesPage() {
 
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<FilterKey>('all')
+  const [lens, setLens] = useState<LensKey>('all')
+  const [pills, setPills] = useState<Set<PillKey>>(new Set())
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [showAddModal, setShowAddModal] = useState(false)
   const [scraping, setScraping] = useState(false)
@@ -193,23 +225,23 @@ export default function RecipesPage() {
   useEffect(() => { setPortalMounted(true) }, [])
 
   useEffect(() => {
-    fetch('/api/recipes')
+    fetch(`/api/recipes${buildQuery(pills)}`)
       .then(r => r.ok ? r.json() : { recipes: [] })
       .then(data => setRecipes(data.recipes ?? []))
       .catch(() => setRecipes([]))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pills])
 
   // Auto-refresh every 60s to pick up cron-scraped recipes
   useEffect(() => {
     const id = setInterval(() => {
-      fetch('/api/recipes')
+      fetch(`/api/recipes${buildQuery(pills)}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data) setRecipes(data.recipes ?? []) })
         .catch(() => {})
     }, 60_000)
     return () => clearInterval(id)
-  }, [])
+  }, [pills])
 
   function toggleFavorite(id: string) {
     setFavorites(prev => {
@@ -232,9 +264,21 @@ export default function RecipesPage() {
     finally { setScraping(false) }
   }
 
-  const filtered = recipes.filter(r => passesFilter(r, filter))
-  const groups = groupBySite(filtered)
+  const groups = groupBySite(recipes)
   const featured = recipes[0]
+
+  function selectLens(key: LensKey) {
+    setLens(key)
+    setPills(new Set())   // reset pills when switching lens
+  }
+  function togglePill(p: PillKey) {
+    setPills(prev => {
+      const next = new Set(prev)
+      next.has(p) ? next.delete(p) : next.add(p)
+      return next
+    })
+  }
+  const activeLens = LENSES.find(l => l.key === lens)!
 
   return (
     <div className="max-w-4xl mx-auto py-2 space-y-6">
@@ -339,17 +383,31 @@ export default function RecipesPage() {
         </div>
       )}
 
-      {/* Filter pills */}
-      {recipes.length > 0 && (
+      {/* Lens tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {LENSES.map(l => (
+          <button
+            key={l.key}
+            onClick={() => selectLens(l.key)}
+            className={cn('flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all', lens === l.key ? 'text-white shadow-sm' : 'border')}
+            style={lens === l.key ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+          >
+            {t(l.labelKey) === l.labelKey ? l.fallback : t(l.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* Pills for the active lens */}
+      {activeLens.pills.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {FILTERS.map(f => (
+          {activeLens.pills.map(p => (
             <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={cn('flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all', filter === f.key ? 'text-white shadow-sm' : 'border')}
-              style={filter === f.key ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+              key={p}
+              onClick={() => togglePill(p)}
+              className={cn('flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all', pills.has(p) ? 'text-white' : 'border')}
+              style={pills.has(p) ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
             >
-              {t(f.labelKey)}
+              {PILL_LABELS[p]}
             </button>
           ))}
         </div>
