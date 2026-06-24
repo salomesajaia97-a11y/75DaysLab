@@ -41,3 +41,9 @@ yarn-error.log*
 next-env.d.ts
 data/
 lib/local-db.ts
+
+# python
+__pycache__/
+*.pyc
+scripts/seen_urls.db
+scripts/scraper.log
