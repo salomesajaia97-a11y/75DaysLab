@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio'
 export interface ScrapedRecipe {
   title: string
   sourceUrl: string
-  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
+  sourceSite: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats' | 'minimalistbaker' | 'loveandlemons'
   imageUrl?: string
   calories?: number
   cookTimeMin?: number
@@ -13,6 +13,7 @@ export interface ScrapedRecipe {
   description?: string
   category?: string
   tags: string[]
+  suitableForDiet?: string | string[]
   ingredients?: string[]
   instructions?: string[]
 }
@@ -87,7 +88,7 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
 
 export async function scrapeRecipePage(
   url: string,
-  site: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats'
+  site: 'seriouseats' | 'skinnytaste' | 'allrecipes' | 'eatingwell' | 'kulinaria' | 'spruceeats' | 'minimalistbaker' | 'loveandlemons'
 ): Promise<ScrapedRecipe | null> {
   const html = await fetchHtml(url)
   if (!html) return null
@@ -154,10 +155,12 @@ export async function scrapeRecipePage(
     }
   }
 
+  const suitableForDiet = ld['suitableForDiet'] as string | string[] | undefined
+
   return {
     title, sourceUrl: url, sourceSite: site,
     imageUrl, calories, cookTimeMin, prepTimeMin, totalTimeMin,
-    servings, description, category, tags, ingredients, instructions,
+    servings, description, category, tags, suitableForDiet, ingredients, instructions,
   }
 }
 
@@ -238,6 +241,61 @@ export async function getRecipeUrlsAllRecipes(limit = 15): Promise<string[]> {
   } catch {
     return []
   }
+}
+
+/** Walk a WordPress/Yoast sitemap_index.xml and collect recipe-post URLs. */
+async function collectFromSitemapIndex(
+  indexUrl: string,
+  host: string,
+  skip: RegExp,
+  limit: number,
+): Promise<string[]> {
+  try {
+    const idxRes = await fetch(indexUrl, { headers: { 'User-Agent': HEADERS['User-Agent'] }, signal: AbortSignal.timeout(10000) })
+    if (!idxRes.ok) return []
+    const idxXml = await idxRes.text()
+
+    const subSitemaps: string[] = []
+    for (const m of idxXml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+      const u = m[1].trim()
+      if (/post.*sitemap|sitemap.*post/i.test(u)) subSitemaps.push(u)
+    }
+    // Fallback: if no post-sitemaps matched, use any sub-sitemap referencing the host
+    if (subSitemaps.length === 0) {
+      for (const m of idxXml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+        const u = m[1].trim()
+        if (u.includes('sitemap') && u.includes(host)) subSitemaps.push(u)
+      }
+    }
+
+    const urls: string[] = []
+    for (const sm of subSitemaps) {
+      if (urls.length >= limit) break
+      try {
+        const res = await fetch(sm, { headers: { 'User-Agent': HEADERS['User-Agent'] }, signal: AbortSignal.timeout(10000) })
+        if (!res.ok) continue
+        const xml = await res.text()
+        for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
+          const u = m[1].trim()
+          if (u.includes(host) && !skip.test(u)) urls.push(u.replace(/\/$/, ''))
+          if (urls.length >= limit) break
+        }
+      } catch { /* skip bad sub-sitemap */ }
+    }
+    return urls
+  } catch {
+    return []
+  }
+}
+
+const MB_SKIP = /\/(category|tag|author|page|about|contact|shop|recipe-index|wprm_print|feed)\b|\?|#/i
+export function getRecipeUrlsMinimalistBaker(limit = 15): Promise<string[]> {
+  return collectFromSitemapIndex('https://minimalistbaker.com/sitemap_index.xml', 'minimalistbaker.com', MB_SKIP, limit)
+}
+
+const LL_SKIP = /\/(category|tag|author|page|about|contact|shop|recipes|wprm_print|feed)\b|\?|#/i
+export function getRecipeUrlsLoveAndLemons(limit = 15): Promise<string[]> {
+  return collectFromSitemapIndex('https://www.loveandlemons.com/sitemap_index.xml', 'loveandlemons.com', LL_SKIP, limit)
 }
 
 export function delay(ms: number): Promise<void> {

@@ -218,6 +218,8 @@ def recipe_from_ld(ld: dict, url: str, site: str) -> Optional[dict]:
 
     instructions = extract_instructions(ld)
 
+    suitable = ld.get("suitableForDiet")
+
     return {
         "title":        title,
         "sourceUrl":    url,
@@ -234,6 +236,7 @@ def recipe_from_ld(ld: dict, url: str, site: str) -> Optional[dict]:
         "description":  str(ld.get("description", ""))[:500].strip() or None,
         "category":     category,
         "tags":         tags,
+        "suitableForDiet": suitable,
         "ingredients":  ingredients,
         "instructions": instructions,
     }
@@ -460,6 +463,54 @@ def parse_spruceeats(url: str) -> Optional[dict]:
     ld = extract_json_ld(soup)
     return recipe_from_ld(ld, url, "spruceeats") if ld else None
 
+# ─── SITE 6: minimalistbaker.com ──────────────────────────────────────────────
+def get_urls_minimalistbaker() -> list:
+    urls = []
+    sub_maps = [u for u in all_sub_sitemaps("https://minimalistbaker.com/sitemap_index.xml")
+                if "post" in u.lower()]
+    if not sub_maps:
+        sub_maps = all_sub_sitemaps("https://minimalistbaker.com/sitemap_index.xml")
+    log.info(f"minimalistbaker: {len(sub_maps)} sub-sitemaps")
+    SKIP = {"category", "tag", "author", "about", "contact", "shop", "recipe-index", "feed"}
+    for _url, soup in fetch_sitemaps_parallel(sub_maps):
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
+            if "minimalistbaker.com" in u and not any(sk in u for sk in SKIP):
+                urls.append(u.rstrip("/"))
+    log.info(f"minimalistbaker: {len(urls)} candidates")
+    return ordered_dedup(urls)
+
+def parse_minimalistbaker(url: str) -> Optional[dict]:
+    soup = fetch(url)
+    if not soup:
+        return None
+    ld = extract_json_ld(soup)
+    return recipe_from_ld(ld, url, "minimalistbaker") if ld else None
+
+# ─── SITE 7: loveandlemons.com ────────────────────────────────────────────────
+def get_urls_loveandlemons() -> list:
+    urls = []
+    sub_maps = [u for u in all_sub_sitemaps("https://www.loveandlemons.com/sitemap_index.xml")
+                if "post" in u.lower()]
+    if not sub_maps:
+        sub_maps = all_sub_sitemaps("https://www.loveandlemons.com/sitemap_index.xml")
+    log.info(f"loveandlemons: {len(sub_maps)} sub-sitemaps")
+    SKIP = {"category", "tag", "author", "about", "contact", "shop", "recipes", "feed"}
+    for _url, soup in fetch_sitemaps_parallel(sub_maps):
+        for loc in soup.find_all("loc"):
+            u = loc.get_text(strip=True)
+            if "loveandlemons.com" in u and not any(sk in u for sk in SKIP):
+                urls.append(u.rstrip("/"))
+    log.info(f"loveandlemons: {len(urls)} candidates")
+    return ordered_dedup(urls)
+
+def parse_loveandlemons(url: str) -> Optional[dict]:
+    soup = fetch(url)
+    if not soup:
+        return None
+    ld = extract_json_ld(soup)
+    return recipe_from_ld(ld, url, "loveandlemons") if ld else None
+
 # ─── SITE REGISTRY ────────────────────────────────────────────────────────────
 SITES = [
     {"name": "kulinaria",   "get_urls": get_urls_kulinaria,   "parse": parse_kulinaria},
@@ -467,6 +518,8 @@ SITES = [
     {"name": "skinnytaste", "get_urls": get_urls_skinnytaste, "parse": parse_skinnytaste},
     {"name": "seriouseats", "get_urls": get_urls_seriouseats, "parse": parse_seriouseats},
     {"name": "spruceeats",  "get_urls": get_urls_spruceeats,  "parse": parse_spruceeats},
+    {"name": "minimalistbaker", "get_urls": get_urls_minimalistbaker, "parse": parse_minimalistbaker},
+    {"name": "loveandlemons",   "get_urls": get_urls_loveandlemons,   "parse": parse_loveandlemons},
 ]
 
 # ─── UPLOAD ───────────────────────────────────────────────────────────────────

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { Recipe } from '@/models/Recipe'
-import { scrapeRecipePage, getRecipeUrlsSkinnyTaste, getRecipeUrlsAllRecipes, delay } from '@/lib/scrapers'
+import { classifyRecipe } from '@/lib/classify'
+import { scrapeRecipePage, getRecipeUrlsSkinnyTaste, getRecipeUrlsAllRecipes, getRecipeUrlsMinimalistBaker, getRecipeUrlsLoveAndLemons, delay } from '@/lib/scrapers'
 
 // Extend timeout for scraping (requires Pro on Vercel; works locally)
 export const maxDuration = 300
@@ -12,7 +13,7 @@ const ST_SITEMAPS = [
   'https://www.skinnytaste.com/post-sitemap.xml',
 ]
 
-type ScrapeTarget = 'skinnytaste' | 'allrecipes'
+type ScrapeTarget = 'skinnytaste' | 'allrecipes' | 'minimalistbaker' | 'loveandlemons'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -22,7 +23,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}))
   const batchSize: number = Math.min(parseInt(body.batch ?? '8'), 20)
-  const site: ScrapeTarget = body.site === 'allrecipes' ? 'allrecipes' : 'skinnytaste'
+  const allowed: ScrapeTarget[] = ['skinnytaste', 'allrecipes', 'minimalistbaker', 'loveandlemons']
+  const site: ScrapeTarget = allowed.includes(body.site) ? body.site : 'skinnytaste'
 
   await connectDB()
 
@@ -33,12 +35,14 @@ export async function POST(req: NextRequest) {
   const candidateUrls: string[] = []
 
   if (site === 'allrecipes') {
-    const urls = await getRecipeUrlsAllRecipes(batchSize * 2)
-    candidateUrls.push(...urls)
+    candidateUrls.push(...await getRecipeUrlsAllRecipes(batchSize * 2))
+  } else if (site === 'minimalistbaker') {
+    candidateUrls.push(...await getRecipeUrlsMinimalistBaker(batchSize * 2))
+  } else if (site === 'loveandlemons') {
+    candidateUrls.push(...await getRecipeUrlsLoveAndLemons(batchSize * 2))
   } else {
     for (const sm of ST_SITEMAPS) {
-      const urls = await getRecipeUrlsSkinnyTaste(sm, perSitemap)
-      candidateUrls.push(...urls)
+      candidateUrls.push(...await getRecipeUrlsSkinnyTaste(sm, perSitemap))
     }
   }
 
@@ -58,7 +62,8 @@ export async function POST(req: NextRequest) {
     if (!scraped) { results.errors++; continue }
 
     try {
-      await Recipe.create({ ...scraped, scrapedAt: new Date() })
+      const derived = classifyRecipe(scraped)
+      await Recipe.create({ ...scraped, ...derived, scrapedAt: new Date() })
       results.saved++
     } catch {
       results.errors++

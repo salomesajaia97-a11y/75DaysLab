@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongoose'
 import { Recipe } from '@/models/Recipe'
+import { classifyRecipe } from '@/lib/classify'
 
 export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization')
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, status: 'skipped' })
   }
 
-  await Recipe.create({ ...body, scrapedAt: new Date() })
+  const derived = classifyRecipe(body)
+  await Recipe.create({ ...body, ...derived, scrapedAt: new Date() })
   return NextResponse.json({ ok: true, status: 'saved' })
 }
