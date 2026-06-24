@@ -31,6 +31,8 @@ export default function NutritionPage() {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
   const [week, setWeek] = useState<{ date: string; calories: number }[]>([])
 
+  const isToday = selectedDate === TODAY
+
   const loadDay = useCallback((date: string) => {
     fetch(`/api/nutrition?date=${date}`)
       .then(r => r.ok ? r.json() : null)
@@ -90,6 +92,7 @@ export default function NutritionPage() {
   }, [selectedDate, loadDay])
 
   function handleLogged(entry: FoodEntry) {
+    if (selectedDate !== TODAY) return
     setFoodLog(prev => [entry, ...prev])
     setConsumed(prev => ({
       calories: prev.calories + (entry.calories ?? 0),
@@ -159,12 +162,14 @@ export default function NutritionPage() {
       <div className="h-px" style={{ background: 'var(--border)' }} />
 
       {/* Log a Meal */}
-      <section>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.log_meal')}
-        </p>
-        <FoodLogger onLogged={handleLogged} />
-      </section>
+      {isToday && (
+        <section>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+            {t('nutrition.log_meal')}
+          </p>
+          <FoodLogger onLogged={handleLogged} />
+        </section>
+      )}
 
       {/* Food Log */}
       <AnimatePresence>
