@@ -2,6 +2,8 @@
 import { useState, useRef } from 'react'
 import { Loader2, ScanLine } from 'lucide-react'
 import type { FoodEntry } from '@/types'
+import { MealChips } from './MealChips'
+import { mealFromTime, type MealType } from '@/lib/nutrition-meal'
 
 interface FoodLoggerProps {
   onLogged: (entry: FoodEntry) => void
@@ -11,7 +13,34 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [meal, setMeal] = useState<MealType>(() => mealFromTime(new Date()))
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined)
+  const [scanning, setScanning] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setScanning(true); setError(null)
+    try {
+      const fd = new FormData()
+      fd.append('image', f)
+      const res = await fetch('/api/nutrition/scan', { method: 'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPhotoUrl(data.photoUrl)
+      if (data.macros) {
+        setDescription(data.macros.food || 'Scanned meal')
+      } else {
+        setError("Couldn't read the photo — describe it instead.")
+      }
+    } catch {
+      setError('Photo scan failed. Try again or describe it.')
+    } finally {
+      setScanning(false)
+      e.target.value = ''
+    }
+  }
 
   async function logFood() {
     const text = description.trim()
@@ -36,6 +65,8 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
           proteinG: macros.proteinG,
           carbsG: macros.carbsG,
           fatG: macros.fatG,
+          meal,
+          photoUrl,
         }),
       })
       const saved = await saveRes.json()
@@ -48,9 +79,13 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
         carbsG: macros.carbsG,
         fatG: macros.fatG,
         loggedAt: new Date().toISOString(),
+        meal,
+        photoUrl,
       }
       onLogged(entry)
       setDescription('')
+      setPhotoUrl(undefined)
+      setMeal(mealFromTime(new Date()))
     } catch {
       setError('Failed to log food. Try again.')
     } finally {
@@ -66,6 +101,7 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
 
   return (
     <div className="space-y-3">
+      <MealChips value={meal} onChange={setMeal} />
       <div
         className="relative rounded-xl overflow-hidden transition-shadow duration-200"
         style={{
@@ -88,12 +124,16 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            disabled={loading}
+            disabled={loading || scanning}
             className="flex items-center gap-1.5 text-xs transition-opacity"
-            style={{ color: 'var(--muted-foreground)', opacity: loading ? 0.4 : 1 }}
+            style={{ color: 'var(--muted-foreground)', opacity: loading || scanning ? 0.4 : 1 }}
           >
-            <ScanLine className="h-3.5 w-3.5" />
-            <span>scan photo</span>
+            {scanning ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ScanLine className="h-3.5 w-3.5" />
+            )}
+            <span>{scanning ? 'scanning…' : 'scan photo'}</span>
           </button>
 
           <button
@@ -112,7 +152,7 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
           </button>
         </div>
       </div>
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
