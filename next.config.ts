@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.cloudfront.net' },
       { protocol: 'https', hostname: '**.dotdash.com' },
       { protocol: 'https', hostname: '**.dotdashmdp.com' },
+      { protocol: 'https', hostname: '**.allrecipes.com' },
+      { protocol: 'https', hostname: 'allrecipes.com' },
+      { protocol: 'https', hostname: '**.minimalistbaker.com' },
+      { protocol: 'https', hostname: 'minimalistbaker.com' },
+      { protocol: 'https', hostname: '**.wp.com' },
+      { protocol: 'https', hostname: '**.wordpress.com' },
     ],
   },
   experimental: {

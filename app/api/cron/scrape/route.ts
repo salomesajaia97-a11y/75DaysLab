@@ -22,7 +22,7 @@ export async function GET(req: Request) {
 
   const candidateUrls: string[] = []
   for (const sm of ST_SITEMAPS) {
-    const urls = await getRecipeUrlsSkinnyTaste(sm, 40)
+    const urls = await getRecipeUrlsSkinnyTaste(sm, 200)
     candidateUrls.push(...urls)
   }
 
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   })
 
   for (const url of uniqueUrls) {
-    if (results.saved >= 20) break
+    if (results.saved >= 100) break
     const existing = await Recipe.findOne({ sourceUrl: url })
     if (existing) { results.skipped++; continue }
     const scraped = await scrapeRecipePage(url, 'skinnytaste')

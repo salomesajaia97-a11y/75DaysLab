@@ -298,6 +298,21 @@ export function getRecipeUrlsLoveAndLemons(limit = 15): Promise<string[]> {
   return collectFromSitemapIndex('https://www.loveandlemons.com/sitemap_index.xml', 'loveandlemons.com', LL_SKIP, limit)
 }
 
+const EW_SKIP = /\/(category|tag|author|page|about|contact|shop|feed)\b|\?|#/i
+export function getRecipeUrlsEatingWell(limit = 50): Promise<string[]> {
+  return collectFromSitemapIndex('https://www.eatingwell.com/sitemap_index.xml', 'eatingwell.com', EW_SKIP, limit)
+}
+
+const SE_SKIP = /\/(category|tag|author|page|about|contact|shop|feed)\b|\?|#/i
+export function getRecipeUrlsSeriousEats(limit = 50): Promise<string[]> {
+  return collectFromSitemapIndex('https://www.seriouseats.com/sitemap_index.xml', 'seriouseats.com', SE_SKIP, limit)
+}
+
+const SPR_SKIP = /\/(category|tag|author|page|about|contact|shop|feed)\b|\?|#/i
+export function getRecipeUrlsSpruceEats(limit = 50): Promise<string[]> {
+  return collectFromSitemapIndex('https://www.thespruceeats.com/sitemap_index.xml', 'thespruceeats.com', SPR_SKIP, limit)
+}
+
 export function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }

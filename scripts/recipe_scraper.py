@@ -26,7 +26,7 @@ from typing import Optional
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
 SCRAPE_INTERVAL_HOURS = 12      # change to adjust run frequency
-BATCH_PER_SITE        = 20      # max new recipes saved per site per run
+BATCH_PER_SITE        = 200     # max new recipes saved per site per run
 REQUEST_DELAY_MIN     = 0.5     # min seconds between page requests
 REQUEST_DELAY_MAX     = 1.5     # max seconds between page requests
 MAX_PAGES_CATEGORY    = 50      # max paginated category pages to walk per site

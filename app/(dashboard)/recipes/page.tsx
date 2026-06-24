@@ -123,6 +123,7 @@ function RecipeCard({ recipe, favorite, onToggle }: {
             className="object-cover"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            unoptimized
           />
         ) : (
           <span className="text-4xl">{emoji}</span>
@@ -200,6 +201,9 @@ const SCRAPE_TARGETS: { site: string; label: string }[] = [
   { site: 'allrecipes',      label: 'AllRecipes' },
   { site: 'minimalistbaker', label: 'Minimalist Baker' },
   { site: 'loveandlemons',   label: 'Love & Lemons' },
+  { site: 'eatingwell',      label: 'EatingWell' },
+  { site: 'seriouseats',     label: 'SeriousEats' },
+  { site: 'spruceeats',      label: 'SpruceEats' },
 ]
 
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
@@ -263,7 +267,7 @@ export default function RecipesPage() {
     setScraping(true)
     setScrapeResult(null)
     try {
-      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({ site }), headers: { 'Content-Type': 'application/json' } })
+      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({ site, batch: 100 }), headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       setScrapeResult({ saved: data.saved, skipped: data.skipped })
       const r = await fetch('/api/recipes').then(r => r.json())
@@ -350,7 +354,7 @@ export default function RecipesPage() {
           className={`relative rounded-3xl overflow-hidden h-48 block cursor-pointer bg-gradient-to-br ${cardGradient(featured._id)}`}
         >
           {featured.imageUrl && (
-            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="(max-width: 896px) 100vw, 896px" priority />
+            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="(max-width: 896px) 100vw, 896px" priority unoptimized />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-5">
             <p className="text-xs text-white/70 mb-1">{t('recipes.featured')}</p>
