@@ -10,3 +10,11 @@ export function mealFromTime(d: Date): MealType {
   if (h <= 21) return 'dinner'
   return 'snack'
 }
+
+/** Display time-range label per meal slot. `null` = no fixed time (snack, all day). */
+export const MEAL_TIME_RANGES: Record<MealType, string | null> = {
+  breakfast: '08:00 – 10:00',
+  lunch:     '12:00 – 15:00',
+  dinner:    '18:00 – 21:00',
+  snack:     null,
+}
