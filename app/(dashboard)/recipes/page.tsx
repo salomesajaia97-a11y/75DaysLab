@@ -194,6 +194,14 @@ const SITE_LABELS: Record<string, string> = {
   loveandlemons:   'Love & Lemons',
 }
 
+// Admin scrape buttons — must match the server's allowed ScrapeTarget list
+const SCRAPE_TARGETS: { site: string; label: string }[] = [
+  { site: 'skinnytaste',     label: 'SkinnyTaste' },
+  { site: 'allrecipes',      label: 'AllRecipes' },
+  { site: 'minimalistbaker', label: 'Minimalist Baker' },
+  { site: 'loveandlemons',   label: 'Love & Lemons' },
+]
+
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
   const map = new Map<string, Recipe[]>()
   for (const r of recipes) {
@@ -291,26 +299,19 @@ export default function RecipesPage() {
         <div className="flex items-center gap-2">
           {isAdmin && (
             <>
-              <button
-                onClick={() => triggerScrape('skinnytaste')}
-                disabled={scraping}
-                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-                title="Scrape SkinnyTaste recipes"
-              >
-                <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
-                SkinnyTaste
-              </button>
-              <button
-                onClick={() => triggerScrape('allrecipes')}
-                disabled={scraping}
-                className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-                title="Scrape AllRecipes recipes"
-              >
-                <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
-                AllRecipes
-              </button>
+              {SCRAPE_TARGETS.map(target => (
+                <button
+                  key={target.site}
+                  onClick={() => triggerScrape(target.site)}
+                  disabled={scraping}
+                  className="flex items-center gap-2 px-3 py-2 rounded-2xl text-xs font-semibold border transition-all hover:opacity-80 disabled:opacity-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+                  title={`Scrape ${target.label} recipes`}
+                >
+                  <RefreshCw className={cn('h-3.5 w-3.5', scraping && 'animate-spin')} />
+                  {target.label}
+                </button>
+              ))}
             </>
           )}
           <button
