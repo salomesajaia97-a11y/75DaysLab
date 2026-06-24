@@ -8,14 +8,21 @@ import { useLanguage } from '@/lib/i18n'
 
 interface FoodLoggerProps {
   onLogged: (entry: FoodEntry) => void
+  meal?: MealType
+  onMealChange?: (m: MealType) => void
 }
 
-export function FoodLogger({ onLogged }: FoodLoggerProps) {
+export function FoodLogger({ onLogged, meal: mealProp, onMealChange }: FoodLoggerProps) {
   const { t } = useLanguage()
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [meal, setMeal] = useState<MealType>(() => mealFromTime(new Date()))
+  const [internalMeal, setInternalMeal] = useState<MealType>(() => mealFromTime(new Date()))
+  const meal = mealProp ?? internalMeal
+  const setMeal = (m: MealType) => {
+    setInternalMeal(m)
+    onMealChange?.(m)
+  }
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined)
   const [scanning, setScanning] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
