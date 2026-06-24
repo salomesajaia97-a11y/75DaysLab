@@ -4,12 +4,14 @@ import { Loader2, ScanLine } from 'lucide-react'
 import type { FoodEntry } from '@/types'
 import { MealChips } from './MealChips'
 import { mealFromTime, type MealType } from '@/lib/nutrition-meal'
+import { useLanguage } from '@/lib/i18n'
 
 interface FoodLoggerProps {
   onLogged: (entry: FoodEntry) => void
 }
 
 export function FoodLogger({ onLogged }: FoodLoggerProps) {
+  const { t } = useLanguage()
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export function FoodLogger({ onLogged }: FoodLoggerProps) {
       if (data.macros) {
         setDescription(data.macros.food || 'Scanned meal')
       } else {
-        setError("Couldn't read the photo — describe it instead.")
+        setError(t('nutrition.scan_failed'))
       }
     } catch {
       setError('Photo scan failed. Try again or describe it.')
