@@ -8,6 +8,7 @@ export interface IFoodLog extends Document {
   proteinG: number
   carbsG: number
   fatG: number
+  meal: 'breakfast' | 'lunch' | 'dinner' | 'snack'
   photoUrl?: string
   loggedAt: Date
 }
@@ -20,6 +21,7 @@ const FoodLogSchema = new Schema<IFoodLog>({
   proteinG: { type: Number, default: 0 },
   carbsG: { type: Number, default: 0 },
   fatG: { type: Number, default: 0 },
+  meal: { type: String, enum: ['breakfast', 'lunch', 'dinner', 'snack'], default: 'snack' },
   photoUrl: String,
   loggedAt: { type: Date, default: Date.now },
 })
