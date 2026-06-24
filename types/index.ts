@@ -45,6 +45,7 @@ export interface FoodEntry {
   fatG: number
   loggedAt: string
   photoUrl?: string
+  meal: import('@/lib/nutrition-meal').MealType
 }
 
 export interface DailyLog {
