@@ -120,3 +120,36 @@ export function parseMacros(responseText: string): { message: string; macros: Ma
     return { message: responseText.trim(), macros: null }
   }
 }
+
+const VISION_MODEL = 'meta-llama/llama-3.2-11b-vision-instruct:free'
+
+const PHOTO_SYSTEM = `You are a nutrition vision estimator. Look at the food photo and estimate its nutrition for the full portion shown.
+Reply with ONLY this tag and nothing else:
+<macros>{"calories":0,"proteinG":0,"carbsG":0,"fatG":0,"food":"short description"}</macros>
+Use realistic estimates. If the image is not food, set all numbers to 0 and food to "not food".`
+
+export async function parseFoodPhoto(imageUrl: string): Promise<MacroData | null> {
+  try {
+    const completion = await openRouterClient.chat.completions.create({
+      model: VISION_MODEL,
+      max_tokens: 256,
+      messages: [
+        { role: 'system', content: PHOTO_SYSTEM },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Estimate the nutrition of this food.' },
+            { type: 'image_url', image_url: { url: imageUrl } },
+          ] as never,
+        },
+      ],
+    })
+    const raw = completion.choices[0]?.message?.content ?? ''
+    const { macros } = parseMacros(raw)
+    if (!macros || macros.food === 'not food') return null
+    return macros
+  } catch (err) {
+    console.error('[parseFoodPhoto]', err instanceof Error ? err.message : String(err))
+    return null
+  }
+}
