@@ -102,10 +102,17 @@ export async function POST(req: NextRequest) {
 
   const systemPrompt = buildSystemPrompt(userContext, progress, weather, usdaContext)
 
+  // Food logging needs reliable macro estimation + JSON-tag adherence — the small
+  // 8B model often emits zeros or skips the <macros> tag (esp. for non-English dishes).
+  // Use a stronger free model for food_log; keep the fast one for general chat.
+  const model = mode === 'food_log'
+    ? 'meta-llama/llama-3.3-70b-instruct:free'
+    : 'meta-llama/llama-3.1-8b-instruct:free'
+
   let rawText: string
   try {
     const completion = await openRouterClient.chat.completions.create({
-      model: 'meta-llama/llama-3.1-8b-instruct:free',
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
