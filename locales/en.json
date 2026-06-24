@@ -123,6 +123,10 @@
   "nutrition.viewing_day": "Viewing",
   "nutrition.back_to_today": "Back to today",
   "nutrition.scan_failed": "Couldn't read the photo — describe it instead.",
+  "nutrition.meal_planner": "Meal Planner",
+  "nutrition.slot_empty": "Empty",
+  "nutrition.snack_allday": "During the day",
+  "nutrition.recipes_heading": "Recipes",
 
   "cycle.title": "Cycle Tracker",
   "cycle.card_title": "Menstrual Calendar",

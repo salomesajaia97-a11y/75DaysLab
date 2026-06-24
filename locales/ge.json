@@ -123,6 +123,10 @@
   "nutrition.viewing_day": "ნახვა",
   "nutrition.back_to_today": "დღევანდელზე დაბრუნება",
   "nutrition.scan_failed": "ფოტო ვერ წავიკითხე — აღწერე ტექსტით.",
+  "nutrition.meal_planner": "კვების გეგმა",
+  "nutrition.slot_empty": "ცარიელია",
+  "nutrition.snack_allday": "დღის განმავლობაში",
+  "nutrition.recipes_heading": "რეცეპტები",
 
   "cycle.title": "ციკლის ტრეკერი",
   "cycle.card_title": "მენსტრუაციის კალენდარი",
