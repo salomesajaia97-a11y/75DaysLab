@@ -32,9 +32,10 @@ interface Recipe {
 }
 
 type PillKey =
-  | 'maxIngr10' | 'onePot' | 'quick'        // Minimal
-  | 'highProtein' | 'lowCarb' | 'lowCal'    // Goal
-  | 'vegan' | 'vegetarian' | 'wholeFood'    // Plant-Forward
+  | 'maxIngr10' | 'onePot' | 'quick'              // Minimal
+  | 'highProtein' | 'lowCarb' | 'lowCal'          // Goal
+  | 'lowCal200' | 'lowCal300'                     // Cal quick-filters
+  | 'vegan' | 'vegetarian' | 'wholeFood'          // Plant-Forward
 
 type LensKey = 'all' | 'minimal' | 'goal' | 'plant'
 
@@ -47,7 +48,8 @@ const LENSES: { key: LensKey; labelKey: string; fallback: string; pills: PillKey
 
 const PILL_LABELS: Record<PillKey, string> = {
   maxIngr10: '≤10 ingredients', onePot: 'One-pot', quick: '≤30 min',
-  highProtein: 'High-protein', lowCarb: 'Low-carb', lowCal: '≤400 cal',
+  highProtein: 'High-protein', lowCarb: 'Low-carb', lowCal: '400 cal',
+  lowCal200: '200 cal', lowCal300: '300 cal',
   vegan: 'Vegan', vegetarian: 'Vegetarian', wholeFood: 'Whole-food',
 }
 
@@ -59,10 +61,14 @@ const PILL_PARAMS: Record<PillKey, [string, string]> = {
   highProtein: ['minProtein', '20'],
   lowCarb:     ['maxCarbs', '20'],
   lowCal:      ['maxCal', '400'],
+  lowCal200:   ['maxCal', '200'],
+  lowCal300:   ['maxCal', '300'],
   vegan:       ['diet', 'vegan'],
   vegetarian:  ['diet', 'vegetarian'],
   wholeFood:   ['diet', 'whole-food'],
 }
+
+const CAL_PILLS: PillKey[] = ['lowCal200', 'lowCal300', 'lowCal', 'highProtein']
 
 function buildQuery(pills: Set<PillKey>): string {
   const params = new URLSearchParams()
@@ -123,6 +129,7 @@ function RecipeCard({ recipe, favorite, onToggle }: {
             className="object-cover"
             sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            unoptimized
           />
         ) : (
           <span className="text-4xl">{emoji}</span>
@@ -200,6 +207,9 @@ const SCRAPE_TARGETS: { site: string; label: string }[] = [
   { site: 'allrecipes',      label: 'AllRecipes' },
   { site: 'minimalistbaker', label: 'Minimalist Baker' },
   { site: 'loveandlemons',   label: 'Love & Lemons' },
+  { site: 'eatingwell',      label: 'EatingWell' },
+  { site: 'seriouseats',     label: 'SeriousEats' },
+  { site: 'spruceeats',      label: 'SpruceEats' },
 ]
 
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
@@ -263,7 +273,7 @@ export function RecipeBrowser() {
     setScraping(true)
     setScrapeResult(null)
     try {
-      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({ site }), headers: { 'Content-Type': 'application/json' } })
+      const res = await fetch('/api/recipes/scrape', { method: 'POST', body: JSON.stringify({ site, batch: 100 }), headers: { 'Content-Type': 'application/json' } })
       const data = await res.json()
       setScrapeResult({ saved: data.saved, skipped: data.skipped })
       const r = await fetch('/api/recipes').then(r => r.json())
@@ -350,7 +360,7 @@ export function RecipeBrowser() {
           className={`relative rounded-3xl overflow-hidden h-48 block cursor-pointer bg-gradient-to-br ${cardGradient(featured._id)}`}
         >
           {featured.imageUrl && (
-            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="(max-width: 896px) 100vw, 896px" priority />
+            <NextImage src={featured.imageUrl} alt={featured.title} fill className="object-cover" sizes="(max-width: 896px) 100vw, 896px" priority unoptimized />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-5">
             <p className="text-xs text-white/70 mb-1">{t('recipes.featured')}</p>
@@ -394,6 +404,20 @@ export function RecipeBrowser() {
             style={lens === l.key ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
           >
             {t(l.labelKey) === l.labelKey ? l.fallback : t(l.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* Cal / Protein quick-filter pills — always visible */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {CAL_PILLS.map(p => (
+          <button
+            key={p}
+            onClick={() => togglePill(p)}
+            className={cn('flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all', pills.has(p) ? 'text-white' : 'border')}
+            style={pills.has(p) ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+          >
+            {PILL_LABELS[p]}
           </button>
         ))}
       </div>
