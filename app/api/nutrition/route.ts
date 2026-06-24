@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { FoodLog } from '@/models/FoodLog'
+import { mealFromTime, type MealType } from '@/lib/nutrition-meal'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -29,11 +30,15 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { description, calories, proteinG, carbsG, fatG } = body
+  const { description, calories, proteinG, carbsG, fatG, meal, photoUrl } = body
   if (!description) return NextResponse.json({ error: 'Description required' }, { status: 400 })
 
   await connectDB()
-  const date = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const date = now.toISOString().split('T')[0]
+  const validMeals: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
+  const resolvedMeal: MealType = validMeals.includes(meal) ? meal : mealFromTime(now)
+
   const log = await FoodLog.create({
     userId: session.user.id,
     date,
@@ -42,6 +47,8 @@ export async function POST(req: NextRequest) {
     proteinG: proteinG ?? 0,
     carbsG: carbsG ?? 0,
     fatG: fatG ?? 0,
+    meal: resolvedMeal,
+    photoUrl: photoUrl || undefined,
   })
 
   return NextResponse.json(log, { status: 201 })
