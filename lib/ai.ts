@@ -121,7 +121,9 @@ export function parseMacros(responseText: string): { message: string; macros: Ma
   }
 }
 
-const VISION_MODEL = 'meta-llama/llama-3.2-11b-vision-instruct:free'
+// Paid slug — the `:free` vision model was pulled by OpenRouter (404/429), which
+// silently broke photo scanning. Paid llama-3.2-11b-vision is cheap and reliable.
+const VISION_MODEL = 'meta-llama/llama-3.2-11b-vision-instruct'
 
 const PHOTO_SYSTEM = `You are a nutrition vision estimator. Look at the food photo and estimate its nutrition for the full portion shown.
 Reply with ONLY this tag and nothing else:
