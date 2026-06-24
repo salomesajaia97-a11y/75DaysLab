@@ -32,9 +32,10 @@ interface Recipe {
 }
 
 type PillKey =
-  | 'maxIngr10' | 'onePot' | 'quick'        // Minimal
-  | 'highProtein' | 'lowCarb' | 'lowCal'    // Goal
-  | 'vegan' | 'vegetarian' | 'wholeFood'    // Plant-Forward
+  | 'maxIngr10' | 'onePot' | 'quick'              // Minimal
+  | 'highProtein' | 'lowCarb' | 'lowCal'          // Goal
+  | 'lowCal200' | 'lowCal300'                     // Cal quick-filters
+  | 'vegan' | 'vegetarian' | 'wholeFood'          // Plant-Forward
 
 type LensKey = 'all' | 'minimal' | 'goal' | 'plant'
 
@@ -47,7 +48,8 @@ const LENSES: { key: LensKey; labelKey: string; fallback: string; pills: PillKey
 
 const PILL_LABELS: Record<PillKey, string> = {
   maxIngr10: '≤10 ingredients', onePot: 'One-pot', quick: '≤30 min',
-  highProtein: 'High-protein', lowCarb: 'Low-carb', lowCal: '≤400 cal',
+  highProtein: 'High-protein', lowCarb: 'Low-carb', lowCal: '400 cal',
+  lowCal200: '200 cal', lowCal300: '300 cal',
   vegan: 'Vegan', vegetarian: 'Vegetarian', wholeFood: 'Whole-food',
 }
 
@@ -59,10 +61,14 @@ const PILL_PARAMS: Record<PillKey, [string, string]> = {
   highProtein: ['minProtein', '20'],
   lowCarb:     ['maxCarbs', '20'],
   lowCal:      ['maxCal', '400'],
+  lowCal200:   ['maxCal', '200'],
+  lowCal300:   ['maxCal', '300'],
   vegan:       ['diet', 'vegan'],
   vegetarian:  ['diet', 'vegetarian'],
   wholeFood:   ['diet', 'whole-food'],
 }
+
+const CAL_PILLS: PillKey[] = ['lowCal200', 'lowCal300', 'lowCal', 'highProtein']
 
 function buildQuery(pills: Set<PillKey>): string {
   const params = new URLSearchParams()
@@ -398,6 +404,20 @@ export default function RecipesPage() {
             style={lens === l.key ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
           >
             {t(l.labelKey) === l.labelKey ? l.fallback : t(l.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* Cal / Protein quick-filter pills — always visible */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {CAL_PILLS.map(p => (
+          <button
+            key={p}
+            onClick={() => togglePill(p)}
+            className={cn('flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-all', pills.has(p) ? 'text-white' : 'border')}
+            style={pills.has(p) ? { background: 'var(--primary)' } : { borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
+          >
+            {PILL_LABELS[p]}
           </button>
         ))}
       </div>
