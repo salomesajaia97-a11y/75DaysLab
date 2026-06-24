@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Clock, Flame, Plus, X, Type, Camera, Image as ImageIcon, Star, RefreshCw } from 'lucide-react'
+import { Heart, Clock, Flame, Plus, X, Type, Camera, Image as ImageIcon, Star, RefreshCw, Search, ChefHat } from 'lucide-react'
 import NextImage from 'next/image'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/i18n'
@@ -29,6 +29,10 @@ interface Recipe {
   ingredientCount?: number
   isOnePot?: boolean
   dietTags?: string[]
+}
+
+interface FridgeResult extends Recipe {
+  matchScore: number
 }
 
 type PillKey =
@@ -212,6 +216,199 @@ const SCRAPE_TARGETS: { site: string; label: string }[] = [
   { site: 'spruceeats',      label: 'SpruceEats' },
 ]
 
+function FridgeResultRow({ recipe, totalTags }: { recipe: FridgeResult; totalTags: number }) {
+  const gradient = cardGradient(recipe._id)
+  const emoji = cardEmoji(recipe._id)
+  return (
+    <Link href={`/recipes/${recipe._id}`}>
+      <motion.div
+        whileHover={{ x: 2 }}
+        transition={{ duration: 0.15 }}
+        className="flex items-center gap-3 p-2 rounded-xl cursor-pointer"
+        style={{ border: '1px solid var(--border)' }}
+      >
+        <div className={`relative h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+          {recipe.imageUrl ? (
+            <NextImage
+              src={recipe.imageUrl}
+              alt={recipe.title}
+              fill
+              className="object-cover"
+              sizes="48px"
+              unoptimized
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          ) : (
+            <span className="text-xl">{emoji}</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold truncate" style={{ color: 'var(--foreground)' }}>{recipe.title}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            {recipe.calories && (
+              <span className="flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
+                <Flame className="h-2.5 w-2.5 text-orange-400" />{recipe.calories}
+              </span>
+            )}
+            {recipe.totalTimeMin && (
+              <span className="flex items-center gap-0.5 text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
+                <Clock className="h-2.5 w-2.5" />{recipe.totalTimeMin}m
+              </span>
+            )}
+          </div>
+        </div>
+        <span
+          className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+        >
+          {recipe.matchScore}/{totalTags}
+        </span>
+      </motion.div>
+    </Link>
+  )
+}
+
+function FridgeSearch() {
+  const [input, setInput] = useState('')
+  const [tags, setTags] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<FridgeResult[] | null>(null)
+
+  function addTag() {
+    const val = input.trim().replace(/,+$/, '')
+    if (val && !tags.map(t => t.toLowerCase()).includes(val.toLowerCase())) {
+      setTags(prev => [...prev, val])
+    }
+    setInput('')
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addTag()
+    }
+    if (e.key === 'Backspace' && !input && tags.length) {
+      setTags(prev => prev.slice(0, -1))
+    }
+  }
+
+  async function search() {
+    if (!tags.length) return
+    setLoading(true)
+    setResults(null)
+    try {
+      const res = await fetch('/api/recipes/fridge-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredients: tags }),
+      })
+      const data = await res.json()
+      setResults(data.recipes ?? [])
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+      <div className="flex items-center gap-2">
+        <ChefHat className="h-4 w-4" style={{ color: 'var(--primary)' }} />
+        <h2 className="text-sm font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+          Cook with What You Have
+        </h2>
+      </div>
+
+      {/* Tag input area */}
+      <div
+        className="flex flex-wrap gap-2 p-2.5 rounded-xl min-h-[44px] cursor-text"
+        style={{ background: 'var(--muted)', border: '1px solid var(--border)' }}
+        onClick={e => (e.currentTarget.querySelector('input') as HTMLInputElement)?.focus()}
+      >
+        {tags.map(tag => (
+          <span
+            key={tag}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+            style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+          >
+            {tag}
+            <button
+              onClick={e => { e.stopPropagation(); setTags(prev => prev.filter(t => t !== tag)) }}
+              className="hover:opacity-70 flex items-center"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </span>
+        ))}
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={addTag}
+          placeholder={tags.length ? 'Add another…' : 'Type an ingredient and press Enter (e.g. chicken)'}
+          className="flex-1 min-w-[160px] bg-transparent text-xs outline-none placeholder:text-[var(--muted-foreground)]"
+          style={{ color: 'var(--foreground)' }}
+        />
+      </div>
+
+      {/* Actions row */}
+      <div className="flex items-center justify-between">
+        {tags.length > 0 ? (
+          <button
+            onClick={() => { setTags([]); setResults(null) }}
+            className="text-xs"
+            style={{ color: 'var(--muted-foreground)' }}
+          >
+            Clear all
+          </button>
+        ) : <span />}
+        <button
+          onClick={search}
+          disabled={!tags.length || loading}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:opacity-90 active:scale-95 disabled:opacity-40"
+          style={{ background: 'var(--primary)', color: 'var(--primary-foreground)' }}
+        >
+          {loading
+            ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            : <Search className="h-3.5 w-3.5" />}
+          Find Recipes
+        </button>
+      </div>
+
+      {/* Results */}
+      <AnimatePresence>
+        {results !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="space-y-2 pt-3 border-t"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {results.length === 0 ? (
+              <p className="text-xs text-center py-3" style={{ color: 'var(--muted-foreground)' }}>
+                No recipes found. Try simpler terms like &ldquo;chicken&rdquo; or &ldquo;garlic&rdquo;.
+              </p>
+            ) : (
+              <>
+                <p className="text-[11px] font-medium" style={{ color: 'var(--muted-foreground)' }}>
+                  {results.length} recipe{results.length !== 1 ? 's' : ''} matched
+                </p>
+                <div className="space-y-1.5">
+                  {results.map(recipe => (
+                    <FridgeResultRow key={recipe._id} recipe={recipe} totalTags={tags.length} />
+                  ))}
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
 function groupBySite(recipes: Recipe[]): GroupedRecipes {
   const map = new Map<string, Recipe[]>()
   for (const r of recipes) {
@@ -349,6 +546,9 @@ export default function RecipesPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Fridge search */}
+      <FridgeSearch />
 
       {/* Featured banner */}
       {featured && (
