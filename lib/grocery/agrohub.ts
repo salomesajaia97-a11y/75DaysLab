@@ -3,39 +3,52 @@ import type { ScrapedProduct } from './types'
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
+// The agrohub.ge homepage sets an `agrohub-access_token` cookie whose value is
+// URL-encoded JSON: {"token":"<jwt>","isUserToken":false}. The product API wants
+// the inner JWT as a Bearer token — NOT the whole JSON blob.
 async function harvestToken(): Promise<string | null> {
   try {
     const res = await fetch('https://agrohub.ge', { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(10000) })
     const setCookie = res.headers.get('set-cookie') ?? ''
     const m = setCookie.match(/agrohub-access_token=([^;]+)/)
-    return m ? decodeURIComponent(m[1]) : null
+    if (!m) return null
+    const raw = decodeURIComponent(m[1])
+    try {
+      const obj = JSON.parse(raw) as { token?: string }
+      return obj.token ?? null
+    } catch {
+      return raw // fall back to raw value if it is ever a bare token
+    }
   } catch { return null }
 }
 
-interface AhProduct { id?: string | number; name?: string; nameGeo?: string; title?: string; price?: number; salePrice?: number; unit?: string; slug?: string }
+// Live shape (verified): api.agrohub.ge/v1/Products → { products: [{ id, name, price, imageUrl, onSale, previousPrice, ... }] }.
+// Product names are English/transliterated, not Georgian. There is no `unit` or `slug`.
+interface AhProduct { id?: string | number; name?: string; price?: number; onSale?: boolean; previousPrice?: number | null }
 
 function mapProduct(p: AhProduct): ScrapedProduct | null {
-  const price = p.salePrice ?? p.price
-  const productName = (p.nameGeo ?? p.name ?? p.title ?? '').trim()
+  const price = p.onSale && p.price ? p.price : p.price
+  const productName = (p.name ?? '').trim()
   if (!price || !productName) return null
   return {
     retailer: 'agrohub',
     productName,
     price: Number(price),
-    unit: p.unit,
-    sourceUrl: p.slug ? `https://agrohub.ge/product/${p.slug}` : (p.id ? `https://agrohub.ge/product/${p.id}` : 'https://agrohub.ge'),
+    sourceUrl: p.id != null ? `https://agrohub.ge/en/product/${p.id}` : 'https://agrohub.ge',
   }
 }
 
 async function fetchPage(token: string, page: number, query?: string): Promise<ScrapedProduct[]> {
   try {
-    const q = query ? `&Search=${encodeURIComponent(query)}` : ''
+    // `Name` is the search param that actually filters (Search/Query/Text are ignored).
+    const q = query ? `&Name=${encodeURIComponent(query)}` : ''
     const res = await fetch(`https://api.agrohub.ge/v1/Products?Page=${page}&Limit=100${q}`, {
       headers: { 'User-Agent': UA, Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(12000),
     })
     if (!res.ok) return []
     const data = await res.json()
-    const products: AhProduct[] = data?.data ?? data?.items ?? data?.products ?? (Array.isArray(data) ? data : [])
+    const raw = data?.products ?? data?.data ?? data?.items
+    const products: AhProduct[] = Array.isArray(raw) ? raw : []
     return products.map(mapProduct).filter((x): x is ScrapedProduct => x !== null)
   } catch { return [] }
 }
