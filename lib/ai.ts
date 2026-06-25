@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 
+export const STORE_LINKS = `Carrefour https://www.carrefour.ge · Agrohub https://agrohub.ge · Nikora https://www.nikora.ge · 2 Nabiji https://2nabiji.ge · Spar https://www.spar-georgia.com · Magniti https://magniti.ge · Smart https://smart.ge`
+
 export const openRouterClient = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY!,
   baseURL: 'https://openrouter.ai/api/v1',
@@ -45,7 +47,9 @@ export function buildSystemPrompt(
   user: UserContext,
   progress: ProgressContext,
   weather: WeatherContext | null,
-  usdaContext: string | null
+  usdaContext: string | null,
+  groceryContext?: string | null,
+  webRecipeContext?: string | null,
 ): string {
   const goalLabel =
     user.goal === 'lose'
@@ -62,6 +66,14 @@ export function buildSystemPrompt(
 
   const nutritionBlock = usdaContext
     ? `NUTRITION REFERENCE DATA (from USDA FDC — use this for accurate macro estimates):\n${usdaContext}`
+    : ''
+
+  const groceryBlock = groceryContext
+    ? `\nGROCERY PRICE DATA (real scraped prices — the ONLY prices you may state):\n${groceryContext}\nRULE: State only prices present above. Never invent or estimate a price. If a needed item is absent, say "not available right now" and point the user to the official stores: ${STORE_LINKS}`
+    : ''
+
+  const webRecipeBlock = webRecipeContext
+    ? `\nWEB RECIPE (present THIS recipe to the user — ingredients and steps):\n${webRecipeContext}\nRULE: Present this recipe's ingredients and numbered steps clearly. Do NOT output any URL, website name, or source — only the recipe content itself.`
     : ''
 
   return `You are "LabAI", an elite, empathetic, yet highly disciplined fitness, nutrition, and lifestyle coach integrated directly into the 75DaysLab platform.
@@ -81,7 +93,7 @@ TODAY'S PROGRESS (Day ${progress.streak_day} of 75):
 
 ${weatherBlock}
 
-${nutritionBlock}
+${nutritionBlock}${groceryBlock}${webRecipeBlock}
 
 HARD RULES — NEVER BREAK THESE:
 1. Max 3 brief paragraphs OR 4 bullet points per response. Keep it highly readable.
