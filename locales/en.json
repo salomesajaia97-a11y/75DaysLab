@@ -127,6 +127,12 @@
   "nutrition.slot_empty": "Empty",
   "nutrition.snack_allday": "During the day",
   "nutrition.recipes_heading": "Recipes",
+  "nutrition.add.title": "Add food",
+  "nutrition.add.text_placeholder": "What did you eat? e.g. '2 eggs with avocado toast'",
+  "nutrition.add.estimate": "Estimate",
+  "nutrition.add.scanning": "Scanning…",
+  "nutrition.add.log_to": "Log to {meal}",
+  "nutrition.add.no_favorites": "No favorites yet. Log some food and it'll show up here.",
 
   "cycle.title": "Cycle Tracker",
   "cycle.card_title": "Menstrual Calendar",

@@ -127,6 +127,12 @@
   "nutrition.slot_empty": "ცარიელია",
   "nutrition.snack_allday": "დღის განმავლობაში",
   "nutrition.recipes_heading": "რეცეპტები",
+  "nutrition.add.title": "დაამატე საკვები",
+  "nutrition.add.text_placeholder": "რა მიირთვი? მაგ: '2 კვერცხი და ავოკადო ტოსტი'",
+  "nutrition.add.estimate": "გამოთვალე",
+  "nutrition.add.scanning": "სკანირება…",
+  "nutrition.add.log_to": "დაამატე — {meal}",
+  "nutrition.add.no_favorites": "ჯერ ფავორიტები არ გაქვს. დაამატე საკვები და აქ გამოჩნდება.",
 
   "cycle.title": "ციკლის ტრეკერი",
   "cycle.card_title": "მენსტრუაციის კალენდარი",
