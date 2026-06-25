@@ -35,6 +35,10 @@ function normalizeGe(s: string): string {
   return s.toLowerCase().trim()
 }
 
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 /** One batched AI call: English food terms -> Georgian search terms. Translation only, no prices. */
 export async function translateTerms(terms: string[]): Promise<Record<string, string>> {
   const unique = [...new Set(terms)].filter(Boolean)
@@ -72,20 +76,25 @@ export async function matchIngredients(ingredients: string[]): Promise<MatchedIn
     const matches: PriceMatch[] = []
     if (termGe) {
       const search = normalizeGe(termGe)
+      const safe = escapeRegex(search.split(/\s+/)[0])
       for (const retailer of RETAILERS) {
-        const row = await GroceryPrice.findOne({
-          retailer,
-          searchText: { $regex: search.split(/\s+/)[0], $options: 'i' },
-        }).sort({ price: 1 }).lean<{ productName: string; price: number; unit?: string; sourceUrl: string; scrapedAt: Date } | null>()
-        if (row) {
-          matches.push({
+        try {
+          const row = await GroceryPrice.findOne({
             retailer,
-            productName: row.productName,
-            price: row.price,
-            unit: row.unit,
-            sourceUrl: row.sourceUrl,
-            scrapedAt: row.scrapedAt.toISOString(),
-          })
+            searchText: { $regex: safe, $options: 'i' },
+          }).sort({ price: 1 }).lean<{ productName: string; price: number; unit?: string; sourceUrl: string; scrapedAt: Date } | null>()
+          if (row) {
+            matches.push({
+              retailer,
+              productName: row.productName,
+              price: row.price,
+              unit: row.unit,
+              sourceUrl: row.sourceUrl,
+              scrapedAt: row.scrapedAt.toISOString(),
+            })
+          }
+        } catch (err) {
+          console.error('[grocery/matchIngredients] lookup failed', retailer, err instanceof Error ? err.message : String(err))
         }
       }
     }
