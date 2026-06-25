@@ -125,6 +125,10 @@ export async function POST(req: NextRequest) {
 
   let groceryContext: string | null = null
   let webRecipeContext: string | null = null
+  // When web search finds no real recipe (or CSE keys aren't set), we ask the
+  // model to GENERATE a custom recipe instead. `recipeRequest` carries what to
+  // generate: the dish text and, for pantry mode, the ingredients on hand.
+  let recipeRequest: { dish: string; pantry?: string[] } | null = null
 
   if (intent === 'grocery_price') {
     const term = extractPriceTerm(message)
@@ -135,6 +139,7 @@ export async function POST(req: NextRequest) {
   } else if (intent === 'recipe_web') {
     const recipes = await findWebRecipes(message)
     if (recipes[0]) webRecipeContext = formatWebRecipe(recipes[0])
+    else recipeRequest = { dish: message }
   } else if (intent === 'cook_from_pantry') {
     const pantry = parsePantryItems(message)
     const recipes = await findWebRecipes(pantry.join(' '))
@@ -147,10 +152,14 @@ export async function POST(req: NextRequest) {
         const items = await matchIngredients(missing)
         groceryContext = formatGrocery(items)
       }
+    } else {
+      recipeRequest = { dish: pantry.length ? pantry.join(', ') : message, pantry }
     }
   }
 
-  const systemPrompt = buildSystemPrompt(userContext, progress, weather, usdaContext, groceryContext, webRecipeContext)
+  const systemPrompt = buildSystemPrompt(userContext, progress, weather, usdaContext, groceryContext, webRecipeContext, recipeRequest)
+  // Recipes need room for a full ingredient list + numbered steps.
+  const maxTokens = webRecipeContext || recipeRequest ? 900 : 512
 
   // NOTE: OpenRouter removed/throttled the `:free` model slugs (404 "unavailable for
   // free" / 429 rate-limited upstream), which made every AI call fail and silently
@@ -165,7 +174,7 @@ export async function POST(req: NextRequest) {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message },
       ],
-      max_tokens: 512,
+      max_tokens: maxTokens,
     })
     rawText = completion.choices[0]?.message?.content ?? ''
     if (!rawText) {

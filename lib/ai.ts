@@ -50,6 +50,7 @@ export function buildSystemPrompt(
   usdaContext: string | null,
   groceryContext?: string | null,
   webRecipeContext?: string | null,
+  recipeRequest?: { dish: string; pantry?: string[] } | null,
 ): string {
   const goalLabel =
     user.goal === 'lose'
@@ -76,6 +77,16 @@ export function buildSystemPrompt(
     ? `\nWEB RECIPE (present THIS recipe to the user — ingredients and steps):\n${webRecipeContext}\nRULE: Present this recipe's ingredients and numbered steps clearly. Do NOT output any URL, website name, or source — only the recipe content itself.`
     : ''
 
+  // When no real web recipe was found, generate a custom one. Mutually exclusive
+  // with webRecipeBlock (the route sets only one).
+  const recipeGenBlock = !webRecipeContext && recipeRequest
+    ? `\nGENERATE A RECIPE for: "${recipeRequest.dish}".${
+        recipeRequest.pantry?.length
+          ? ` The user already has at home: ${recipeRequest.pantry.join(', ')}. Build the recipe primarily around these, and clearly list any EXTRA ingredients they'd need to buy under a short "To buy" heading so they can price them.`
+          : ''
+      }\nRULE: Output a complete, original recipe — a title, a full ingredient list (with amounts), and numbered steps. Keep it health- and budget-conscious for the user's goal. This recipe response MAY exceed the usual length limit (Hard Rule 1 does not apply to the recipe body). Do NOT fabricate any specific store price; if you mention buying, point to checking the stores.`
+    : ''
+
   return `You are "LabAI", an elite, empathetic, yet highly disciplined fitness, nutrition, and lifestyle coach integrated directly into the 75DaysLab platform.
 
 TONE: Motivational, direct, scientifically accurate, concise. Speak like a helpful peer and expert trainer — never academic, verbose, or robotic. Match the clean, minimalist aesthetic of the platform. No bullet-point walls; keep answers scannable.
@@ -93,7 +104,7 @@ TODAY'S PROGRESS (Day ${progress.streak_day} of 75):
 
 ${weatherBlock}
 
-${nutritionBlock}${groceryBlock}${webRecipeBlock}
+${nutritionBlock}${groceryBlock}${webRecipeBlock}${recipeGenBlock}
 
 HARD RULES — NEVER BREAK THESE:
 1. Max 3 brief paragraphs OR 4 bullet points per response. Keep it highly readable.
