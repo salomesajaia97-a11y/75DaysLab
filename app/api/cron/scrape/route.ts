@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongoose'
 import { Recipe } from '@/models/Recipe'
 import { scrapeRecipePage, getRecipeUrlsSkinnyTaste, delay } from '@/lib/scrapers'
+import { scrapeAllRetailers } from '@/lib/grocery'
 
 export const maxDuration = 300
 
@@ -48,5 +49,12 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, ...results })
+  let grocery: { retailer: string; count: number }[] = []
+  try {
+    grocery = await scrapeAllRetailers()
+  } catch (err) {
+    console.error('[cron] grocery scrape failed', err instanceof Error ? err.message : String(err))
+  }
+
+  return NextResponse.json({ ok: true, ...results, grocery })
 }

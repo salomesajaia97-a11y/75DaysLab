@@ -7,10 +7,11 @@ import { DailyLog } from '@/models/DailyLog'
 import { FoodLog } from '@/models/FoodLog'
 import { WaterLog } from '@/models/WaterLog'
 import { JournalEntry } from '@/models/JournalEntry'
+import { GroceryPrice } from '@/models/GroceryPrice'
 import type { Model } from 'mongoose'
 
 export const FULL_ACCESS_MODELS = ['user', 'challenge', 'squad', 'photo'] as const
-export const READ_ONLY_MODELS = ['cyclelog', 'dailylog', 'foodlog', 'waterlog', 'journalentry'] as const
+export const READ_ONLY_MODELS = ['cyclelog', 'dailylog', 'foodlog', 'waterlog', 'journalentry', 'groceryprice'] as const
 export type ModelSlug = (typeof FULL_ACCESS_MODELS)[number] | (typeof READ_ONLY_MODELS)[number]
 
 export interface ModelMeta {
@@ -30,7 +31,8 @@ export const MODEL_REGISTRY: Record<ModelSlug, ModelMeta> = {
   dailylog:     { model: DailyLog,     label: 'Daily Logs',     searchField: 'userId',  readOnly: true  },
   foodlog:      { model: FoodLog,      label: 'Food Logs',      searchField: 'userId',  readOnly: true  },
   waterlog:     { model: WaterLog,     label: 'Water Logs',     searchField: 'userId',  readOnly: true  },
-  journalentry: { model: JournalEntry, label: 'Journal Entries',searchField: 'userId',  readOnly: true  },
+  journalentry:  { model: JournalEntry,  label: 'Journal Entries', searchField: 'userId',      readOnly: true  },
+  groceryprice:  { model: GroceryPrice,  label: 'Grocery Prices',  searchField: 'productName', readOnly: true  },
 }
 
 export function isValidModelSlug(slug: string): slug is ModelSlug {
