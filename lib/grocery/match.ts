@@ -1,6 +1,7 @@
 // lib/grocery/match.ts
 import { openRouterClient } from '@/lib/ai'
 import { GroceryPrice } from '@/models/GroceryPrice'
+import { harvestToken as agrohubToken, searchByName as agrohubSearch } from './agrohub'
 import { RETAILERS } from './types'
 import type { Retailer, MatchedIngredient, PriceMatch, Basket } from './types'
 
@@ -65,50 +66,83 @@ export async function translateTerms(terms: string[]): Promise<Record<string, st
   }
 }
 
+/** The most distinctive (longest) word in a term — the noun we filter results on. */
+function relevanceWord(term: string): string {
+  return term.split(/\s+/).filter(Boolean).sort((a, b) => b.length - a.length)[0] ?? term
+}
+
+/** Cheapest agrohub product (live) whose name actually contains the term's noun. */
+async function liveAgrohub(token: string, coreTerm: string): Promise<PriceMatch | null> {
+  if (!coreTerm) return null
+  const products = await agrohubSearch(token, coreTerm)
+  const word = relevanceWord(coreTerm)
+  const relevant = products.filter(p => p.productName.toLowerCase().includes(word))
+  // Prefer products whose NAME STARTS with the noun ("Garlic ..." over "Baguette
+  // with garlic ..."), so the cheapest is of the actual item, not a tangential one.
+  const leading = relevant.filter(p => p.productName.toLowerCase().startsWith(word))
+  const pool = leading.length ? leading : relevant   // require a real name match — never a random cheap item
+  let best: PriceMatch | null = null
+  for (const p of pool) {
+    if (!best || p.price < best.price) {
+      best = { retailer: 'agrohub', productName: p.productName, price: p.price, unit: p.unit, sourceUrl: p.sourceUrl, scrapedAt: new Date().toISOString() }
+    }
+  }
+  return best
+}
+
+/** Cheapest cron-cached DB row for a retailer matching any of the search terms. */
+async function dbMatch(retailer: Retailer, safeTerms: string[]): Promise<PriceMatch | null> {
+  let best: PriceMatch | null = null
+  for (const safe of safeTerms) {
+    try {
+      const row = await GroceryPrice.findOne({
+        retailer,
+        searchText: { $regex: safe, $options: 'i' },
+      }).sort({ price: 1 }).lean<{ productName: string; price: number; unit?: string; sourceUrl: string; scrapedAt: Date } | null>()
+      if (row && (!best || row.price < best.price)) {
+        best = { retailer, productName: row.productName, price: row.price, unit: row.unit, sourceUrl: row.sourceUrl, scrapedAt: row.scrapedAt.toISOString() }
+      }
+    } catch (err) {
+      console.error('[grocery/matchIngredients] db lookup failed', retailer, err instanceof Error ? err.message : String(err))
+    }
+  }
+  return best
+}
+
 export async function matchIngredients(ingredients: string[]): Promise<MatchedIngredient[]> {
   const terms = ingredients.map(stripToFoodTerm)
   const translations = await translateTerms(terms)
+
+  // Harvest the agrohub token ONCE for the whole batch (live prices, no cron wait).
+  const token = await agrohubToken().catch(() => null)
 
   const out: MatchedIngredient[] = []
   for (let i = 0; i < ingredients.length; i++) {
     const term = terms[i]
     const termGe = translations[term]
 
-    // Retailers don't all list in the same language: orinabiji/nikora use
-    // Georgian product names, but agrohub lists in English. So we search each
-    // retailer with BOTH the Georgian translation AND the English core term and
-    // keep whichever yields the cheapest real row. Each is the first word only
-    // (regex-escaped) to stay a broad "contains" match.
-    const searchTerms = [...new Set([
+    // DB search terms (first word, regex-escaped) for cron-cached retailers.
+    const safeTerms = [...new Set([
       termGe ? escapeRegex(normalizeGe(termGe).split(/\s+/)[0]) : '',
       term ? escapeRegex(term.split(/\s+/)[0]) : '',
     ].filter(Boolean))]
 
     const matches: PriceMatch[] = []
+
+    // agrohub — LIVE (it lists in English; query with the English core term).
+    if (token) {
+      const live = await liveAgrohub(token, term)
+      if (live) matches.push(live)
+    }
+
+    // orinabiji / nikora — cron-cached DB (Georgian names). No live price source
+    // available for these yet, so they only appear once the cron has populated them.
     for (const retailer of RETAILERS) {
-      let best: PriceMatch | null = null
-      for (const safe of searchTerms) {
-        try {
-          const row = await GroceryPrice.findOne({
-            retailer,
-            searchText: { $regex: safe, $options: 'i' },
-          }).sort({ price: 1 }).lean<{ productName: string; price: number; unit?: string; sourceUrl: string; scrapedAt: Date } | null>()
-          if (row && (!best || row.price < best.price)) {
-            best = {
-              retailer,
-              productName: row.productName,
-              price: row.price,
-              unit: row.unit,
-              sourceUrl: row.sourceUrl,
-              scrapedAt: row.scrapedAt.toISOString(),
-            }
-          }
-        } catch (err) {
-          console.error('[grocery/matchIngredients] lookup failed', retailer, err instanceof Error ? err.message : String(err))
-        }
-      }
+      if (retailer === 'agrohub') continue
+      const best = await dbMatch(retailer, safeTerms)
       if (best) matches.push(best)
     }
+
     out.push({ ingredient: ingredients[i], term, termGe, matches })
   }
   return out

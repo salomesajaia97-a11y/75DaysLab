@@ -71,3 +71,10 @@ export async function refreshOne(query: string): Promise<ScrapedProduct[]> {
   if (!token) return []
   return fetchPage(token, 1, query)
 }
+
+// Live matching helpers (used by the matcher so prices show without waiting for
+// the daily cron). Harvest the token once, then search many terms with it.
+export { harvestToken }
+export async function searchByName(token: string, term: string): Promise<ScrapedProduct[]> {
+  return fetchPage(token, 1, term)
+}

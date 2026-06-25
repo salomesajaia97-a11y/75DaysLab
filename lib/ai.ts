@@ -70,7 +70,7 @@ export function buildSystemPrompt(
     : ''
 
   const groceryBlock = groceryContext
-    ? `\nGROCERY PRICE DATA (real scraped prices — the ONLY prices you may state):\n${groceryContext}\nRULE: State only prices present above. Never invent or estimate a price. If a needed item is absent, say "not available right now" and point the user to the official stores: ${STORE_LINKS}`
+    ? `\nGROCERY PRICE DATA (real scraped prices — the ONLY prices you may state):\n${groceryContext}\nRULE: State only prices present above. Never invent or estimate a price. All prices are in Georgian Lari — always write them with the ₾ symbol, never $ or USD. If a needed item is absent, say "not available right now" and point the user to the official stores: ${STORE_LINKS}`
     : ''
 
   const webRecipeBlock = webRecipeContext
@@ -84,7 +84,7 @@ export function buildSystemPrompt(
         recipeRequest.pantry?.length
           ? ` The user already has at home: ${recipeRequest.pantry.join(', ')}. Build the recipe primarily around these, and clearly list any EXTRA ingredients they'd need to buy under a short "To buy" heading so they can price them.`
           : ''
-      }\nRULE: Output a complete, original recipe — a title, a full ingredient list (with amounts), and numbered steps. Keep it health- and budget-conscious for the user's goal. This recipe response MAY exceed the usual length limit (Hard Rule 1 does not apply to the recipe body). Do NOT fabricate any specific store price; if you mention buying, point to checking the stores.`
+      }\nRULE: Output a complete, original recipe — a title, a full ingredient list (with amounts), and numbered steps. Keep it health- and budget-conscious for the user's goal. This recipe response MAY exceed the usual length limit (Hard Rule 1 does not apply to the recipe body). Do NOT fabricate any specific store price; if you mention cost, use Georgian Lari (₾), never $ or USD, and point to checking the stores.`
     : ''
 
   return `You are "LabAI", an elite, empathetic, yet highly disciplined fitness, nutrition, and lifestyle coach integrated directly into the 75DaysLab platform.
