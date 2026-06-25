@@ -73,30 +73,41 @@ export async function matchIngredients(ingredients: string[]): Promise<MatchedIn
   for (let i = 0; i < ingredients.length; i++) {
     const term = terms[i]
     const termGe = translations[term]
+
+    // Retailers don't all list in the same language: orinabiji/nikora use
+    // Georgian product names, but agrohub lists in English. So we search each
+    // retailer with BOTH the Georgian translation AND the English core term and
+    // keep whichever yields the cheapest real row. Each is the first word only
+    // (regex-escaped) to stay a broad "contains" match.
+    const searchTerms = [...new Set([
+      termGe ? escapeRegex(normalizeGe(termGe).split(/\s+/)[0]) : '',
+      term ? escapeRegex(term.split(/\s+/)[0]) : '',
+    ].filter(Boolean))]
+
     const matches: PriceMatch[] = []
-    if (termGe) {
-      const search = normalizeGe(termGe)
-      const safe = escapeRegex(search.split(/\s+/)[0])
-      for (const retailer of RETAILERS) {
+    for (const retailer of RETAILERS) {
+      let best: PriceMatch | null = null
+      for (const safe of searchTerms) {
         try {
           const row = await GroceryPrice.findOne({
             retailer,
             searchText: { $regex: safe, $options: 'i' },
           }).sort({ price: 1 }).lean<{ productName: string; price: number; unit?: string; sourceUrl: string; scrapedAt: Date } | null>()
-          if (row) {
-            matches.push({
+          if (row && (!best || row.price < best.price)) {
+            best = {
               retailer,
               productName: row.productName,
               price: row.price,
               unit: row.unit,
               sourceUrl: row.sourceUrl,
               scrapedAt: row.scrapedAt.toISOString(),
-            })
+            }
           }
         } catch (err) {
           console.error('[grocery/matchIngredients] lookup failed', retailer, err instanceof Error ? err.message : String(err))
         }
       }
+      if (best) matches.push(best)
     }
     out.push({ ingredient: ingredients[i], term, termGe, matches })
   }
