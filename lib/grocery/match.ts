@@ -9,7 +9,7 @@ const QTY_RE = /^[\d¼½¾⅓⅔⅛/.\-]+$/
 
 export function stripToFoodTerm(ingredient: string): string {
   // drop parentheticals and anything after a comma
-  let s = ingredient.replace(/\(.*?\)/g, ' ').split(',')[0]
+  const s = ingredient.replace(/\(.*?\)/g, ' ').split(',')[0]
   const tokens = s.trim().split(/\s+/)
   // drop leading quantity + unit/adjective tokens
   while (tokens.length > 1 && (QTY_RE.test(tokens[0]) || UNIT_RE.test(tokens[0]))) {
