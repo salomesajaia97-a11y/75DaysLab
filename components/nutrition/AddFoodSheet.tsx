@@ -72,7 +72,7 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
     const text = description.trim()
     if (!text) return
     const m = await log.estimateText(text)
-    setMacros(m)
+    if (m) setMacros(m)
   }
 
   async function commit(desc: string, m: Macros, url?: string) {

@@ -18,7 +18,7 @@ export interface UseFoodLogging {
   scanning: boolean
   error: string | null
   clearError(): void
-  estimateText(text: string): Promise<Macros>
+  estimateText(text: string): Promise<Macros | null>
   scanPhoto(file: File): Promise<{ macros: Macros | null; photoUrl?: string }>
   save(input: { description: string; macros: Macros; meal: MealType; photoUrl?: string }): Promise<FoodEntry | null>
 }
@@ -28,14 +28,24 @@ export function useFoodLogging(): UseFoodLogging {
   const [scanning, setScanning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function estimateText(text: string): Promise<Macros> {
-    const res = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, mode: 'food_log' }),
-    })
-    const data = await res.json()
-    return data.macros ?? { ...ZERO, food: text }
+  async function estimateText(text: string): Promise<Macros | null> {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, mode: 'food_log' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      return data.macros ?? { ...ZERO, food: text }
+    } catch {
+      setError("Couldn't estimate that. Try again or rephrase.")
+      return null
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function scanPhoto(file: File): Promise<{ macros: Macros | null; photoUrl?: string }> {
