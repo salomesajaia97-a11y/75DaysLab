@@ -4,6 +4,12 @@ import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { openRouterClient, buildSystemPrompt, parseMacros } from '@/lib/ai'
 import type { WeatherContext, ProgressContext } from '@/lib/ai'
+import { classifyIntent, parsePantryItems, extractPriceTerm } from '@/lib/ai/intent'
+import { matchIngredients } from '@/lib/grocery/match'
+import { findWebRecipes } from '@/lib/recipes/find'
+import { RETAILER_LABELS } from '@/lib/grocery/types'
+import type { MatchedIngredient } from '@/lib/grocery/types'
+import type { WebRecipe } from '@/lib/recipes/types'
 
 async function fetchWeather(city: string): Promise<WeatherContext | null> {
   const apiKey = process.env.OPENWEATHER_API_KEY
@@ -49,6 +55,21 @@ async function fetchUsdaContext(query: string): Promise<string | null> {
   } catch {
     return null
   }
+}
+
+function formatGrocery(items: MatchedIngredient[]): string {
+  return items.map(it => {
+    if (it.matches.length === 0) return `- ${it.term}: not available`
+    const lines = it.matches
+      .slice().sort((a, b) => a.price - b.price)
+      .map(m => `${RETAILER_LABELS[m.retailer]} ₾${m.price.toFixed(2)}${m.unit ? '/' + m.unit : ''}`)
+      .join(', ')
+    return `- ${it.term}: ${lines}`
+  }).join('\n')
+}
+
+function formatWebRecipe(r: WebRecipe): string {
+  return `Title: ${r.title}\nIngredients:\n${r.ingredients.map(i => '- ' + i).join('\n')}\nSteps:\n${r.instructions.map((s, i) => `${i + 1}. ${s}`).join('\n')}${r.totalTimeMin ? `\nTime: ${r.totalTimeMin} min` : ''}${r.servings ? `\nServes: ${r.servings}` : ''}`
 }
 
 export async function POST(req: NextRequest) {
@@ -100,7 +121,36 @@ export async function POST(req: NextRequest) {
     mode === 'food_log' ? fetchUsdaContext(message) : Promise.resolve(null),
   ])
 
-  const systemPrompt = buildSystemPrompt(userContext, progress, weather, usdaContext)
+  const intent = mode === 'chat' ? classifyIntent(message) : mode
+
+  let groceryContext: string | null = null
+  let webRecipeContext: string | null = null
+
+  if (intent === 'grocery_price') {
+    const term = extractPriceTerm(message)
+    if (term) {
+      const items = await matchIngredients([term])
+      groceryContext = formatGrocery(items)
+    }
+  } else if (intent === 'recipe_web') {
+    const recipes = await findWebRecipes(message)
+    if (recipes[0]) webRecipeContext = formatWebRecipe(recipes[0])
+  } else if (intent === 'cook_from_pantry') {
+    const pantry = parsePantryItems(message)
+    const recipes = await findWebRecipes(pantry.join(' '))
+    if (recipes[0]) {
+      webRecipeContext = formatWebRecipe(recipes[0])
+      const missing = recipes[0].ingredients.filter(
+        ing => !pantry.some(p => ing.toLowerCase().includes(p.toLowerCase())),
+      )
+      if (missing.length) {
+        const items = await matchIngredients(missing)
+        groceryContext = formatGrocery(items)
+      }
+    }
+  }
+
+  const systemPrompt = buildSystemPrompt(userContext, progress, weather, usdaContext, groceryContext, webRecipeContext)
 
   // NOTE: OpenRouter removed/throttled the `:free` model slugs (404 "unavailable for
   // free" / 429 rate-limited upstream), which made every AI call fail and silently
