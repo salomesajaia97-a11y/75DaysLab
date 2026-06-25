@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, Type, Camera, Image as ImageIcon, Star, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/lib/i18n'
@@ -35,6 +36,11 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined)
   const [favorites, setFavorites] = useState<FavoriteFood[]>([])
   const [favLoading, setFavLoading] = useState(false)
+  const [portalMounted, setPortalMounted] = useState(false)
+
+  // Portal only after mount (avoids SSR document access).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setPortalMounted(true) }, [])
 
   // Reset everything when the sheet (re)opens.
   useEffect(() => {
@@ -58,7 +64,7 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
       .finally(() => setFavLoading(false))
   }, [view])
 
-  if (!open || !meal) return null
+  if (!open || !meal || !portalMounted) return null
 
   const mealLabel = t(`nutrition.meal_${meal}`)
 
@@ -81,11 +87,11 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
     if (entry) { onLogged(entry); onClose() }
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         key="backdrop"
-        className="fixed inset-0 z-50 flex items-end justify-center"
+        className="fixed inset-0 z-[9999] flex items-end justify-center"
         style={{ background: 'rgba(0,0,0,0.4)' }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={onClose}
@@ -229,6 +235,7 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
           )}
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
