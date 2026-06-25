@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import NextImage from 'next/image'
 import { ArrowLeft, Flame, Clock, Users } from 'lucide-react'
+import { ShopIngredients } from '@/components/recipes/ShopIngredients'
 
 interface FullRecipe {
   _id: string
@@ -206,6 +207,9 @@ export default function RecipeDetailPage() {
           </ul>
         </section>
       )}
+
+      {/* Shop Ingredients */}
+      {recipe.ingredients?.length ? <ShopIngredients ingredients={recipe.ingredients} /> : null}
 
       {/* Instructions */}
       {recipe.instructions && recipe.instructions.length > 0 && (

@@ -194,5 +194,13 @@
   "recipes.add.gallery": "გალერეა",
   "recipes.add.gallery_desc": "აირჩიე ფოტო",
   "recipes.add.favorites": "ფავორიტები",
-  "recipes.add.favorites_desc": "შენი კერძები"
+  "recipes.add.favorites_desc": "შენი კერძები",
+
+  "recipes.shop_title": "ინგრედიენტების ყიდვა",
+  "recipes.shop_cta": "იპოვე იაფი ფასები",
+  "recipes.shop_loading": "ფასების ძებნა…",
+  "recipes.shop_basket": "კალათის ჯამი მაღაზიების მიხედვით",
+  "recipes.shop_updated": "განახლდა {h}სთ წინ",
+  "recipes.shop_na": "არ არის ხელმისაწვდომი",
+  "recipes.shop_unavailable": "ფასები ამჟამად მიუწვდომელია."
 }

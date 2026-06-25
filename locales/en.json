@@ -194,5 +194,13 @@
   "recipes.add.gallery": "Gallery",
   "recipes.add.gallery_desc": "Pick from gallery",
   "recipes.add.favorites": "Favorites",
-  "recipes.add.favorites_desc": "Your saved dishes"
+  "recipes.add.favorites_desc": "Your saved dishes",
+
+  "recipes.shop_title": "Shop ingredients",
+  "recipes.shop_cta": "Find cheapest prices",
+  "recipes.shop_loading": "Finding prices…",
+  "recipes.shop_basket": "Basket total per store",
+  "recipes.shop_updated": "updated {h}h ago",
+  "recipes.shop_na": "not available",
+  "recipes.shop_unavailable": "Prices unavailable right now."
 }
