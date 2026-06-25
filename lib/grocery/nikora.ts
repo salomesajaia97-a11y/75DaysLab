@@ -1,4 +1,12 @@
 // lib/grocery/nikora.ts
+//
+// LIVE FINDING (verified): nikorasupermarket.ge is a corporate/news site, not a
+// price catalog. Its `product_box_content` blocks are news/promo articles, and
+// the "current promotions" page has no parseable per-product price grid (promos
+// are image/PDF based). No structured product+price HTML exists to scrape, so
+// this adapter yields [] and Nikora shows "not available" in the UI — by design
+// (truth principle: never invent a price). Selectors below are kept as a
+// best-effort parser in case a structured catalog page is added later.
 import * as cheerio from 'cheerio'
 import type { ScrapedProduct } from './types'
 
