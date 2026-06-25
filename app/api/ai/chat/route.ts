@@ -59,7 +59,11 @@ async function fetchUsdaContext(query: string): Promise<string | null> {
 
 function formatGrocery(items: MatchedIngredient[]): string {
   return items.map(it => {
-    if (it.matches.length === 0) return `- ${it.term}: not available`
+    if (it.matches.length === 0) {
+      return it.approxPrice
+        ? `- ${it.term}: ≈ ₾${it.approxPrice.toFixed(2)} (approx estimate)`
+        : `- ${it.term}: not available`
+    }
     const lines = it.matches
       .slice().sort((a, b) => a.price - b.price)
       .map(m => `${RETAILER_LABELS[m.retailer]} ₾${m.price.toFixed(2)}${m.unit ? '/' + m.unit : ''}`)

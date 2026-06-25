@@ -70,7 +70,7 @@ export function buildSystemPrompt(
     : ''
 
   const groceryBlock = groceryContext
-    ? `\nGROCERY PRICE DATA (real scraped prices — the ONLY prices you may state):\n${groceryContext}\nRULE: State only prices present above. Never invent or estimate a price. All prices are in Georgian Lari — always write them with the ₾ symbol, never $ or USD. If a needed item is absent, say "not available right now" and point the user to the official stores: ${STORE_LINKS}`
+    ? `\nGROCERY PRICE DATA (real scraped prices — the ONLY prices you may state):\n${groceryContext}\nRULE: Use ONLY the numbers above — do not invent your own. A plain price (e.g. "Agrohub ₾4.95") is a real scraped price; state it as exact. A value marked "≈ approx estimate" is a rough estimate, NOT a live price — present it as approximate and tell the user to verify on the store apps/sites. All prices are in Georgian Lari (₾), never $ or USD. For anything with no number, say "not available" and point to the official stores: ${STORE_LINKS}`
     : ''
 
   const webRecipeBlock = webRecipeContext

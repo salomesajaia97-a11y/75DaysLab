@@ -71,6 +71,8 @@ export function ShopIngredients({ ingredients }: { ingredients: string[] }) {
                       {RETAILER_LABELS[m.retailer]} · ₾{m.price.toFixed(2)}
                       <span style={{ color: 'var(--muted-foreground)' }}> · {t('recipes.shop_updated', { h: String(hoursAgo(m.scrapedAt)) })}</span>
                     </a>
+                  ) : it.approxPrice ? (
+                    <span style={{ color: 'var(--muted-foreground)' }}>{t('recipes.shop_approx', { p: it.approxPrice.toFixed(2) })}</span>
                   ) : (
                     <span style={{ color: 'var(--muted-foreground)' }}>{t('recipes.shop_na')}</span>
                   )}
@@ -78,6 +80,7 @@ export function ShopIngredients({ ingredients }: { ingredients: string[] }) {
               )
             })}
           </ul>
+          <p className="text-xs mt-3" style={{ color: 'var(--muted-foreground)' }}>{t('recipes.shop_disclaimer')}</p>
         </>
       )}
     </section>

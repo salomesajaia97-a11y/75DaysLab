@@ -66,6 +66,38 @@ export async function translateTerms(terms: string[]): Promise<Record<string, st
   }
 }
 
+/**
+ * One batched AI call → an APPROXIMATE typical Georgian-supermarket price (₾) per
+ * food term. These are estimates, NOT scraped prices; the UI/chat always label them
+ * "≈ approx" and tell the user to verify live. Used only to replace a bare
+ * "not available" when no real scraped row exists. Failure → {} (no estimate shown).
+ */
+export async function estimateApproxPrices(terms: string[]): Promise<Record<string, number>> {
+  const unique = [...new Set(terms)].filter(Boolean)
+  if (unique.length === 0) return {}
+  const prompt = `For each grocery item, give an APPROXIMATE typical retail price in Georgian Lari (₾) at a Tbilisi supermarket for a normal package/unit. Return ONLY a JSON object mapping the item to a number (Lari, no currency symbol). No ranges, no text.\nItems: ${JSON.stringify(unique)}`
+  try {
+    const completion = await openRouterClient.chat.completions.create({
+      model: 'meta-llama/llama-3.1-8b-instruct',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 400,
+    })
+    const raw = completion.choices[0]?.message?.content ?? ''
+    const json = raw.match(/\{[\s\S]*\}/)
+    if (!json) return {}
+    const parsed = JSON.parse(json[0]) as Record<string, unknown>
+    const out: Record<string, number> = {}
+    for (const [k, v] of Object.entries(parsed)) {
+      const n = typeof v === 'number' ? v : parseFloat(String(v))
+      if (!isNaN(n) && n > 0) out[k.toLowerCase()] = Math.round(n * 100) / 100
+    }
+    return out
+  } catch (err) {
+    console.error('[grocery/estimateApproxPrices]', err instanceof Error ? err.message : String(err))
+    return {}
+  }
+}
+
 /** The most distinctive (longest) word in a term — the noun we filter results on. */
 function relevanceWord(term: string): string {
   return term.split(/\s+/).filter(Boolean).sort((a, b) => b.length - a.length)[0] ?? term
@@ -111,7 +143,11 @@ async function dbMatch(retailer: Retailer, safeTerms: string[]): Promise<PriceMa
 
 export async function matchIngredients(ingredients: string[]): Promise<MatchedIngredient[]> {
   const terms = ingredients.map(stripToFoodTerm)
-  const translations = await translateTerms(terms)
+  // Translation (for Georgian-named retailers) + approximate ₾ estimates in parallel.
+  const [translations, approx] = await Promise.all([
+    translateTerms(terms),
+    estimateApproxPrices(terms),
+  ])
 
   // Harvest the agrohub token ONCE for the whole batch (live prices, no cron wait).
   const token = await agrohubToken().catch(() => null)
@@ -143,7 +179,7 @@ export async function matchIngredients(ingredients: string[]): Promise<MatchedIn
       if (best) matches.push(best)
     }
 
-    out.push({ ingredient: ingredients[i], term, termGe, matches })
+    out.push({ ingredient: ingredients[i], term, termGe, matches, approxPrice: approx[term] })
   }
   return out
 }

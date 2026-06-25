@@ -32,7 +32,9 @@ export interface MatchedIngredient {
   ingredient: string    // original e.g. "2 large eggs"
   term: string          // stripped core e.g. "eggs"
   termGe?: string       // Georgian translation used for lookup
-  matches: PriceMatch[] // one cheapest row per retailer that carries it
+  matches: PriceMatch[] // one cheapest real (scraped) row per retailer that carries it
+  approxPrice?: number  // AI estimate (₾) of a typical Georgian supermarket price — shown
+                        // (clearly labelled "≈ approx") when no real scraped match exists
 }
 
 /** Basket total for one retailer across all matched ingredients. */

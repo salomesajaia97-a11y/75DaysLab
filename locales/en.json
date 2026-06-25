@@ -202,5 +202,7 @@
   "recipes.shop_basket": "Basket total per store",
   "recipes.shop_updated": "updated {h}h ago",
   "recipes.shop_na": "not available",
+  "recipes.shop_approx": "≈ ₾{p} approx",
+  "recipes.shop_disclaimer": "≈ approximate estimates, not live prices — check the store apps/sites for exact prices.",
   "recipes.shop_unavailable": "Prices unavailable right now."
 }

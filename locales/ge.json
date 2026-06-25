@@ -202,5 +202,7 @@
   "recipes.shop_basket": "კალათის ჯამი მაღაზიების მიხედვით",
   "recipes.shop_updated": "განახლდა {h}სთ წინ",
   "recipes.shop_na": "არ არის ხელმისაწვდომი",
+  "recipes.shop_approx": "≈ {p} ₾ დაახლოებით",
+  "recipes.shop_disclaimer": "≈ დაახლოებითი შეფასება, არა ცოცხალი ფასი — ზუსტი ფასისთვის შეამოწმეთ მაღაზიის აპლიკაცია/საიტი.",
   "recipes.shop_unavailable": "ფასები ამჟამად მიუწვდომელია."
 }
