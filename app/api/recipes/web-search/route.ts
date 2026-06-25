@@ -14,8 +14,10 @@ export async function POST(req: NextRequest) {
   if (!query) return NextResponse.json({ error: 'query required' }, { status: 400 })
 
   const found = await findWebRecipes(query)
-  // strip sourceDomain — never expose where it came from
+  // strip sourceDomain AND imageUrl — never expose where the recipe came from.
+  // imageUrl is a third-party CDN URL whose host reveals the source site, so it
+  // is omitted to honor the "recipes only, no links/sources" requirement.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const recipes = found.map(({ sourceDomain: _omit, ...rest }) => rest)
+  const recipes = found.map(({ sourceDomain: _omitDomain, imageUrl: _omitImage, ...rest }) => rest)
   return NextResponse.json({ recipes })
 }
