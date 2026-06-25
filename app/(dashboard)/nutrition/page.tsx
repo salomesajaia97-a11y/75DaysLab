@@ -1,15 +1,15 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MacroDashboard } from '@/components/nutrition/MacroDashboard'
-import { FoodLogger } from '@/components/nutrition/FoodLogger'
+import { AddFoodSheet } from '@/components/nutrition/AddFoodSheet'
 import { WeeklyChart } from '@/components/nutrition/WeeklyChart'
 import { MealPlanner } from '@/components/nutrition/MealPlanner'
 import { RecipeBrowser } from '@/components/recipes/RecipeBrowser'
 import { getProfile, saveProfile } from '@/lib/storage'
 import { calculateMacros } from '@/lib/calculations'
 import { useLanguage } from '@/lib/i18n'
-import { type MealType, mealFromTime } from '@/lib/nutrition-meal'
+import { type MealType } from '@/lib/nutrition-meal'
 import type { FoodEntry, MacroTargets, UserProfile } from '@/types'
 
 const FALLBACK_TARGETS: MacroTargets = { calories: 2000, proteinG: 150, carbsG: 200, fatG: 65 }
@@ -26,12 +26,10 @@ export default function NutritionPage() {
   const [foodLog, setFoodLog] = useState<FoodEntry[]>([])
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0])
   const [week, setWeek] = useState<{ date: string; calories: number }[]>([])
-  const [loggerMeal, setLoggerMeal] = useState<MealType>(() => mealFromTime(new Date()))
-  const loggerRef = useRef<HTMLDivElement>(null)
+  const [sheetMeal, setSheetMeal] = useState<MealType | null>(null)
 
   function handleAddMeal(m: MealType) {
-    setLoggerMeal(m)
-    loggerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setSheetMeal(m)
   }
 
   const isToday = selectedDate === TODAY
@@ -172,16 +170,6 @@ export default function NutritionPage() {
         <MealPlanner foodLog={foodLog} interactive={isToday} onAddMeal={handleAddMeal} />
       </section>
 
-      {/* Log a Meal */}
-      {isToday && (
-        <section ref={loggerRef}>
-          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-            {t('nutrition.log_meal')}
-          </p>
-          <FoodLogger onLogged={handleLogged} meal={loggerMeal} onMealChange={setLoggerMeal} />
-        </section>
-      )}
-
       {/* Recipes */}
       <div className="h-px" style={{ background: 'var(--border)' }} />
       <section>
@@ -190,6 +178,13 @@ export default function NutritionPage() {
         </p>
         <RecipeBrowser />
       </section>
+
+      <AddFoodSheet
+        meal={sheetMeal}
+        open={sheetMeal !== null}
+        onClose={() => setSheetMeal(null)}
+        onLogged={handleLogged}
+      />
     </div>
   )
 }
