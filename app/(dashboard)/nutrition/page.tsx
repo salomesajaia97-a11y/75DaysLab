@@ -133,30 +133,6 @@ export default function NutritionPage() {
           {t('nutrition.this_week')}
         </p>
         <WeeklyChart days={week} target={targets.calories} selected={selectedDate} onSelectDay={setSelectedDate} />
-        <AnimatePresence>
-          {selectedDate !== TODAY && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
-              className="flex items-center justify-between gap-3 mt-4 rounded-full px-4 py-2"
-              style={{ background: 'var(--card)', border: '1px solid var(--border)' }}
-            >
-              <span className="text-xs font-medium truncate" style={{ color: 'var(--muted-foreground)' }}>
-                {t('nutrition.viewing_day')} {selectedDate}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedDate(TODAY)}
-                className="text-xs font-semibold tracking-wide flex-shrink-0"
-                style={{ color: 'var(--foreground)' }}
-              >
-                {t('nutrition.back_to_today')}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </section>
 
       {/* Divider */}

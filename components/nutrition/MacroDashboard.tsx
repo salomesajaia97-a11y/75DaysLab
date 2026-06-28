@@ -60,7 +60,7 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
               {consumed.calories}
             </span>
             <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              of {targets.calories.toLocaleString()} kcal
+              of {targets.calories.toLocaleString('en-US')} kcal
             </span>
           </div>
         </div>
@@ -68,7 +68,7 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
           className="text-xs font-semibold tracking-widest uppercase mt-1"
           style={{ color: remaining > 0 ? '#7a9e7e' : '#c07c5e', letterSpacing: '0.12em' }}
         >
-          {remaining > 0 ? `${remaining.toLocaleString()} to go` : 'Goal reached'}
+          {remaining > 0 ? `${remaining.toLocaleString('en-US')} to go` : 'Goal reached'}
         </p>
       </div>
 
