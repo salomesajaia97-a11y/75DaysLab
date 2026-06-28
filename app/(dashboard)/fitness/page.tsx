@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getWorkoutState, todayString } from '@/lib/storage'
 import type { WorkoutTrackerState } from '@/types'
 import { useLanguage } from '@/lib/i18n'
+import { OutdoorWorkout } from '@/components/fitness/OutdoorWorkout'
+import { IndoorWorkout } from '@/components/fitness/IndoorWorkout'
 
 function getPast7Days(): string[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -120,6 +122,10 @@ export default function FitnessPage() {
           </Card>
         ))}
       </div>
+
+      {/* Outdoor + Indoor workout sections */}
+      <OutdoorWorkout />
+      <IndoorWorkout />
     </div>
   )
 }
