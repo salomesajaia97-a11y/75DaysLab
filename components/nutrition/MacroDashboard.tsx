@@ -8,11 +8,11 @@ interface MacroDashboardProps {
   consumed: MacroTargets
 }
 
-const R = 52
-const CX = 70
-const CY = 70
+const R = 58
+const CX = 80
+const CY = 80
 const CIRC = 2 * Math.PI * R
-const GAP = 70
+const GAP = 80
 const ARC = (360 - GAP) / 360 * CIRC
 const ROTATE = 90 + GAP / 2
 
@@ -22,27 +22,28 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
   const dashOffset = ARC - calPct * ARC
 
   return (
-    <div className="space-y-6">
-      {/* Calorie ring */}
-      <div className="flex flex-col items-center">
+    <div
+      className="flex items-center gap-8 rounded-2xl p-6"
+      style={{ backgroundColor: 'var(--card)', border: '1px solid var(--border)' }}
+    >
+      {/* Ring left */}
+      <div className="flex-shrink-0 flex flex-col items-center">
         <div className="relative">
-          <svg width="160" height="160" viewBox="0 0 140 140">
-            {/* Track */}
+          <svg width="172" height="172" viewBox="0 0 160 160">
             <circle
               cx={CX} cy={CY} r={R}
               fill="none"
               stroke="var(--muted)"
-              strokeWidth="5"
+              strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={`${ARC} ${CIRC}`}
               style={{ transform: `rotate(${ROTATE}deg)`, transformOrigin: `${CX}px ${CY}px` }}
             />
-            {/* Progress */}
             <motion.circle
               cx={CX} cy={CY} r={R}
               fill="none"
               stroke="var(--foreground)"
-              strokeWidth="5"
+              strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={`${ARC} ${CIRC}`}
               initial={{ strokeDashoffset: ARC }}
@@ -51,31 +52,28 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
               style={{ transform: `rotate(${ROTATE}deg)`, transformOrigin: `${CX}px ${CY}px` }}
             />
           </svg>
-
-          {/* Center label */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
             <span
-              className="text-4xl font-bold leading-none tracking-tight"
+              className="text-5xl font-bold leading-none tracking-tight"
               style={{ fontFamily: 'var(--font-fraunces), Georgia, serif' }}
             >
               {consumed.calories}
             </span>
             <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              of {targets.calories} kcal
+              of {targets.calories.toLocaleString()} kcal
             </span>
           </div>
         </div>
-
         <p
           className="text-xs font-semibold tracking-widest uppercase mt-1"
           style={{ color: remaining > 0 ? '#7a9e7e' : '#c07c5e', letterSpacing: '0.12em' }}
         >
-          {remaining > 0 ? `${remaining} kcal to go` : 'Goal reached'}
+          {remaining > 0 ? `${remaining.toLocaleString()} to go` : 'Goal reached'}
         </p>
       </div>
 
-      {/* Macro bars */}
-      <div className="space-y-4 pt-2">
+      {/* Macro bars right */}
+      <div className="flex-1 space-y-5">
         <MacroBar label="Protein" consumed={consumed.proteinG} target={targets.proteinG} unit="g" accent="#c07c5e" delay={0} />
         <MacroBar label="Carbs"   consumed={consumed.carbsG}   target={targets.carbsG}   unit="g" accent="#c5a55a" delay={0.08} />
         <MacroBar label="Fat"     consumed={consumed.fatG}     target={targets.fatG}     unit="g" accent="#7a9e7e" delay={0.16} />

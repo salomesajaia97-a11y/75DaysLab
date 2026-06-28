@@ -104,12 +104,12 @@ export function WaterTracker({ consumedMl, goalMl, gender }: WaterTrackerProps) 
 
       <div className="text-center space-y-1">
         <p className="text-3xl font-bold">
-          {currentMl}
-          <span className="text-base font-normal ml-1" style={{ color: 'var(--muted-foreground)' }}>ml</span>
+          {(currentMl / 1000).toFixed(2)}
+          <span className="text-base font-normal ml-1" style={{ color: 'var(--muted-foreground)' }}>L</span>
         </p>
-        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>of {goalMl} ml goal</p>
+        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>of {(goalMl / 1000).toFixed(2)} L goal</p>
         {remainingMl > 0
-          ? <p className="text-xs font-medium text-sky-500">{remainingMl} ml remaining</p>
+          ? <p className="text-xs font-medium text-sky-500">{(remainingMl / 1000).toFixed(2)} L remaining</p>
           : <p className="text-xs font-semibold text-green-500">Goal reached! 🎉</p>
         }
       </div>
@@ -119,7 +119,7 @@ export function WaterTracker({ consumedMl, goalMl, gender }: WaterTrackerProps) 
           <Button key={ml} size="sm" variant="outline" onClick={() => addWater(ml)}
             className="rounded-xl font-medium"
             style={{ borderColor: 'rgba(14,165,233,0.3)' }}>
-            +{ml}ml
+            +{(ml / 1000).toFixed(1)}L
           </Button>
         ))}
       </div>
