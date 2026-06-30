@@ -1,8 +1,10 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Camera, Loader2 } from 'lucide-react'
+import { Camera, Loader2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/lib/i18n'
 
 interface PhotoUploadProps {
   dayNumber: number
@@ -10,14 +12,33 @@ interface PhotoUploadProps {
 }
 
 export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
-  const [uploading, setUploading] = useState(false)
+  const { t } = useLanguage()
+  const [file, setFile] = useState<File>()
   const [preview, setPreview] = useState<string>()
+  const [uploading, setUploading] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string>()
 
-  const onDrop = useCallback(async (files: File[]) => {
-    const file = files[0]
+  const onDrop = useCallback((files: File[]) => {
+    const picked = files[0]
+    if (!picked) return
+    setFile(picked)
+    setPreview(URL.createObjectURL(picked))
+    setSaved(false)
+    setError(undefined)
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'image/*': [] },
+    maxFiles: 1,
+    noKeyboard: true,
+  })
+
+  async function handleSave() {
     if (!file) return
-    setPreview(URL.createObjectURL(file))
     setUploading(true)
+    setError(undefined)
     try {
       const form = new FormData()
       form.append('photo', file)
@@ -26,18 +47,55 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
       if (!res.ok) throw new Error(await res.text())
       const { url } = await res.json()
       onUploaded(url)
+      setSaved(true)
     } catch (err) {
       console.error('Upload failed:', err)
+      setError(t('photos.save_failed'))
     } finally {
       setUploading(false)
     }
-  }, [dayNumber, onUploaded])
+  }
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'image/*': [] },
-    maxFiles: 1,
-  })
+  function reset() {
+    setFile(undefined)
+    setPreview(undefined)
+    setSaved(false)
+    setError(undefined)
+  }
+
+  if (preview) {
+    return (
+      <div className="w-full space-y-3">
+        <img src={preview} alt="Preview" className="w-full max-h-64 object-cover rounded-lg" />
+        {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+        {saved ? (
+          <div className="flex items-center justify-center gap-2 text-green-500 text-sm">
+            <Check className="h-4 w-4" /> {t('photos.day_saved', { n: dayNumber })}
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={uploading} className="flex-1">
+              {uploading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t('photos.uploading')}
+                </span>
+              ) : (
+                t('photos.save')
+              )}
+            </Button>
+            <Button onClick={reset} variant="outline" disabled={uploading}>
+              {t('photos.change')}
+            </Button>
+          </div>
+        )}
+        {saved && (
+          <Button onClick={reset} variant="outline" className="w-full">
+            {t('photos.change')}
+          </Button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div
@@ -48,23 +106,10 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
       )}
     >
       <input {...getInputProps()} />
-      {preview ? (
-        <div className="w-full space-y-2">
-          <img src={preview} alt="Preview" className="w-full max-h-64 object-cover rounded-lg" />
-          {uploading && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          <Camera className="h-10 w-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mt-3 text-center">
-            {`Drop Day ${dayNumber} photo here or click to select`}
-          </p>
-        </>
-      )}
+      <Camera className="h-10 w-10 text-muted-foreground" />
+      <p className="text-sm text-muted-foreground mt-3 text-center">
+        {`Drop Day ${dayNumber} photo here or click to select`}
+      </p>
     </div>
   )
 }

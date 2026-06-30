@@ -149,6 +149,10 @@
   "photos.vault_title": "ყველა ფოტო ({n})",
   "photos.empty": "ჯერ ფოტო არ არის. დაიწყე პირველი დღიდან!",
   "photos.day_label": "დღე {n}",
+  "photos.save": "ფოტოს შენახვა",
+  "photos.uploading": "ინახება...",
+  "photos.change": "სხვის არჩევა",
+  "photos.save_failed": "შენახვა ვერ მოხერხდა. სცადე თავიდან.",
 
   "squads.title": "გუნდები",
   "squads.join": "შეერთება",

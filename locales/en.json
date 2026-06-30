@@ -149,6 +149,10 @@
   "photos.vault_title": "All Photos ({n})",
   "photos.empty": "No photos uploaded yet. Start with Day 1!",
   "photos.day_label": "Day {n}",
+  "photos.save": "Save Photo",
+  "photos.uploading": "Saving...",
+  "photos.change": "Choose Different",
+  "photos.save_failed": "Save failed. Try again.",
 
   "squads.title": "Squads",
   "squads.join": "Join",
