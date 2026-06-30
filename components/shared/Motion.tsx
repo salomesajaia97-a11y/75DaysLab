@@ -55,8 +55,8 @@ export function Reveal({ children, className }: { children: ReactNode; className
 /** Cinematic reveal that fires as the block scrolls into view — like a slide
     building when you reach it. Direction shifts the entrance. */
 export function ScrollReveal({
-  children, className, direction = 'up', delay = 0,
-}: { children: ReactNode; className?: string; direction?: 'up' | 'left' | 'right'; delay?: number }) {
+  children, className, direction = 'up', delay = 0, amount = 0.06,
+}: { children: ReactNode; className?: string; direction?: 'up' | 'left' | 'right'; delay?: number; amount?: number }) {
   const reduce = useReducedMotion()
   if (reduce) return <div className={className}>{children}</div>
   const offset =
@@ -68,7 +68,7 @@ export function ScrollReveal({
       className={className}
       initial={{ opacity: 0, filter: 'blur(10px)', ...offset }}
       whileInView={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
-      viewport={{ once: true, amount: 0.25 }}
+      viewport={{ once: true, amount }}
       transition={{ duration: 0.8, ease: EXPO, delay }}
       style={{ willChange: 'transform, opacity, filter' }}
     >
