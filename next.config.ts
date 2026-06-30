@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
+      { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '**.seriouseats.com' },
       { protocol: 'https', hostname: '**.skinnytaste.com' },
       { protocol: 'https', hostname: '**.eatingwell.com' },
