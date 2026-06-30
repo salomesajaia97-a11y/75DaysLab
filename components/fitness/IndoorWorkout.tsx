@@ -1,9 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Home, Dumbbell, Video, Film, Sparkles, Loader2, AlertCircle, Inbox, ExternalLink } from 'lucide-react'
+import { Home, Dumbbell, Loader2, AlertCircle, Inbox, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useLanguage } from '@/lib/i18n'
 import { getVideos, type TrainLocation } from '@/lib/fitness/videos'
 import type { IndoorFocus } from '@/lib/fitness/wger'
@@ -32,7 +31,6 @@ export function IndoorWorkout() {
   const { t } = useLanguage()
   const [prefs, setPrefs] = useState<Prefs>({ location: 'home', focus: 'full' })
   const [hydrated, setHydrated] = useState(false)
-  const [tab, setTab] = useState('videos')
 
   useEffect(() => {
     const raw = localStorage.getItem(PREFS_KEY)
@@ -65,7 +63,7 @@ export function IndoorWorkout() {
         <p className="text-xs text-muted-foreground mt-0.5">{t('fitness.indoor_desc')}</p>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Location toggle */}
         <div className="inline-flex rounded-xl border border-border p-0.5">
           {(['home', 'gym'] as const).map(loc => {
@@ -113,73 +111,63 @@ export function IndoorWorkout() {
           </div>
         </div>
 
-        {/* Dual display: Videos vs Wger animation */}
-        <Tabs value={tab} onValueChange={(v: string) => setTab(v)}>
-          <TabsList className="w-full">
-            <TabsTrigger value="videos">
-              <Video className="h-3.5 w-3.5" />
-              {t('fitness.tab_videos')}
-            </TabsTrigger>
-            <TabsTrigger value="wger">
-              <Film className="h-3.5 w-3.5" />
-              {t('fitness.tab_wger')}
-            </TabsTrigger>
-            <TabsTrigger value="animations">
-              <Sparkles className="h-3.5 w-3.5" />
-              Animations
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Option A — trusted YouTube routines */}
-          <TabsContent value="videos" className="pt-3">
-            <p className="mb-2 text-xs text-muted-foreground">{t('fitness.videos_note')}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {videos.map(v => (
-                <a
-                  key={v.channel}
-                  href={v.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col rounded-xl border border-border bg-background p-3 transition-colors hover:bg-muted"
-                >
-                  <div className="mb-2 flex aspect-video items-center justify-center rounded-lg bg-muted text-3xl">
-                    {v.emoji}
-                  </div>
-                  <span className="text-sm font-medium leading-tight">{v.title}</span>
-                  <span className="mt-0.5 text-xs text-muted-foreground">{v.channel}</span>
-                  <span className="mt-2 flex items-center gap-1 text-xs text-primary">
-                    {t('fitness.watch')}
-                    <ExternalLink className="h-3 w-3" />
-                  </span>
-                </a>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Option B — wger image-toggle animation loop */}
-          <TabsContent value="wger" className="pt-3">
-            <p className="mb-2 text-xs text-muted-foreground">{t('fitness.wger_note')}</p>
-            {tab === 'wger' && (
-              <FitnessErrorBoundary
-                fallback={
-                  <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    {t('fitness.wger_crashed')}
-                  </div>
-                }
+        {/* Videos */}
+        <section>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {t('fitness.tab_videos')}
+          </p>
+          <p className="mb-2 text-xs text-muted-foreground">{t('fitness.videos_note')}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {videos.map(v => (
+              <a
+                key={v.channel}
+                href={v.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col rounded-xl border border-border bg-background p-3 transition-colors hover:bg-muted"
               >
-                <WgerSection focus={prefs.focus} />
-              </FitnessErrorBoundary>
-            )}
-          </TabsContent>
-          {/* Option C — Lottie exercise animations */}
-          <TabsContent value="animations" className="pt-3">
-            <p className="mb-2 text-xs text-muted-foreground">
-              Animated demonstrations matching your selected focus.
-            </p>
-            <LottieExerciseGrid focus={prefs.focus} />
-          </TabsContent>
-        </Tabs>
+                <div className="mb-2 flex aspect-video items-center justify-center rounded-lg bg-muted text-3xl">
+                  {v.emoji}
+                </div>
+                <span className="text-sm font-medium leading-tight">{v.title}</span>
+                <span className="mt-0.5 text-xs text-muted-foreground">{v.channel}</span>
+                <span className="mt-2 flex items-center gap-1 text-xs text-primary">
+                  {t('fitness.watch')}
+                  <ExternalLink className="h-3 w-3" />
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Animated guide (wger) */}
+        <section>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {t('fitness.tab_wger')}
+          </p>
+          <p className="mb-2 text-xs text-muted-foreground">{t('fitness.wger_note')}</p>
+          <FitnessErrorBoundary
+            fallback={
+              <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                {t('fitness.wger_crashed')}
+              </div>
+            }
+          >
+            <WgerSection focus={prefs.focus} />
+          </FitnessErrorBoundary>
+        </section>
+
+        {/* Lottie animations */}
+        <section>
+          <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Animations
+          </p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Animated demonstrations matching your selected focus.
+          </p>
+          <LottieExerciseGrid focus={prefs.focus} />
+        </section>
       </CardContent>
     </Card>
   )
