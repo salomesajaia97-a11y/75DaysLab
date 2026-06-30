@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { SquadCard } from '@/components/squads/SquadCard'
 import { Leaderboard } from '@/components/squads/Leaderboard'
 import { Plus, Hash } from 'lucide-react'
+import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 import type { Squad } from '@/types'
 
@@ -72,9 +73,21 @@ export default function SquadsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('squads.title')}</h1>
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+      <ScrollReveal>
+      <div
+        className="living-gradient relative overflow-hidden rounded-[2rem] p-6 md:p-7"
+        style={{
+          background: 'linear-gradient(120deg, #d4f0f5 0%, #c2e7f2 44%, #d3eaf2 74%, #dde4ff 100%)',
+          boxShadow: '0 24px 60px -28px rgba(34, 150, 170, 0.42)',
+        }}
+      >
+        <div className="pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%)' }} />
+        <span className="shine-sweep" />
+        <div className="relative flex items-center justify-between gap-4">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#2d3142]">{t('squads.title')}</h1>
         <div className="flex gap-2">
           <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
             <DialogTrigger render={<Button variant="outline" size="sm" />}>
@@ -108,7 +121,10 @@ export default function SquadsPage() {
           </Dialog>
         </div>
       </div>
+      </div>
+      </ScrollReveal>
 
+      <ScrollReveal delay={0.06}>
       {squads.length === 0 ? (
         <p className="text-muted-foreground text-center py-12">{t('squads.empty')}</p>
       ) : (
@@ -118,6 +134,8 @@ export default function SquadsPage() {
           ))}
         </div>
       )}
+      </ScrollReveal>
+      </div>
     </div>
   )
 }

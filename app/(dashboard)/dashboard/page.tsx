@@ -21,6 +21,7 @@ import {
 import { calculateWaterGoal, calculateCurrentDay } from '@/lib/calculations'
 import type { UserProfile } from '@/types'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
+import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 
 interface Task {
@@ -132,39 +133,63 @@ export default function DashboardPage() {
   const greeting = hour < 12 ? t('dashboard.greeting.morning') : hour < 17 ? t('dashboard.greeting.afternoon') : t('dashboard.greeting.evening')
 
   const stats = [
-    { label: t('dashboard.stat.streak'), value: streak !== 1 ? t('dashboard.stat.streak_value_plural', { n: streak }) : t('dashboard.stat.streak_value', { n: streak }), icon: '🔥' },
-    { label: t('dashboard.stat.day'),    value: t('dashboard.stat.day_value', { n: currentDay }), icon: '📅' },
-    { label: t('dashboard.stat.days_left'), value: t('dashboard.stat.days_left_value', { n: totalDays - currentDay }), icon: '🏁' },
+    { label: t('dashboard.stat.streak'), num: streak, icon: '🔥', grad: 'linear-gradient(135deg, #ff8a4c 0%, #ef4f2b 100%)', glow: 'rgba(239, 79, 43, 0.35)' },
+    { label: t('dashboard.stat.day'),    num: currentDay, icon: '📅', grad: 'linear-gradient(135deg, #5eb6f7 0%, #2f72d6 100%)', glow: 'rgba(47, 114, 214, 0.35)' },
+    { label: t('dashboard.stat.days_left'), num: Math.max(0, totalDays - currentDay), icon: '🏁', grad: 'linear-gradient(135deg, #5fd6a3 0%, #20a06b 100%)', glow: 'rgba(32, 160, 107, 0.35)' },
   ]
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{greeting}, {displayName}</h1>
-          <p className="text-muted-foreground mt-1">{t('dashboard.subtitle')}</p>
-          {allDone && (
-            <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
-              <Flame className="h-3 w-3 mr-1" /> {t('dashboard.day_complete')} 🎉
-            </Badge>
-          )}
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 space-y-6 max-w-4xl mx-auto">
+      {/* Hero panel — a living gradient "title slide" for the day */}
+      <ScrollReveal>
+        <div
+          className="living-gradient relative overflow-hidden rounded-[2rem] p-7 md:p-8"
+          style={{
+            background: 'linear-gradient(120deg, #ffe7d3 0%, #ffd7e2 38%, #e7dbff 70%, #d6e6ff 100%)',
+            boxShadow: '0 24px 60px -28px rgba(217, 98, 46, 0.45)',
+          }}
+        >
+          <div className="pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%)' }} />
+          <div className="pointer-events-none absolute -left-12 -bottom-20 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(217,98,46,0.18), transparent 70%)' }} />
+          <span className="shine-sweep" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <span className="inline-block h-1.5 w-12 rounded-full mb-4" style={{ background: 'linear-gradient(90deg, #ff8a4c, #ef4f2b)' }} />
+              <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] text-[#2d3142]">{greeting},<br />{displayName}</h1>
+              <p className="text-[#2d3142]/70 mt-2 max-w-md">{t('dashboard.subtitle')}</p>
+              {allDone && (
+                <Badge className="mt-3 bg-green-500/20 text-green-700 border-green-500/30">
+                  <Flame className="h-3 w-3 mr-1" /> {t('dashboard.day_complete')} 🎉
+                </Badge>
+              )}
+            </div>
+            <StreakCounter day={currentDay} totalDays={totalDays} />
+          </div>
         </div>
-        <StreakCounter day={currentDay} totalDays={totalDays} />
-      </div>
+      </ScrollReveal>
 
-      <div className="space-y-1">
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>{t('dashboard.progress')}</span>
-          <span>{t('dashboard.tasks_count', { done: completedCount, total: tasks.length })}</span>
+      <ScrollReveal delay={0.05}>
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>{t('dashboard.progress')}</span>
+            <span>{t('dashboard.tasks_count', { done: completedCount, total: tasks.length })}</span>
+          </div>
+          <div className="h-3 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${(completedCount / tasks.length) * 100}%`,
+                background: 'linear-gradient(90deg, #ff8a4c 0%, #ef4f2b 60%, #ffb169 100%)',
+                boxShadow: '0 0 16px -2px rgba(239, 79, 43, 0.5)',
+              }}
+            />
+          </div>
         </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${(completedCount / tasks.length) * 100}%` }}
-          />
-        </div>
-      </div>
+      </ScrollReveal>
 
+      <ScrollReveal delay={0.1}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.hydration')}</CardTitle></CardHeader>
@@ -201,17 +226,31 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+      </ScrollReveal>
 
       <div className="grid grid-cols-3 gap-4">
-        {stats.map(stat => (
-          <Card key={stat.label}>
-            <CardContent className="pt-4 pb-4 text-center">
-              <div className="text-2xl mb-1">{stat.icon}</div>
-              <div className="font-bold">{stat.value}</div>
-              <div className="text-xs text-muted-foreground">{stat.label}</div>
-            </CardContent>
-          </Card>
+        {stats.map((stat, i) => (
+          <Pop key={stat.label} delay={i * 0.1}>
+            <Tilt>
+            <div
+              className="tile-pulse relative overflow-hidden rounded-3xl p-5 text-center text-white"
+              style={{ background: stat.grad, boxShadow: `0 16px 34px -14px ${stat.glow}`, animationDelay: `${i * 0.5}s` }}
+            >
+              <div
+                className="pointer-events-none absolute -right-6 -top-8 h-24 w-24 rounded-full"
+                style={{ background: 'rgba(255,255,255,0.18)' }}
+              />
+              <span className="shine-sweep" style={{ animationDelay: `${i * 1.2}s` }} />
+              <div className="relative text-3xl mb-1 drop-shadow-sm">{stat.icon}</div>
+              <div className="relative text-4xl font-bold leading-none tracking-tight tabular-nums">
+                <CountUp value={stat.num} />
+              </div>
+              <div className="relative text-xs font-medium uppercase tracking-wide text-white/80 mt-1.5">{stat.label}</div>
+            </div>
+            </Tilt>
+          </Pop>
         ))}
+      </div>
       </div>
     </div>
   )

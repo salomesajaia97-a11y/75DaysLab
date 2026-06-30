@@ -14,11 +14,19 @@ export function StreakCounter({ day, totalDays }: StreakCounterProps) {
     <div className="flex flex-col items-center gap-2">
       <div className="relative w-32 h-32">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" />
+          <defs>
+            <linearGradient id="streakGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ffb169" />
+              <stop offset="55%" stopColor="#ff8a4c" />
+              <stop offset="100%" stopColor="#ef4f2b" />
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(45,49,66,0.10)" strokeWidth="12" />
           <motion.circle
+            className="streak-glow"
             cx="60" cy="60" r="54"
             fill="none"
-            stroke="hsl(var(--primary))"
+            stroke="url(#streakGrad)"
             strokeWidth="12"
             strokeLinecap="round"
             strokeDasharray={339.3}

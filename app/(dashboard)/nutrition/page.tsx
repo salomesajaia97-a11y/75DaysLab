@@ -6,6 +6,7 @@ import { AddFoodSheet } from '@/components/nutrition/AddFoodSheet'
 import { WeeklyChart } from '@/components/nutrition/WeeklyChart'
 import { MealPlanner } from '@/components/nutrition/MealPlanner'
 import { RecipeBrowser } from '@/components/recipes/RecipeBrowser'
+import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { getProfile, saveProfile } from '@/lib/storage'
 import { calculateMacros } from '@/lib/calculations'
 import { useLanguage } from '@/lib/i18n'
@@ -104,56 +105,79 @@ export default function NutritionPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-1 py-2 space-y-8">
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 max-w-3xl mx-auto px-1 py-2 space-y-8">
 
-      {/* Header */}
-      <div className="flex items-end justify-between border-b pb-4" style={{ borderColor: 'var(--border)' }}>
-        <h1
-          className="text-4xl font-bold tracking-tight leading-none"
-          style={{ fontFamily: 'var(--font-fraunces), Georgia, serif' }}
+      {/* Header — gradient hero */}
+      <ScrollReveal>
+        <div
+          className="living-gradient relative overflow-hidden rounded-[2rem] p-7 md:p-8"
+          style={{
+            background: 'linear-gradient(120deg, #fef3c7 0%, #ffe2ad 44%, #ffd9bf 74%, #ffe1d2 100%)',
+            boxShadow: '0 24px 60px -28px rgba(217, 119, 46, 0.42)',
+          }}
         >
-          {t('nutrition.title')}
-        </h1>
-        <span className="text-xs font-medium tracking-widest uppercase" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.today')}
-        </span>
-      </div>
+          <div className="pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%)' }} />
+          <div className="pointer-events-none absolute -left-12 -bottom-20 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(217,119,46,0.16), transparent 70%)' }} />
+          <span className="shine-sweep" />
+          <div className="relative flex items-end justify-between gap-4">
+            <div>
+              <span className="inline-block h-1.5 w-12 rounded-full mb-4" style={{ background: 'linear-gradient(90deg, #f5b13c, #ef7d2b)' }} />
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.05] text-[#2d3142]">
+                {t('nutrition.title')}
+              </h1>
+            </div>
+            <span className="text-xs font-medium tracking-widest uppercase pb-1 text-[#2d3142]/60">
+              {t('nutrition.today')}
+            </span>
+          </div>
+        </div>
+      </ScrollReveal>
 
       {/* Daily Macros */}
-      <section>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.daily_macros')}
-        </p>
-        <MacroDashboard targets={targets} consumed={consumed} />
-      </section>
+      <ScrollReveal delay={0.05}>
+        <section>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
+            {t('nutrition.daily_macros')}
+          </p>
+          <MacroDashboard targets={targets} consumed={consumed} />
+        </section>
+      </ScrollReveal>
 
       {/* This Week */}
-      <section>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.this_week')}
-        </p>
-        <WeeklyChart days={week} target={targets.calories} selected={selectedDate} onSelectDay={setSelectedDate} />
-      </section>
+      <ScrollReveal>
+        <section>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--muted-foreground)' }}>
+            {t('nutrition.this_week')}
+          </p>
+          <WeeklyChart days={week} target={targets.calories} selected={selectedDate} onSelectDay={setSelectedDate} />
+        </section>
+      </ScrollReveal>
 
       {/* Divider */}
       <div className="h-px" style={{ background: 'var(--border)' }} />
 
       {/* Meal Planner */}
-      <section>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.meal_planner')}
-        </p>
-        <MealPlanner foodLog={foodLog} interactive={isToday} onAddMeal={handleAddMeal} />
-      </section>
+      <ScrollReveal>
+        <section>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+            {t('nutrition.meal_planner')}
+          </p>
+          <MealPlanner foodLog={foodLog} interactive={isToday} onAddMeal={handleAddMeal} />
+        </section>
+      </ScrollReveal>
 
       {/* Recipes */}
       <div className="h-px" style={{ background: 'var(--border)' }} />
-      <section>
-        <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-          {t('nutrition.recipes_heading')}
-        </p>
-        <RecipeBrowser />
-      </section>
+      <ScrollReveal>
+        <section>
+          <p className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
+            {t('nutrition.recipes_heading')}
+          </p>
+          <RecipeBrowser />
+        </section>
+      </ScrollReveal>
 
       <AddFoodSheet
         meal={sheetMeal}
@@ -161,6 +185,7 @@ export default function NutritionPage() {
         onClose={() => setSheetMeal(null)}
         onLogged={handleLogged}
       />
+      </div>
     </div>
   )
 }

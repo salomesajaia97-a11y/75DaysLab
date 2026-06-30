@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Bot } from 'lucide-react'
 import { ChatMessage } from '@/components/ai/ChatMessage'
+import { Aurora } from '@/components/shared/Motion'
 import type { MacroData, ProgressContext } from '@/lib/ai'
 
 interface Message {
@@ -130,11 +131,13 @@ export default function LabAIPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 max-w-2xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
       <div className="flex items-center gap-3 mb-4">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{ background: 'var(--foreground)', color: 'var(--background)' }}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #ff8a4c, #ef4f2b)', boxShadow: '0 8px 20px -6px rgba(239,79,43,0.5)' }}
         >
           <Bot className="h-5 w-5" />
         </div>
@@ -205,6 +208,7 @@ export default function LabAIPage() {
         >
           <Send className="h-4 w-4" />
         </button>
+      </div>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node --max-old-space-size=4096 dev-server.js dev --webpack",
+    "dev:turbo": "node --max-old-space-size=4096 dev-server.js dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -6,6 +6,7 @@ import { PhotoUpload } from '@/components/photos/PhotoUpload'
 import { PhotoComparison } from '@/components/photos/PhotoComparison'
 import { getProfile, saveProfile } from '@/lib/storage'
 import { calculateCurrentDay } from '@/lib/calculations'
+import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 
 interface PhotoEntry {
@@ -68,8 +69,27 @@ export default function PhotosPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold">{t('photos.title')}</h1>
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+      <ScrollReveal>
+        <div
+          className="living-gradient relative overflow-hidden rounded-[2rem] p-7 md:p-8"
+          style={{
+            background: 'linear-gradient(120deg, #dde2ff 0%, #cdd6ff 44%, #d8e0ff 74%, #e6dcff 100%)',
+            boxShadow: '0 24px 60px -28px rgba(79, 96, 214, 0.42)',
+          }}
+        >
+          <div className="pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%)' }} />
+          <div className="pointer-events-none absolute -left-12 -bottom-20 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(79,96,214,0.16), transparent 70%)' }} />
+          <span className="shine-sweep" />
+          <div className="relative">
+            <span className="inline-block h-1.5 w-12 rounded-full mb-4" style={{ background: 'linear-gradient(90deg, #8d9bff, #4f60d6)' }} />
+            <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] text-[#2d3142]">{t('photos.title')}</h1>
+          </div>
+        </div>
+      </ScrollReveal>
+      <ScrollReveal delay={0.08}>
       <Tabs defaultValue="upload">
         <TabsList className="w-full">
           <TabsTrigger value="upload" className="flex-1">{t('photos.tab.upload')}</TabsTrigger>
@@ -149,6 +169,8 @@ export default function PhotosPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </ScrollReveal>
+      </div>
     </div>
   )
 }

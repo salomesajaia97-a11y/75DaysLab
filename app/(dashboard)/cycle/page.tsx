@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { CycleCalendar, LS_KEY } from '@/components/cycle/CycleCalendar'
+import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 import { Heart } from 'lucide-react'
 
@@ -73,12 +74,28 @@ export default function CyclePage() {
   const tip = getTrainingTip(predictions.daysUntilPeriod)
 
   return (
-    <div className="max-w-lg mx-auto space-y-4 p-4">
-      <div className="flex items-center gap-2 mb-1">
-        <Heart className="h-5 w-5 text-rose-400" strokeWidth={1.5} />
-        <h1 className="text-2xl font-semibold">{t('cycle.title')}</h1>
-      </div>
+    <div className="relative">
+      <Aurora />
+      <div className="relative z-10 max-w-lg mx-auto space-y-4 p-4">
+      <ScrollReveal>
+        <div
+          className="living-gradient relative overflow-hidden rounded-[2rem] p-7 md:p-8"
+          style={{
+            background: 'linear-gradient(120deg, #ffe0ec 0%, #ffd4e3 44%, #ffe0ef 74%, #f0e0ff 100%)',
+            boxShadow: '0 24px 60px -28px rgba(225, 70, 130, 0.42)',
+          }}
+        >
+          <div className="pointer-events-none absolute -right-10 -top-16 h-52 w-52 rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%)' }} />
+          <div className="pointer-events-none absolute -left-12 -bottom-20 h-56 w-56 rounded-full" style={{ background: 'radial-gradient(circle, rgba(225,70,130,0.16), transparent 70%)' }} />
+          <span className="shine-sweep" />
+          <div className="relative flex items-center gap-3">
+            <Heart className="h-7 w-7 text-rose-500" strokeWidth={1.6} />
+            <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] text-[#2d3142]">{t('cycle.title')}</h1>
+          </div>
+        </div>
+      </ScrollReveal>
 
+      <ScrollReveal delay={0.05}>
       <Card
         className="border-0"
         style={{
@@ -97,7 +114,9 @@ export default function CyclePage() {
           />
         </CardContent>
       </Card>
+      </ScrollReveal>
 
+      <ScrollReveal>
       <Card>
         <CardContent className="pt-5 pb-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -119,13 +138,17 @@ export default function CyclePage() {
           </div>
         </CardContent>
       </Card>
+      </ScrollReveal>
 
-      <div className="rounded-2xl bg-muted px-4 py-3">
-        <p className="text-sm">
-          <span className="mr-1">💪</span>
-          <strong>Training Tip:</strong>{' '}
-          <span className="text-muted-foreground">{tip}</span>
-        </p>
+      <ScrollReveal>
+        <div className="rounded-2xl bg-muted px-4 py-3">
+          <p className="text-sm">
+            <span className="mr-1">💪</span>
+            <strong>Training Tip:</strong>{' '}
+            <span className="text-muted-foreground">{tip}</span>
+          </p>
+        </div>
+      </ScrollReveal>
       </div>
     </div>
   )

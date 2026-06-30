@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans, Fraunces, Nunito, Noto_Sans_Georgian } from 'next/font/google'
+import { Plus_Jakarta_Sans, Fraunces, Nunito, Noto_Sans_Georgian, Bricolage_Grotesque } from 'next/font/google'
 import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from '@/components/shared/ThemeProvider'
 import { SuppressNextThemesWarning } from '@/components/shared/SuppressNextThemesWarning'
@@ -12,14 +12,15 @@ import './globals.css'
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-jakarta',
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 })
 
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-fraunces',
-  weight: ['400', '700'],
+  weight: ['300', '400', '500', '600', '700'],
+  style: ['normal', 'italic'],
   display: 'swap',
 })
 
@@ -27,6 +28,13 @@ const nunito = Nunito({
   subsets: ['latin'],
   variable: '--font-caveat',
   weight: ['400', '600'],
+  display: 'swap',
+})
+
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  variable: '--font-bricolage',
+  weight: ['200', '300', '400', '600', '700', '800'],
   display: 'swap',
 })
 
@@ -49,7 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`${jakarta.variable} ${fraunces.variable} ${nunito.variable} ${notoGeorgian.variable}`}
+      className={`${jakarta.variable} ${fraunces.variable} ${nunito.variable} ${bricolage.variable} ${notoGeorgian.variable}`}
       suppressHydrationWarning
       style={cssVars as React.CSSProperties}
     >
