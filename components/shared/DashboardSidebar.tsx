@@ -49,13 +49,13 @@ export function DashboardSidebar() {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
+                'group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
                 active
                   ? 'bg-[#2d3142] text-[#f5f3ef] shadow-sm'
                   : 'text-[#7c7d8a] hover:text-[#2d3142] hover:bg-white/60'
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0 transition-transform duration-200 ease-out group-hover:scale-[1.35] group-hover:-rotate-6" />
               <span className="hidden md:block">{t(labelKey)}</span>
             </Link>
           )
@@ -66,13 +66,13 @@ export function DashboardSidebar() {
             <Link
               href={adminLink.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
+                'group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-200',
                 pathname === adminLink.href || pathname.startsWith(adminLink.href + '/')
                   ? 'bg-[#2d3142] text-[#f5f3ef] shadow-sm'
                   : 'text-[#7c7d8a] hover:text-[#2d3142] hover:bg-white/60'
               )}
             >
-              <adminLink.icon className="h-4 w-4 shrink-0" />
+              <adminLink.icon className="h-4 w-4 shrink-0 transition-transform duration-200 ease-out group-hover:scale-[1.35] group-hover:-rotate-6" />
               <span className="hidden md:block">{adminLink.label}</span>
             </Link>
           </>
@@ -91,10 +91,10 @@ export function DashboardSidebar() {
         </div>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-2xl w-full text-sm font-medium transition-all duration-200"
+          className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl w-full text-sm font-medium transition-all duration-200"
           style={{ color: 'var(--muted-foreground)' }}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-4 w-4 shrink-0 transition-transform duration-200 ease-out group-hover:scale-[1.35] group-hover:-rotate-6" />
           <span className="hidden md:block">{t('nav.logout')}</span>
         </button>
       </div>
