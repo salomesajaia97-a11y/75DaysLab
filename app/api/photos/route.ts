@@ -25,15 +25,21 @@ export async function POST(req: NextRequest) {
   if (!file || !dayNumber)
     return NextResponse.json({ error: 'Missing photo or dayNumber' }, { status: 400 })
 
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const { url, publicId } = await uploadPhoto(buffer, `75dayslab/${session.user.id}`)
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const { url, publicId } = await uploadPhoto(buffer, `75dayslab/${session.user.id}`)
 
-  await connectDB()
-  const photo = await Photo.findOneAndUpdate(
-    { userId: session.user.id, dayNumber },
-    { url, publicId, uploadedAt: new Date() },
-    { upsert: true, new: true }
-  )
+    await connectDB()
+    const photo = await Photo.findOneAndUpdate(
+      { userId: session.user.id, dayNumber },
+      { url, publicId, uploadedAt: new Date() },
+      { upsert: true, new: true }
+    )
 
-  return NextResponse.json({ url: photo.url }, { status: 201 })
+    return NextResponse.json({ url: photo.url }, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/photos] failed:', err)
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 }

@@ -44,13 +44,18 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
       form.append('photo', file)
       form.append('dayNumber', String(dayNumber))
       const res = await fetch('/api/photos', { method: 'POST', body: form })
-      if (!res.ok) throw new Error(await res.text())
+      if (!res.ok) {
+        const body = await res.text()
+        let detail = body
+        try { detail = JSON.parse(body).error ?? body } catch { /* not json */ }
+        throw new Error(`${res.status}: ${detail}`)
+      }
       const { url } = await res.json()
       onUploaded(url)
       setSaved(true)
     } catch (err) {
       console.error('Upload failed:', err)
-      setError(t('photos.save_failed'))
+      setError(err instanceof Error ? err.message : t('photos.save_failed'))
     } finally {
       setUploading(false)
     }
