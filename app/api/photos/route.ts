@@ -39,7 +39,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: photo.url }, { status: 201 })
   } catch (err) {
     console.error('[POST /api/photos] failed:', err)
-    const message = err instanceof Error ? err.message : 'Unknown error'
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : typeof err === 'string'
+            ? err
+            : JSON.stringify(err)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
