@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Home, Dumbbell, Video, Film, Loader2, AlertCircle, Inbox, ExternalLink } from 'lucide-react'
+import { Home, Dumbbell, Video, Film, Sparkles, Loader2, AlertCircle, Inbox, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -10,6 +10,7 @@ import type { IndoorFocus } from '@/lib/fitness/wger'
 import { useWger } from './useWger'
 import { WgerLoop } from './WgerLoop'
 import { FitnessErrorBoundary } from './FitnessErrorBoundary'
+import { LottieExerciseGrid } from './LottieExerciseGrid'
 
 const PREFS_KEY = '75lab_indoor_prefs'
 
@@ -123,6 +124,10 @@ export function IndoorWorkout() {
               <Film className="h-3.5 w-3.5" />
               {t('fitness.tab_wger')}
             </TabsTrigger>
+            <TabsTrigger value="animations">
+              <Sparkles className="h-3.5 w-3.5" />
+              Animations
+            </TabsTrigger>
           </TabsList>
 
           {/* Option A — trusted YouTube routines */}
@@ -166,6 +171,13 @@ export function IndoorWorkout() {
                 <WgerSection focus={prefs.focus} />
               </FitnessErrorBoundary>
             )}
+          </TabsContent>
+          {/* Option C — Lottie exercise animations */}
+          <TabsContent value="animations" className="pt-3">
+            <p className="mb-2 text-xs text-muted-foreground">
+              Animated demonstrations matching your selected focus.
+            </p>
+            <LottieExerciseGrid focus={prefs.focus} />
           </TabsContent>
         </Tabs>
       </CardContent>
