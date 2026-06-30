@@ -134,6 +134,12 @@ export default function OnboardingPage() {
           border-radius: 32px; overflow: hidden;
           box-shadow: 0 30px 80px -30px rgba(45,49,66,0.45),
                       0 10px 30px -12px rgba(45,49,66,0.18);
+          /* Re-point the brand accent away from orange → blue/pink, scoped to
+             onboarding. Flips every var(--brand) consumer: selected chips,
+             check circles, the Start button, input focus rings. */
+          --brand: #5b6dff;
+          --brand-soft: #ff6fae;
+          --brand-tint: rgba(91,109,255,0.12);
         }
         @media (min-width: 820px) {
           .ob-shell { grid-template-columns: 0.92fr 1.08fr; min-height: 580px; }
@@ -145,10 +151,12 @@ export default function OnboardingPage() {
           padding: clamp(1.6rem, 3vw, 2.6rem);
           display: flex; flex-direction: column;
           color: #f4ecdc;
+          /* Blue → pink gradient (dashboard hues, deepened for white text).
+             Saturated glows keep it alive; white sparkles read on top. */
           background:
-            radial-gradient(120% 80% at 18% 0%, rgba(255,138,76,0.30) 0%, transparent 52%),
-            radial-gradient(120% 90% at 100% 108%, rgba(255,90,31,0.42) 0%, transparent 56%),
-            linear-gradient(165deg, #211a36 0%, #14101d 58%, #0c0a14 100%);
+            radial-gradient(105% 80% at 8% -2%, rgba(96,150,255,0.50) 0%, transparent 55%),
+            radial-gradient(105% 85% at 102% 106%, rgba(255,120,185,0.50) 0%, transparent 58%),
+            linear-gradient(150deg, #2b3f8c 0%, #4a3f8e 48%, #8e3a72 100%);
         }
         .ob-grain {
           position: absolute; inset: 0; opacity: 0.06; mix-blend-mode: overlay; pointer-events: none;
@@ -157,15 +165,15 @@ export default function OnboardingPage() {
         .ob-particles { position: absolute; inset: 0; pointer-events: none; }
         .ob-particle {
           position: absolute; border-radius: 50%;
-          background: rgba(255, 224, 188, 0.9);
-          box-shadow: 0 0 12px 3px rgba(255, 200, 150, 0.45);
+          background: rgba(255, 255, 255, 0.95);
+          box-shadow: 0 0 12px 3px rgba(255, 255, 255, 0.5);
           animation: th-drift linear infinite;
         }
         .ob-ghost {
           position: absolute; right: -1.5rem; bottom: -5rem; z-index: 0;
           font-family: var(--font-fraunces), Georgia, serif; font-weight: 600;
           font-size: clamp(13rem, 22vw, 20rem); line-height: 0.7;
-          color: #fff; opacity: 0.06; pointer-events: none; user-select: none;
+          color: #fff; opacity: 0.07; pointer-events: none; user-select: none;
           animation: ob-ghost-pop 0.6s cubic-bezier(0.16,1,0.3,1) both;
         }
         .ob-eyebrow {
@@ -173,11 +181,11 @@ export default function OnboardingPage() {
           display: inline-flex; align-items: center; gap: 0.6rem;
           font-family: var(--font-geist-mono), ui-monospace, monospace;
           font-size: 0.66rem; letter-spacing: 0.3em; text-transform: uppercase;
-          color: #ffd9a8;
+          color: #cdd6ff;
         }
         .ob-eyebrow-dot {
           width: 7px; height: 7px; border-radius: 50%;
-          background: #ff7a3c; box-shadow: 0 0 10px #ff7a3c;
+          background: #ff6fae; box-shadow: 0 0 10px #ff6fae;
           animation: ob-pulse 2.6s ease-in-out infinite;
         }
         .ob-headline {
@@ -202,7 +210,7 @@ export default function OnboardingPage() {
         .ob-row.is-done { color: rgba(244,236,220,0.7); cursor: pointer; }
         .ob-row.is-done:hover { padding-left: 0.4rem; color: #fff5e8; }
         .ob-row.is-active { color: #fff5e8; }
-        .ob-row:focus-visible { outline: 2px solid #ff9d4d; outline-offset: 3px; border-radius: 6px; }
+        .ob-row:focus-visible { outline: 2px solid #8aa0ff; outline-offset: 3px; border-radius: 6px; }
         .ob-num {
           width: 1.9rem; height: 1.9rem; flex: none;
           display: grid; place-items: center; border-radius: 50%;
@@ -213,13 +221,13 @@ export default function OnboardingPage() {
         }
         .ob-row.is-active .ob-num {
           border-color: transparent; color: #fff;
-          background: linear-gradient(135deg, #ff5a1f, #ff9d4d);
-          box-shadow: 0 6px 18px -4px rgba(255,90,31,0.6);
+          background: linear-gradient(135deg, #5b86ff, #ff6fae);
+          box-shadow: 0 6px 18px -4px rgba(120,110,255,0.6);
           transform: scale(1.08);
         }
         .ob-row.is-done .ob-num {
-          border-color: transparent; color: #14101d;
-          background: #f3c372;
+          border-color: transparent; color: #fff;
+          background: #ff6fae;
         }
         .ob-marker {
           position: relative; z-index: 2; margin-top: clamp(1.2rem, 3vh, 2rem);
@@ -228,7 +236,7 @@ export default function OnboardingPage() {
           color: rgba(244,236,220,0.85);
         }
         .ob-marker-lab { font-size: 0.6rem; letter-spacing: 0.26em; text-transform: uppercase; opacity: 0.6; }
-        .ob-marker-num { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; color: #f3c372; }
+        .ob-marker-num { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; color: #ff8fc4; }
         .ob-marker-sep, .ob-marker-total { font-size: 0.85rem; opacity: 0.6; }
 
         /* ── Right: the form panel ── */
@@ -242,7 +250,7 @@ export default function OnboardingPage() {
         .ob-progress { display: flex; gap: 0.4rem; margin-bottom: 0.5rem; }
         .ob-seg { height: 4px; flex: 1; border-radius: 99px; background: rgba(45,49,66,0.1); overflow: hidden; }
         .ob-seg-fill { display: block; height: 100%; width: 0; border-radius: 99px;
-          background: linear-gradient(90deg, #d9622e, #e8884f);
+          background: linear-gradient(90deg, #5b6dff, #ff6fae);
           transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
         .ob-seg.is-filled .ob-seg-fill { width: 100%; }
         .ob-stepof {
@@ -360,7 +368,7 @@ export default function OnboardingPage() {
                         className={cn(
                           'flex-1 py-2 rounded-xl border text-sm font-medium transition-all duration-200',
                           data.gender === o.value
-                            ? 'bg-brand text-white border-transparent shadow-[0_6px_16px_-6px_rgba(217,98,46,0.6)]'
+                            ? 'bg-brand text-white border-transparent shadow-[0_6px_16px_-6px_rgba(91,109,255,0.6)]'
                             : 'border-border hover:bg-accent hover:border-[var(--brand)]/40'
                         )}
                       >{t(o.labelKey)}</button>
@@ -394,7 +402,7 @@ export default function OnboardingPage() {
                     className={cn(
                       'ob-rise w-full px-4 py-3 rounded-2xl border text-left transition-all duration-200 flex items-center justify-between gap-3',
                       selected
-                        ? 'border-[var(--brand)] bg-[var(--brand)]/8 shadow-[0_8px_22px_-12px_rgba(217,98,46,0.5)]'
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/8 shadow-[0_8px_22px_-12px_rgba(91,109,255,0.5)]'
                         : 'border-border hover:bg-accent hover:border-[var(--brand)]/40'
                     )}
                   >
@@ -427,7 +435,7 @@ export default function OnboardingPage() {
                     className={cn(
                       'ob-rise relative p-5 rounded-2xl border font-medium transition-all duration-200',
                       selected
-                        ? 'border-[var(--brand)] bg-[var(--brand)]/8 shadow-[0_8px_22px_-12px_rgba(217,98,46,0.5)]'
+                        ? 'border-[var(--brand)] bg-[var(--brand)]/8 shadow-[0_8px_22px_-12px_rgba(91,109,255,0.5)]'
                         : 'border-border hover:bg-accent hover:border-[var(--brand)]/40'
                     )}
                   >
