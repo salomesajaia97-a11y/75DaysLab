@@ -1,15 +1,15 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Home, Dumbbell, Loader2, AlertCircle, Inbox, ExternalLink } from 'lucide-react'
+import { Home, Dumbbell, Loader2, AlertCircle, Inbox } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/lib/i18n'
-import { getVideos, type TrainLocation } from '@/lib/fitness/videos'
+import type { TrainLocation } from '@/lib/fitness/videos'
 import type { IndoorFocus } from '@/lib/fitness/wger'
 import { useWger } from './useWger'
 import { WgerLoop } from './WgerLoop'
 import { FitnessErrorBoundary } from './FitnessErrorBoundary'
-import { LottieExerciseGrid } from './LottieExerciseGrid'
+import { FitnessMediaGrid } from './FitnessMediaGrid'
 
 const PREFS_KEY = '75lab_indoor_prefs'
 
@@ -53,8 +53,6 @@ export function IndoorWorkout() {
   useEffect(() => {
     if (hydrated) localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
   }, [prefs, hydrated])
-
-  const videos = getVideos(prefs.focus, prefs.location)
 
   return (
     <Card>
@@ -111,35 +109,6 @@ export function IndoorWorkout() {
           </div>
         </div>
 
-        {/* Videos */}
-        <section>
-          <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {t('fitness.tab_videos')}
-          </p>
-          <p className="mb-2 text-xs text-muted-foreground">{t('fitness.videos_note')}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {videos.map(v => (
-              <a
-                key={v.channel}
-                href={v.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col rounded-xl border border-border bg-background p-3 transition-colors hover:bg-muted"
-              >
-                <div className="mb-2 flex aspect-video items-center justify-center rounded-lg bg-muted text-3xl">
-                  {v.emoji}
-                </div>
-                <span className="text-sm font-medium leading-tight">{v.title}</span>
-                <span className="mt-0.5 text-xs text-muted-foreground">{v.channel}</span>
-                <span className="mt-2 flex items-center gap-1 text-xs text-primary">
-                  {t('fitness.watch')}
-                  <ExternalLink className="h-3 w-3" />
-                </span>
-              </a>
-            ))}
-          </div>
-        </section>
-
         {/* Animated guide (wger) */}
         <section>
           <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -158,15 +127,15 @@ export function IndoorWorkout() {
           </FitnessErrorBoundary>
         </section>
 
-        {/* Lottie animations */}
+        {/* Videos, GIFs & Animations (admin-managed) */}
         <section>
           <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Animations
+            Media
           </p>
           <p className="mb-2 text-xs text-muted-foreground">
-            Animated demonstrations matching your selected focus.
+            Videos, GIFs and animations for your selected focus.
           </p>
-          <LottieExerciseGrid focus={prefs.focus} />
+          <FitnessMediaGrid category={prefs.focus} />
         </section>
       </CardContent>
     </Card>

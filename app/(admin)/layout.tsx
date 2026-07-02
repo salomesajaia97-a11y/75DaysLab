@@ -14,6 +14,7 @@ import {
   FileText,
   Database,
   CreditCard,
+  Dumbbell,
 } from 'lucide-react'
 import { AdminNavItem } from './AdminNavItem'
 
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/logs', label: 'Daily Logs', icon: ClipboardList },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/admin/flags', label: 'Feature Flags', icon: Flag },
+  { href: '/admin/fitness-media', label: 'Fitness Media', icon: Dumbbell },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
