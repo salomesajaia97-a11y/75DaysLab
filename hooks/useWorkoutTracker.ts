@@ -18,10 +18,35 @@ const DEFAULT_STATE: WorkoutTrackerState = {
   outdoor: { ...DEFAULT_SESSION },
 }
 
+/**
+ * Fire-and-forget sync of a workout completion to the daily-completion spine.
+ * localStorage stays the immediate source of truth for the UI; a failed sync
+ * only logs a warning and never blocks the local state change.
+ * Maps the UI's indoor/outdoor slots to the API's structured/outdoor types.
+ */
+function syncWorkoutCompletion(slot: 'indoor' | 'outdoor', done: boolean) {
+  const type = slot === 'indoor' ? 'structured' : 'outdoor'
+  fetch('/api/fitness/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, done }),
+  })
+    .then(r => {
+      if (!r.ok) console.warn(`[useWorkoutTracker] workout sync rejected (${r.status})`)
+    })
+    .catch(err => console.warn('[useWorkoutTracker] workout sync failed:', err))
+}
+
 export function useWorkoutTracker() {
   const [state, setState] = useState<WorkoutTrackerState>(DEFAULT_STATE)
   const [hydrated, setHydrated] = useState(false)
   const todayRef = useRef(todayString())
+  const stateRef = useRef(state)
+
+  // Mirror latest state so callbacks can read the pre-toggle value without deps.
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   // Load from localStorage after mount (avoids SSR hydration mismatch)
   useEffect(() => {
@@ -74,10 +99,12 @@ export function useWorkoutTracker() {
   }, [])
 
   const resetTimer = useCallback((type: 'indoor' | 'outdoor') => {
+    const wasDone = stateRef.current[type].done
     setState(prev => ({
       ...prev,
       [type]: { ...prev[type], done: false, timerSeconds: 2700, timerRunning: false, timerFinished: false, showConfirm: false },
     }))
+    if (wasDone) syncWorkoutCompletion(type, false)
   }, [])
 
   const confirmDone = useCallback((type: 'indoor' | 'outdoor') => {
@@ -85,6 +112,7 @@ export function useWorkoutTracker() {
       ...prev,
       [type]: { ...prev[type], done: true, showConfirm: false },
     }))
+    syncWorkoutCompletion(type, true)
   }, [])
 
   const dismissConfirm = useCallback((type: 'indoor' | 'outdoor') => {
@@ -102,6 +130,7 @@ export function useWorkoutTracker() {
   }, [])
 
   const manualToggleDone = useCallback((type: 'indoor' | 'outdoor') => {
+    const nextDone = !stateRef.current[type].done
     setState(prev => {
       const s = prev[type]
       const done = !s.done
@@ -110,6 +139,7 @@ export function useWorkoutTracker() {
         [type]: { ...s, done, ...(done ? { timerRunning: false } : {}) },
       }
     })
+    syncWorkoutCompletion(type, nextDone)
   }, [])
 
   const bothDone = state.indoor.done && state.outdoor.done

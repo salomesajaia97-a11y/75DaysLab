@@ -6,7 +6,10 @@ export interface IDailyLog extends Document {
   waterCompleted: boolean
   journalCompleted: boolean
   nutritionCompleted: boolean
+  /** true only when BOTH structured and outdoor workouts are done (75 Hard rule) */
   workoutCompleted: boolean
+  structuredWorkoutCompleted: boolean
+  outdoorWorkoutCompleted: boolean
   photoUploaded: boolean
   allComplete: boolean
   createdAt: Date
@@ -21,6 +24,8 @@ const DailyLogSchema = new Schema<IDailyLog>(
     journalCompleted: { type: Boolean, default: false },
     nutritionCompleted: { type: Boolean, default: false },
     workoutCompleted: { type: Boolean, default: false },
+    structuredWorkoutCompleted: { type: Boolean, default: false },
+    outdoorWorkoutCompleted: { type: Boolean, default: false },
     photoUploaded: { type: Boolean, default: false },
     allComplete: { type: Boolean, default: false },
   },

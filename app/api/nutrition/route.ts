@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import mongoose from 'mongoose'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { FoodLog } from '@/models/FoodLog'
 import { mealFromTime, type MealType } from '@/lib/nutrition-meal'
+import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+
+/** Coerce an optional macro/calorie field to a safe non-negative number. */
+function nonNegNum(v: unknown): number | null {
+  if (v === undefined || v === null) return 0
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) return null
+  return v
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -27,11 +36,24 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const { description, calories, proteinG, carbsG, fatG, meal, photoUrl } = body
-  if (!description) return NextResponse.json({ error: 'Description required' }, { status: 400 })
+  if (typeof description !== 'string' || !description.trim())
+    return NextResponse.json({ error: 'Description required' }, { status: 400 })
+
+  const macros = {
+    calories: nonNegNum(calories),
+    proteinG: nonNegNum(proteinG),
+    carbsG: nonNegNum(carbsG),
+    fatG: nonNegNum(fatG),
+  }
+  if (Object.values(macros).some(v => v === null))
+    return NextResponse.json({ error: 'Macros must be non-negative numbers' }, { status: 400 })
+  if (photoUrl !== undefined && typeof photoUrl !== 'string')
+    return NextResponse.json({ error: 'Invalid photoUrl' }, { status: 400 })
 
   await connectDB()
   const now = new Date()
@@ -42,14 +64,21 @@ export async function POST(req: NextRequest) {
   const log = await FoodLog.create({
     userId: session.user.id,
     date,
-    description,
-    calories: calories ?? 0,
-    proteinG: proteinG ?? 0,
-    carbsG: carbsG ?? 0,
-    fatG: fatG ?? 0,
+    description: description.trim(),
+    calories: macros.calories,
+    proteinG: macros.proteinG,
+    carbsG: macros.carbsG,
+    fatG: macros.fatG,
     meal: resolvedMeal,
     photoUrl: photoUrl || undefined,
   })
+
+  // Update the daily completion spine (non-fatal — the food log is already saved).
+  try {
+    await recomputeDailyLog(session.user.id, date)
+  } catch (err) {
+    console.error('[POST /api/nutrition] recomputeDailyLog failed:', err)
+  }
 
   return NextResponse.json(log, { status: 201 })
 }

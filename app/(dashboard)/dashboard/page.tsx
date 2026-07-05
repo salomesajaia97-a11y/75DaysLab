@@ -23,11 +23,24 @@ import type { UserProfile } from '@/types'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
+import { useDailyProgress, type DailyFlags } from '@/hooks/useDailyProgress'
 
 interface Task {
   id: string
   label: string
   done: boolean
+}
+
+/** Map a dashboard task id to its server completion flag. */
+function flagForTask(id: string, f: DailyFlags): boolean {
+  switch (id) {
+    case 'water': return f.waterCompleted
+    case 'journal': return f.journalCompleted
+    case 'workout': return f.workoutCompleted
+    case 'nutrition': return f.nutritionCompleted
+    case 'photo': return f.photoUploaded
+    default: return false
+  }
 }
 
 const FALLBACK_WATER = 2500
@@ -48,6 +61,10 @@ export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>(TASK_DEFS.map(t => ({ ...t, done: false })))
   const [streak, setStreak] = useState(0)
   const today = todayString()
+
+  // Server-authoritative daily state (self-healing). localStorage below is the
+  // migration fallback used only until this resolves / on failure.
+  const { data: progress } = useDailyProgress()
 
   useEffect(() => {
     const p = getProfile()
@@ -94,6 +111,18 @@ export default function DashboardPage() {
     }
   }, [today])
 
+  // Server truth wins: once /api/daily-progress resolves, seed task completion
+  // and streak from it. Overrides the localStorage seed above; on request
+  // failure `progress` stays null and the localStorage values remain in place.
+  useEffect(() => {
+    if (!progress) return
+    // Seeding React state from fetched server data (not a render-derivable value
+    // because tasks/streak are also locally mutable during the migration).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTasks(prev => prev.map(t => ({ ...t, done: flagForTask(t.id, progress.flags) })))
+    if (progress.challenge) setStreak(progress.challenge.currentStreak)
+  }, [progress])
+
   const toggleTask = useCallback((id: string) => {
     setTasks(prev => {
       const next = prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
@@ -116,9 +145,10 @@ export default function DashboardPage() {
   const allDone = completedCount === tasks.length
 
   const totalDays = profile?.totalDays ?? FALLBACK_TOTAL
-  const currentDay = profile
-    ? calculateCurrentDay(profile.startDate, profile.totalDays)
-    : 1
+  // Prefer server challenge day; fall back to the local calendar calc.
+  const currentDay =
+    progress?.challenge?.currentDay ??
+    (profile ? calculateCurrentDay(profile.startDate, profile.totalDays) : 1)
   const waterGoal = profile
     ? calculateWaterGoal(profile.age, profile.weightKg, profile.heightCm, profile.gender, profile.goal)
     : FALLBACK_WATER

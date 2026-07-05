@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import mongoose from 'mongoose'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { WaterLog } from '@/models/WaterLog'
+import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+
+/** Guard against absurd single entries (data hygiene / anti-gaming). */
+const MAX_WATER_ML = 5000
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -17,14 +22,23 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { amountMl } = await req.json()
-  if (!amountMl || amountMl <= 0) return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
+  if (typeof amountMl !== 'number' || !Number.isFinite(amountMl) || amountMl <= 0 || amountMl > MAX_WATER_ML)
+    return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
 
   await connectDB()
   const date = new Date().toISOString().split('T')[0]
   const log = await WaterLog.create({ userId: session.user.id, date, amountMl })
+
+  // Update the daily completion spine (non-fatal — the water log is already saved).
+  try {
+    await recomputeDailyLog(session.user.id, date)
+  } catch (err) {
+    console.error('[POST /api/water] recomputeDailyLog failed:', err)
+  }
 
   return NextResponse.json(log, { status: 201 })
 }
