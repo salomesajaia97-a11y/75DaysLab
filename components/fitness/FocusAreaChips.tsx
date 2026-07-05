@@ -15,6 +15,7 @@ export function FocusAreaChips({ selected, onSelect }: Props) {
           <button
             key={area.id}
             type="button"
+            aria-pressed={active}
             onClick={() => onSelect(active ? null : area.id)}
             className="flex shrink-0 flex-col items-center gap-1.5 focus:outline-none"
           >

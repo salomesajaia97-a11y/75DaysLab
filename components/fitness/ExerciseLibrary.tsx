@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { getProfile } from '@/lib/storage'
@@ -49,6 +49,9 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
     setRunnerOpen(true)     // open guided runner for this single exercise
   }
 
+  // stable array identity so the runner's timer effect isn't reset on re-render
+  const runnerExercises = useMemo(() => (runnerEx ? [runnerEx] : []), [runnerEx])
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -65,6 +68,7 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
               <button
                 key={g}
                 type="button"
+                aria-pressed={gender === g}
                 onClick={() => setGender(g)}
                 className={`rounded-lg px-3 py-1 text-xs font-medium capitalize transition-colors ${
                   gender === g ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -128,7 +132,7 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
           onOpenChange={setRunnerOpen}
           title={runnerEx.name}
           source="exercise"
-          exercises={[runnerEx]}
+          exercises={runnerExercises}
           gender={gender}
         />
       )}
