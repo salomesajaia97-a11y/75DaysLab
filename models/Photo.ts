@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose'
 export interface IPhoto extends Document {
   userId: mongoose.Types.ObjectId
   dayNumber: number
+  /** 'YYYY-MM-DD' calendar date of upload — links a photo to a DailyLog day */
+  date?: string
   url: string
   publicId: string
   uploadedAt: Date
@@ -11,6 +13,7 @@ export interface IPhoto extends Document {
 const PhotoSchema = new Schema<IPhoto>({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   dayNumber: { type: Number, required: true },
+  date: { type: String },
   url: { type: String, required: true },
   publicId: { type: String, required: true },
   uploadedAt: { type: Date, default: Date.now },

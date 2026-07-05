@@ -7,6 +7,8 @@ export interface IChallenge extends Document {
   currentDay: number
   currentStreak: number
   longestStreak: number
+  /** 'YYYY-MM-DD' of the last fully-complete day — dedupes streak increments */
+  lastCompletedDate?: string
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -20,6 +22,7 @@ const ChallengeSchema = new Schema<IChallenge>(
     currentDay: { type: Number, default: 1 },
     currentStreak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
+    lastCompletedDate: { type: String },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

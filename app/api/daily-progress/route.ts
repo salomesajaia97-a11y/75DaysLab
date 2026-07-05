@@ -4,6 +4,8 @@ import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { DailyLog } from '@/models/DailyLog'
 import { WaterLog } from '@/models/WaterLog'
+import { Challenge } from '@/models/Challenge'
+import { recomputeDailyLog } from '@/lib/recompute-daily-log'
 import mongoose from 'mongoose'
 
 function computeCalorieTarget(
@@ -34,12 +36,25 @@ export async function GET(req: NextRequest) {
 
   await connectDB()
 
-  const date = req.nextUrl.searchParams.get('date') ?? new Date().toISOString().split('T')[0]
+  const today = new Date().toISOString().split('T')[0]
+  const date = req.nextUrl.searchParams.get('date') ?? today
 
-  const [user, dailyLog, waterLogs] = await Promise.all([
+  // Lazy self-heal: recompute today's flags from sources and advance the
+  // challenge (reset-if-missed / streak). Non-fatal — a failure just serves the
+  // last stored values. Only for the live day (past dates are read-only).
+  if (date === today) {
+    try {
+      await recomputeDailyLog(session.user.id, date)
+    } catch (err) {
+      console.error('[GET /api/daily-progress] self-heal failed:', err)
+    }
+  }
+
+  const [user, dailyLog, waterLogs, challenge] = await Promise.all([
     User.findById(session.user.id).select('age gender heightCm weightKg goal'),
     DailyLog.findOne({ userId: session.user.id, date }),
     WaterLog.find({ userId: session.user.id, date }),
+    Challenge.findOne({ userId: session.user.id, isActive: true }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + l.amountMl, 0)
@@ -51,9 +66,33 @@ export async function GET(req: NextRequest) {
     user?.goal
   )
 
-  return NextResponse.json({
+  const flags = {
+    waterCompleted: dailyLog?.waterCompleted ?? false,
+    journalCompleted: dailyLog?.journalCompleted ?? false,
+    nutritionCompleted: dailyLog?.nutritionCompleted ?? false,
+    structuredWorkoutCompleted: dailyLog?.structuredWorkoutCompleted ?? false,
+    outdoorWorkoutCompleted: dailyLog?.outdoorWorkoutCompleted ?? false,
     workoutCompleted: dailyLog?.workoutCompleted ?? false,
+    photoUploaded: dailyLog?.photoUploaded ?? false,
+    allComplete: dailyLog?.allComplete ?? false,
+  }
+
+  return NextResponse.json({
+    // --- backward-compatible fields (existing consumers, e.g. LabAIWidget) ---
+    workoutCompleted: flags.workoutCompleted,
     waterMl,
     calorieTarget,
+    // --- full daily completion flags ---
+    flags,
+    // --- active challenge summary (null when none) ---
+    challenge: challenge
+      ? {
+          currentDay: challenge.currentDay,
+          currentStreak: challenge.currentStreak,
+          longestStreak: challenge.longestStreak,
+          startDate: challenge.startDate,
+          lastCompletedDate: challenge.lastCompletedDate ?? null,
+        }
+      : null,
   })
 }
