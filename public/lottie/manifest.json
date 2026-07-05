@@ -1,0 +1,396 @@
+[
+  {
+    "slug": "squat",
+    "name": "Squat",
+    "level": "beginner",
+    "focus": [
+      "lower",
+      "full"
+    ],
+    "gender": "male",
+    "bytes": 14615
+  },
+  {
+    "slug": "squat",
+    "name": "Squat",
+    "level": "beginner",
+    "focus": [
+      "lower",
+      "full"
+    ],
+    "gender": "female",
+    "bytes": 15574
+  },
+  {
+    "slug": "wall-pushup",
+    "name": "Wall Push-up",
+    "level": "beginner",
+    "focus": [
+      "upper",
+      "full"
+    ],
+    "gender": "male",
+    "bytes": 14140
+  },
+  {
+    "slug": "wall-pushup",
+    "name": "Wall Push-up",
+    "level": "beginner",
+    "focus": [
+      "upper",
+      "full"
+    ],
+    "gender": "female",
+    "bytes": 15129
+  },
+  {
+    "slug": "glute-bridge",
+    "name": "Glute Bridge",
+    "level": "beginner",
+    "focus": [
+      "lower",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 14554
+  },
+  {
+    "slug": "glute-bridge",
+    "name": "Glute Bridge",
+    "level": "beginner",
+    "focus": [
+      "lower",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 15569
+  },
+  {
+    "slug": "bird-dog",
+    "name": "Bird Dog",
+    "level": "beginner",
+    "focus": [
+      "core",
+      "full"
+    ],
+    "gender": "male",
+    "bytes": 13182
+  },
+  {
+    "slug": "bird-dog",
+    "name": "Bird Dog",
+    "level": "beginner",
+    "focus": [
+      "core",
+      "full"
+    ],
+    "gender": "female",
+    "bytes": 13775
+  },
+  {
+    "slug": "march-in-place",
+    "name": "March in Place",
+    "level": "beginner",
+    "focus": [
+      "cardio",
+      "lower"
+    ],
+    "gender": "male",
+    "bytes": 13196
+  },
+  {
+    "slug": "march-in-place",
+    "name": "March in Place",
+    "level": "beginner",
+    "focus": [
+      "cardio",
+      "lower"
+    ],
+    "gender": "female",
+    "bytes": 13761
+  },
+  {
+    "slug": "side-steps",
+    "name": "Side Steps",
+    "level": "beginner",
+    "focus": [
+      "cardio",
+      "lower"
+    ],
+    "gender": "male",
+    "bytes": 13916
+  },
+  {
+    "slug": "side-steps",
+    "name": "Side Steps",
+    "level": "beginner",
+    "focus": [
+      "cardio",
+      "lower"
+    ],
+    "gender": "female",
+    "bytes": 14693
+  },
+  {
+    "slug": "pushup",
+    "name": "Push-up",
+    "level": "intermediate",
+    "focus": [
+      "upper",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 13954
+  },
+  {
+    "slug": "pushup",
+    "name": "Push-up",
+    "level": "intermediate",
+    "focus": [
+      "upper",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 14817
+  },
+  {
+    "slug": "walking-lunge",
+    "name": "Walking Lunge",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "full"
+    ],
+    "gender": "male",
+    "bytes": 14214
+  },
+  {
+    "slug": "walking-lunge",
+    "name": "Walking Lunge",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "full"
+    ],
+    "gender": "female",
+    "bytes": 14991
+  },
+  {
+    "slug": "plank",
+    "name": "Plank",
+    "level": "intermediate",
+    "focus": [
+      "core",
+      "full"
+    ],
+    "gender": "male",
+    "bytes": 13964
+  },
+  {
+    "slug": "plank",
+    "name": "Plank",
+    "level": "intermediate",
+    "focus": [
+      "core",
+      "full"
+    ],
+    "gender": "female",
+    "bytes": 14976
+  },
+  {
+    "slug": "step-up",
+    "name": "Step Up",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "male",
+    "bytes": 14198
+  },
+  {
+    "slug": "step-up",
+    "name": "Step Up",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "female",
+    "bytes": 14975
+  },
+  {
+    "slug": "mountain-climbers",
+    "name": "Mountain Climbers",
+    "level": "intermediate",
+    "focus": [
+      "cardio",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 12090
+  },
+  {
+    "slug": "mountain-climbers",
+    "name": "Mountain Climbers",
+    "level": "intermediate",
+    "focus": [
+      "cardio",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 12683
+  },
+  {
+    "slug": "fire-hydrant",
+    "name": "Fire Hydrant",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 10993
+  },
+  {
+    "slug": "fire-hydrant",
+    "name": "Fire Hydrant",
+    "level": "intermediate",
+    "focus": [
+      "lower",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 11586
+  },
+  {
+    "slug": "burpee",
+    "name": "Burpee",
+    "level": "advanced",
+    "focus": [
+      "full",
+      "cardio"
+    ],
+    "gender": "male",
+    "bytes": 16930
+  },
+  {
+    "slug": "burpee",
+    "name": "Burpee",
+    "level": "advanced",
+    "focus": [
+      "full",
+      "cardio"
+    ],
+    "gender": "female",
+    "bytes": 18084
+  },
+  {
+    "slug": "jump-squat",
+    "name": "Jump Squat",
+    "level": "advanced",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "male",
+    "bytes": 15025
+  },
+  {
+    "slug": "jump-squat",
+    "name": "Jump Squat",
+    "level": "advanced",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "female",
+    "bytes": 16013
+  },
+  {
+    "slug": "pike-pushup",
+    "name": "Pike Push-up",
+    "level": "advanced",
+    "focus": [
+      "upper",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 13947
+  },
+  {
+    "slug": "pike-pushup",
+    "name": "Pike Push-up",
+    "level": "advanced",
+    "focus": [
+      "upper",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 14813
+  },
+  {
+    "slug": "high-knees",
+    "name": "High Knees",
+    "level": "advanced",
+    "focus": [
+      "cardio",
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 16723
+  },
+  {
+    "slug": "high-knees",
+    "name": "High Knees",
+    "level": "advanced",
+    "focus": [
+      "cardio",
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 17288
+  },
+  {
+    "slug": "jump-lunge",
+    "name": "Jump Lunge",
+    "level": "advanced",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "male",
+    "bytes": 14339
+  },
+  {
+    "slug": "jump-lunge",
+    "name": "Jump Lunge",
+    "level": "advanced",
+    "focus": [
+      "lower",
+      "cardio"
+    ],
+    "gender": "female",
+    "bytes": 15116
+  },
+  {
+    "slug": "bicycle-crunch",
+    "name": "Bicycle Crunch",
+    "level": "advanced",
+    "focus": [
+      "core"
+    ],
+    "gender": "male",
+    "bytes": 13490
+  },
+  {
+    "slug": "bicycle-crunch",
+    "name": "Bicycle Crunch",
+    "level": "advanced",
+    "focus": [
+      "core"
+    ],
+    "gender": "female",
+    "bytes": 14083
+  }
+]

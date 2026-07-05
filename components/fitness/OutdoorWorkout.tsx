@@ -1,9 +1,10 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
-import { Cloud, Sun, CloudRain, Snowflake, CloudSun, Wind, AlertCircle } from 'lucide-react'
+import { Cloud, Sun, CloudRain, Snowflake, CloudSun, Wind, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMarkComplete } from '@/hooks/useMarkComplete'
 import {
   Select,
   SelectContent,
@@ -39,6 +40,7 @@ export function OutdoorWorkout() {
   const [cityId, setCityId] = useState(DEFAULT_CITY_ID)
   const [status, setStatus] = useState<Status>('loading')
   const [weather, setWeather] = useState<WeatherPayload | null>(null)
+  const { done, markComplete } = useMarkComplete()
 
   // Restore last city after mount (hydration-safe localStorage sync).
   useEffect(() => {
@@ -172,6 +174,24 @@ export function OutdoorWorkout() {
 
         {/* Tbilisi-only parks block */}
         {showParks && <TbilisiParks badWeather={isBad} />}
+
+        {/* Mark outdoor session complete → feeds weekly progress + stats */}
+        <Button
+          className="w-full"
+          variant={done ? 'outline' : 'default'}
+          disabled={done}
+          onClick={() =>
+            markComplete({
+              kind: 'outdoor',
+              source: 'outdoor',
+              title: 'Outdoor Workout',
+              exerciseSlugs: [],
+              minutes: 45,
+            })
+          }
+        >
+          <CheckCircle2 className="h-4 w-4" /> {done ? 'Outdoor session completed' : 'Mark outdoor workout complete'}
+        </Button>
       </CardContent>
     </Card>
   )
