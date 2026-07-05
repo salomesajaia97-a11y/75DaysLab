@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>75DaysLab · Exercise Lottie Gallery</title>
+<script src="./lottie.min.js"></script>
+<style>
+  :root { --bg:#eff2ff; --ink:#1a1f2e; --muted:#6b7280; --card:#fff; --line:#e5e7eb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--ink); background:#f6f7fb; }
+  header { padding:24px 20px 8px; }
+  h1 { margin:0 0 4px; font-size:20px; }
+  p.sub { margin:0; color:var(--muted); font-size:13px; }
+  .bar { position:sticky; top:0; z-index:5; background:#f6f7fbe6; backdrop-filter:blur(6px); padding:12px 20px; border-bottom:1px solid var(--line); display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+  .bar label { font-size:12px; color:var(--muted); margin-right:6px; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .seg button { border:0; background:var(--card); padding:6px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  .seg button[aria-pressed=true] { background:#445eee; color:#fff; }
+  main { padding:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; }
+  figure { margin:0; background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .anim { aspect-ratio:1; background:var(--bg); }
+  figcaption { padding:8px 10px; }
+  .name { font-weight:600; font-size:13px; }
+  .tags { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; }
+  .tag { font-size:10px; padding:2px 6px; border-radius:999px; background:#eef1f8; color:#4b5563; }
+  .tag.lv-beginner{background:#e7f6ec;color:#1c7a3e}.tag.lv-intermediate{background:#fff2e0;color:#a65a00}.tag.lv-advanced{background:#fde8e8;color:#b42323}
+  footer{padding:8px 20px 40px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>75DaysLab · Exercise Lottie Gallery</h1>
+  <p class="sub">18 exercises × male/female · one flat-design rig · project-owned, free for commercial use.</p>
+</header>
+<div class="bar">
+  <span><label>Level</label><span class="seg" id="lv">
+    <button data-v="all" aria-pressed="true">All</button>
+    <button data-v="beginner">Beginner</button>
+    <button data-v="intermediate">Intermediate</button>
+    <button data-v="advanced">Advanced</button>
+  </span></span>
+  <span><label>Gender</label><span class="seg" id="gd">
+    <button data-v="all" aria-pressed="true">Both</button>
+    <button data-v="male">Male</button>
+    <button data-v="female">Female</button>
+  </span></span>
+</div>
+<main id="grid"></main>
+<footer>Preview served from <code>/lottie/preview.html</code>. Animations loop at 30fps. Player: bundled lottie-web (SVG).</footer>
+<script>
+let filter = { lv:'all', gd:'all' };
+let manifest = [];
+const grid = document.getElementById('grid');
+const anims = new Map();
+
+function render() {
+  anims.forEach(a => a.destroy()); anims.clear(); grid.innerHTML = '';
+  manifest
+    .filter(m => (filter.lv==='all'||m.level===filter.lv) && (filter.gd==='all'||m.gender===filter.gd))
+    .forEach(m => {
+      const fig = document.createElement('figure');
+      const box = document.createElement('div'); box.className='anim';
+      const cap = document.createElement('figcaption');
+      cap.innerHTML = `<div class="name">${m.name}</div><div class="tags">
+        <span class="tag lv-${m.level}">${m.level}</span>
+        <span class="tag">${m.gender}</span></div>`;
+      fig.append(box, cap); grid.append(fig);
+      const a = lottie.loadAnimation({ container:box, renderer:'svg', loop:true, autoplay:true,
+        path:`./${m.gender}/${m.slug}.json` });
+      anims.set(box, a);
+    });
+}
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  filter[seg.id==='lv'?'lv':'gd'] = b.dataset.v; render();
+}));
+fetch('./manifest.json').then(r=>r.json()).then(m=>{ manifest=m; render(); });
+</script>
+</body>
+</html>
