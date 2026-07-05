@@ -2,41 +2,26 @@
 import { useState } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getWorkoutState, todayString } from '@/lib/storage'
-import type { WorkoutTrackerState } from '@/types'
 import { useLanguage } from '@/lib/i18n'
+import { useFitnessProgress } from '@/hooks/useFitnessProgress'
 import { OutdoorWorkout } from '@/components/fitness/OutdoorWorkout'
-import { IndoorWorkout } from '@/components/fitness/IndoorWorkout'
+import { WorkoutPlanWizard } from '@/components/fitness/WorkoutPlanWizard'
+import { TrainingPlanCard } from '@/components/fitness/TrainingPlanCard'
+import { FocusAreaChips } from '@/components/fitness/FocusAreaChips'
+import { ExerciseLibrary } from '@/components/fitness/ExerciseLibrary'
+import { FitnessReports } from '@/components/fitness/FitnessReports'
+import { TRAINING_PLANS, type FocusAreaDef } from '@/lib/fitness/workoutPlans'
+import type { ExerciseFocus } from '@/lib/fitness/exerciseLottieRegistry'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
-
-function getPast7Days(): string[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toISOString().split('T')[0]
-  })
-}
 
 export default function FitnessPage() {
   const { t } = useLanguage()
-  const today = todayString()
-  const [weekData] = useState<Record<string, WorkoutTrackerState | null>>(() => {
-    if (typeof window === 'undefined') return {}
-    const days = getPast7Days()
-    const data: Record<string, WorkoutTrackerState | null> = {}
-    for (const day of days) {
-      data[day] = getWorkoutState(day)
-    }
-    return data
-  })
+  const { days, today, dayState, todayState, totalSessions, fullDays, completionRate } =
+    useFitnessProgress()
 
-  const todayState = weekData[today]
-  const totalSessions = Object.values(weekData).reduce((acc, s) => {
-    if (!s) return acc
-    return acc + (s.indoor.done ? 1 : 0) + (s.outdoor.done ? 1 : 0)
-  }, 0)
-  const fullDays = Object.values(weekData).filter(s => s?.indoor.done && s?.outdoor.done).length
-  const completionRate = Math.round((totalSessions / 14) * 100)
+  const [focus, setFocus] = useState<FocusAreaDef['id'] | null>(null)
+  const focusFilter: ExerciseFocus | null =
+    focus === null ? null : focus === 'stretching' ? 'yoga' : focus
 
   const fitnessStats = [
     { label: t('fitness.stat.sessions'),   num: totalSessions,  suffix: '',  icon: '🏋️', grad: 'linear-gradient(135deg, #5fd6a3 0%, #20a06b 100%)', glow: 'rgba(32, 160, 107, 0.35)' },
@@ -47,7 +32,7 @@ export default function FitnessPage() {
   return (
     <div className="relative">
       <Aurora />
-      <div className="relative z-10 space-y-6 max-w-4xl mx-auto">
+      <div className="relative z-10 space-y-8 md:space-y-10 max-w-4xl mx-auto">
       {/* Header — gradient hero */}
       <ScrollReveal>
         <div
@@ -74,7 +59,7 @@ export default function FitnessPage() {
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t('fitness.today')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(['indoor', 'outdoor'] as const).map(type => {
-            const done = todayState?.[type].done ?? false
+            const done = type === 'indoor' ? todayState.structured : todayState.outdoor
             return (
               <Card key={type}>
                 <CardContent className="flex items-center gap-3 pt-4 pb-4">
@@ -106,8 +91,8 @@ export default function FitnessPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-7 gap-2">
-            {getPast7Days().map(day => {
-              const s = weekData[day]
+            {days.map(day => {
+              const s = dayState[day]
               const isToday = day === today
               const dayLabel = new Date(day + 'T12:00:00').toLocaleDateString('en', { weekday: 'short' })
               return (
@@ -116,11 +101,11 @@ export default function FitnessPage() {
                     {dayLabel}
                   </span>
                   <div
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.indoor.done ? 'bg-primary' : 'bg-muted'}`}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.structured ? 'bg-primary' : 'bg-muted'}`}
                     title="Indoor"
                   />
                   <div
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.outdoor.done ? 'bg-primary' : 'bg-muted'}`}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.outdoor ? 'bg-primary' : 'bg-muted'}`}
                     title="Outdoor"
                   />
                 </div>
@@ -154,9 +139,43 @@ export default function FitnessPage() {
         ))}
       </div>
 
-      {/* Outdoor + Indoor workout sections */}
+      {/* Outdoor workout section */}
       <ScrollReveal><OutdoorWorkout /></ScrollReveal>
-      <ScrollReveal><IndoorWorkout /></ScrollReveal>
+
+      {/* Workout Plan Wizard */}
+      <ScrollReveal><WorkoutPlanWizard /></ScrollReveal>
+
+      {/* Recommended Training Plans */}
+      <ScrollReveal>
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+            Recommended Training Plans
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {TRAINING_PLANS.map(plan => (
+              <TrainingPlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
+        </div>
+      </ScrollReveal>
+
+      {/* Focus Areas + Exercise Library */}
+      <ScrollReveal>
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+              Focus Areas
+            </h2>
+            <FocusAreaChips selected={focus} onSelect={setFocus} />
+          </div>
+          <ExerciseLibrary focusFilter={focusFilter} />
+        </div>
+      </ScrollReveal>
+
+      {/* Reports */}
+      <ScrollReveal>
+        <FitnessReports />
+      </ScrollReveal>
       </div>
     </div>
   )

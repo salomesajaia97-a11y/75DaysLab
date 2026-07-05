@@ -1,0 +1,73 @@
+'use client'
+import { CheckCircle2, Info, Clock, Repeat } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  DIFFICULTY_LABEL,
+  EQUIPMENT_OPTIONS,
+  exerciseMinutes,
+  thumbLottieFor,
+  type CatalogExercise,
+} from '@/lib/fitness/workoutPlans'
+import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
+import { useMarkComplete } from '@/hooks/useMarkComplete'
+import { ExerciseThumb } from './ExerciseThumb'
+
+interface Props {
+  exercise: CatalogExercise
+  gender: Gender
+  onDetails: (exercise: CatalogExercise) => void
+}
+
+function equipmentLabel(id: string) {
+  return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
+}
+
+export function ExerciseCard({ exercise, gender, onDetails }: Props) {
+  const { done, markComplete } = useMarkComplete()
+  const lottieSrc = exercise.lottieAvailable ? thumbLottieFor(exercise.slug, gender) : null
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
+      <ExerciseThumb focus={exercise.focus} lottieSrc={lottieSrc} className="h-32" size={64} />
+
+      <div className="flex flex-1 flex-col gap-2 p-3">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="text-sm font-semibold leading-tight">{exercise.name}</h4>
+          <Badge variant="secondary" className="shrink-0">{DIFFICULTY_LABEL[exercise.level]}</Badge>
+        </div>
+
+        <p className="text-xs text-muted-foreground">{exercise.targetMuscles.join(' · ')}</p>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{exercise.durationSec}s</span>
+          <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" />{exercise.sets} × {exercise.reps}</span>
+        </div>
+
+        <Badge variant="outline" className="w-fit">{equipmentLabel(exercise.equipment)}</Badge>
+
+        <div className="mt-auto flex gap-2 pt-1">
+          <Button
+            size="sm"
+            className="flex-1"
+            variant={done ? 'outline' : 'default'}
+            disabled={done}
+            onClick={() =>
+              markComplete({
+                kind: 'structured',
+                source: 'exercise',
+                title: exercise.name,
+                exerciseSlugs: [exercise.slug],
+                minutes: exerciseMinutes(exercise),
+              })
+            }
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" /> {done ? 'Done' : 'Complete'}
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onDetails(exercise)}>
+            <Info className="h-3.5 w-3.5" /> Details
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
