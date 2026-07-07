@@ -1,6 +1,7 @@
 'use client'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
+import { useLanguage } from '@/lib/i18n'
 import { useWaterTracker } from '@/hooks/useWaterTracker'
 
 interface WaterTrackerProps {
@@ -17,6 +18,7 @@ const GLASS_PATH = 'M 8,4 L 92,4 L 82,172 L 18,172 Z'
 const GLASS_CLIP = 'M 9,6 L 91,6 L 81,170 L 19,170 Z'
 
 export function WaterTracker({ consumedMl, goalMl, gender }: WaterTrackerProps) {
+  const { t } = useLanguage()
   const { consumed: currentMl, percent, remainingMl, addWater } = useWaterTracker({ consumedMl, goalMl })
 
   const FILL_TOP = 10
@@ -105,12 +107,12 @@ export function WaterTracker({ consumedMl, goalMl, gender }: WaterTrackerProps) 
       <div className="text-center space-y-1">
         <p className="text-3xl font-bold">
           {(currentMl / 1000).toFixed(2)}
-          <span className="text-base font-normal ml-1" style={{ color: 'var(--muted-foreground)' }}>L</span>
+          <span className="text-base font-normal ml-1" style={{ color: 'var(--muted-foreground)' }}>{t('water.unit_l')}</span>
         </p>
-        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>of {(goalMl / 1000).toFixed(2)} L goal</p>
+        <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>{t('water.of_goal', { goal: (goalMl / 1000).toFixed(2) })}</p>
         {remainingMl > 0
-          ? <p className="text-xs font-medium text-sky-500">{(remainingMl / 1000).toFixed(2)} L remaining</p>
-          : <p className="text-xs font-semibold text-green-500">Goal reached! 🎉</p>
+          ? <p className="text-xs font-medium text-sky-500">{t('water.remaining', { n: (remainingMl / 1000).toFixed(2) })}</p>
+          : <p className="text-xs font-semibold text-green-500">{t('water.goal_reached')}</p>
         }
       </div>
 
@@ -119,7 +121,7 @@ export function WaterTracker({ consumedMl, goalMl, gender }: WaterTrackerProps) 
           <Button key={ml} size="sm" variant="outline" onClick={() => addWater(ml)}
             className="rounded-xl font-medium"
             style={{ borderColor: 'rgba(14,165,233,0.3)' }}>
-            +{(ml / 1000).toFixed(1)}L
+            +{(ml / 1000).toFixed(1)}{t('water.unit_l')}
           </Button>
         ))}
       </div>

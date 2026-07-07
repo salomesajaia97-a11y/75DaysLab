@@ -438,5 +438,10 @@
   "ai.error_unavailable": "LabAI is unavailable right now. Try again shortly.",
   "ai.logged": "Logged",
   "ai.intro_l1": "Ask about nutrition, workouts, or recipes.",
-  "ai.intro_l2": "I know your goal and today's progress."
+  "ai.intro_l2": "I know your goal and today's progress.",
+
+  "water.unit_l": "L",
+  "water.of_goal": "of {goal} L goal",
+  "water.remaining": "{n} L remaining",
+  "water.goal_reached": "Goal reached! 🎉"
 }
