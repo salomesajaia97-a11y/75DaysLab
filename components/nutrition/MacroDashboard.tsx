@@ -1,6 +1,7 @@
 'use client'
 import { motion } from 'framer-motion'
 import { MacroBar } from './MacroBar'
+import { useLanguage } from '@/lib/i18n'
 import type { MacroTargets } from '@/types'
 
 interface MacroDashboardProps {
@@ -17,6 +18,7 @@ const ARC = (360 - GAP) / 360 * CIRC
 const ROTATE = 90 + GAP / 2
 
 export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
+  const { t } = useLanguage()
   const calPct = Math.min(consumed.calories / targets.calories, 1)
   const remaining = Math.max(targets.calories - consumed.calories, 0)
   const dashOffset = ARC - calPct * ARC
@@ -60,7 +62,7 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
               {consumed.calories}
             </span>
             <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
-              of {targets.calories.toLocaleString('en-US')} kcal
+              {t('nutrition.of_kcal', { n: targets.calories.toLocaleString('en-US') })}
             </span>
           </div>
         </div>
@@ -68,15 +70,15 @@ export function MacroDashboard({ targets, consumed }: MacroDashboardProps) {
           className="text-xs font-semibold tracking-widest uppercase mt-1"
           style={{ color: remaining > 0 ? '#7a9e7e' : '#c07c5e', letterSpacing: '0.12em' }}
         >
-          {remaining > 0 ? `${remaining.toLocaleString('en-US')} to go` : 'Goal reached'}
+          {remaining > 0 ? t('nutrition.to_go', { n: remaining.toLocaleString('en-US') }) : t('nutrition.goal_reached')}
         </p>
       </div>
 
       {/* Macro bars right */}
       <div className="flex-1 space-y-5">
-        <MacroBar label="Protein" consumed={consumed.proteinG} target={targets.proteinG} unit="g" accent="#c07c5e" delay={0} />
-        <MacroBar label="Carbs"   consumed={consumed.carbsG}   target={targets.carbsG}   unit="g" accent="#c5a55a" delay={0.08} />
-        <MacroBar label="Fat"     consumed={consumed.fatG}     target={targets.fatG}     unit="g" accent="#7a9e7e" delay={0.16} />
+        <MacroBar label={t('nutrition.macro_protein')} consumed={consumed.proteinG} target={targets.proteinG} unit="g" accent="#c07c5e" delay={0} />
+        <MacroBar label={t('nutrition.macro_carbs')}   consumed={consumed.carbsG}   target={targets.carbsG}   unit="g" accent="#c5a55a" delay={0.08} />
+        <MacroBar label={t('nutrition.macro_fat')}     consumed={consumed.fatG}     target={targets.fatG}     unit="g" accent="#7a9e7e" delay={0.16} />
       </div>
     </div>
   )

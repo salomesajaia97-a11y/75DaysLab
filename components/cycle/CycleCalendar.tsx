@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect, useContext, createContext } from 'react'
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar'
+import { useLanguage } from '@/lib/i18n'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CyclePrediction {
@@ -19,25 +20,25 @@ interface CycleCalendarProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PHASES = [
-  { label: 'Period',         bg: '#fbeef1', color: '#d9383a' },
-  { label: 'Fertile window', bg: '#e3f2fd', color: '#1e88e5' },
-  { label: 'Ovulation',      bg: '#f3eaff', color: '#7b1fa2' },
+  { key: 'cycle.phase_period',    bg: '#fbeef1', color: '#d9383a' },
+  { key: 'cycle.phase_fertile',   bg: '#e3f2fd', color: '#1e88e5' },
+  { key: 'cycle.phase_ovulation', bg: '#f3eaff', color: '#7b1fa2' },
 ]
 
 const MOODS = [
-  { id: 'happy',     label: 'Happy',     emoji: '😊', bg: '#fff9c4', color: '#f57f17' },
-  { id: 'moody',     label: 'Moody',     emoji: '🎢', bg: '#fce4ec', color: '#c2185b' },
-  { id: 'sad',       label: 'Sad',       emoji: '😢', bg: '#e3f2fd', color: '#1565c0' },
-  { id: 'anxious',   label: 'Anxious',   emoji: '😟', bg: '#f3e5f5', color: '#6a1b9a' },
-  { id: 'energetic', label: 'Energetic', emoji: '⚡', bg: '#e8f5e9', color: '#2e7d32' },
+  { id: 'happy',     key: 'cycle.mood_happy',     emoji: '😊', bg: '#fff9c4', color: '#f57f17' },
+  { id: 'moody',     key: 'cycle.mood_moody',     emoji: '🎢', bg: '#fce4ec', color: '#c2185b' },
+  { id: 'sad',       key: 'cycle.mood_sad',       emoji: '😢', bg: '#e3f2fd', color: '#1565c0' },
+  { id: 'anxious',   key: 'cycle.mood_anxious',   emoji: '😟', bg: '#f3e5f5', color: '#6a1b9a' },
+  { id: 'energetic', key: 'cycle.mood_energetic', emoji: '⚡', bg: '#e8f5e9', color: '#2e7d32' },
 ]
 
 const SYMPTOMS = [
-  { id: 'cramps',   label: 'Cramps',   emoji: '💢', bg: '#fce4ec', color: '#b71c1c' },
-  { id: 'bloating', label: 'Bloating', emoji: '🎈', bg: '#fff3e0', color: '#e65100' },
-  { id: 'headache', label: 'Headache', emoji: '🤕', bg: '#fbe9e7', color: '#bf360c' },
-  { id: 'fatigue',  label: 'Fatigue',  emoji: '🥱', bg: '#ede7f6', color: '#4527a0' },
-  { id: 'acne',     label: 'Acne',     emoji: '🧼', bg: '#e8eaf6', color: '#283593' },
+  { id: 'cramps',   key: 'cycle.symptom_cramps',   emoji: '💢', bg: '#fce4ec', color: '#b71c1c' },
+  { id: 'bloating', key: 'cycle.symptom_bloating', emoji: '🎈', bg: '#fff3e0', color: '#e65100' },
+  { id: 'headache', key: 'cycle.symptom_headache', emoji: '🤕', bg: '#fbe9e7', color: '#bf360c' },
+  { id: 'fatigue',  key: 'cycle.symptom_fatigue',  emoji: '🥱', bg: '#ede7f6', color: '#4527a0' },
+  { id: 'acne',     key: 'cycle.symptom_acne',     emoji: '🧼', bg: '#e8eaf6', color: '#283593' },
 ]
 
 export const LS_KEY = 'cycle_logged_period'
@@ -108,6 +109,7 @@ function Chip({ emoji, label, active, bg, color, onClick }: {
 
 // ─── CycleCalendar ────────────────────────────────────────────────────────────
 export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: CycleCalendarProps) {
+  const { t } = useLanguage()
   // Period logging mode is SEPARATE from symptom panel interaction.
   // periodMode=true → clicks set start/end. periodMode=false → clicks open symptom panel.
   const [periodMode,    setPeriodMode]    = useState(false)
@@ -201,14 +203,14 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Menstrual Calendar</p>
+          <p className="text-sm font-semibold">{t('cycle.card_title')}</p>
           <div className="flex items-center gap-2">
             {loggedPeriod && !periodMode && (
               <button
                 onClick={clearPeriod}
                 className="text-[11px] text-rose-400 hover:text-rose-600 transition-colors underline underline-offset-2"
               >
-                Clear
+                {t('cycle.clear')}
               </button>
             )}
             {periodMode ? (
@@ -216,7 +218,7 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
                 onClick={cancelPeriodMode}
                 className="text-[11px] px-2.5 py-1 rounded-full border border-rose-200 text-rose-400 hover:bg-rose-50 transition-colors"
               >
-                Cancel
+                {t('cycle.cancel')}
               </button>
             ) : (
               <button
@@ -224,7 +226,7 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
                 className="text-[11px] px-2.5 py-1 rounded-full font-medium transition-all hover:opacity-80"
                 style={{ backgroundColor: '#fbeef1', color: '#d9383a' }}
               >
-                {loggedPeriod ? 'Edit Period' : '＋ Log Period'}
+                {loggedPeriod ? t('cycle.edit_period') : `＋ ${t('cycle.log_period')}`}
               </button>
             )}
           </div>
@@ -232,13 +234,13 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
 
         {/* ── Legend ── */}
         <div className="flex gap-1.5 flex-wrap">
-          {PHASES.map(({ label, bg, color }) => (
+          {PHASES.map(({ key, bg, color }) => (
             <span
-              key={label}
+              key={key}
               className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium"
               style={{ backgroundColor: bg, color }}
             >
-              {label}
+              {t(key)}
             </span>
           ))}
         </div>
@@ -247,8 +249,8 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
         {periodMode && (
           <p className="text-[11px] font-medium" style={{ color: '#d9383a' }}>
             {periodStart
-              ? `Start: ${periodStart.toLocaleDateString()} — now click the last day`
-              : 'Click the first day of your period'}
+              ? `${t('cycle.start_label')}: ${periodStart.toLocaleDateString()} — ${t('cycle.hint_end')}`
+              : t('cycle.hint_start')}
           </p>
         )}
 
@@ -282,7 +284,7 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
         {/* ── Period summary ── */}
         {loggedPeriod && (
           <p className="text-[11px] text-muted-foreground">
-            My Period: {loggedPeriod.start.toLocaleDateString()} – {loggedPeriod.end.toLocaleDateString()}
+            {t('cycle.my_period')}: {loggedPeriod.start.toLocaleDateString()} – {loggedPeriod.end.toLocaleDateString()}
           </p>
         )}
 
@@ -300,22 +302,22 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-semibold leading-snug">
-                How were you feeling on {fmtDisplay(selectedDate)}?
+                {t('cycle.feeling_on', { date: fmtDisplay(selectedDate) })}
               </p>
               <button
                 onClick={() => setSelectedDate(null)}
                 className="text-muted-foreground hover:text-foreground text-xl leading-none mt-0.5 flex-shrink-0 transition-colors"
-                aria-label="Close"
+                aria-label={t('cycle.close')}
               >
                 ×
               </button>
             </div>
 
             <section>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Mood</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('cycle.mood')}</p>
               <div className="flex gap-2 flex-wrap">
                 {MOODS.map(m => (
-                  <Chip key={m.id} emoji={m.emoji} label={m.label}
+                  <Chip key={m.id} emoji={m.emoji} label={t(m.key)}
                     active={selLog.moods.includes(m.id)}
                     bg={m.bg} color={m.color}
                     onClick={() => toggle('moods', m.id)} />
@@ -324,10 +326,10 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
             </section>
 
             <section>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Symptoms</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2">{t('cycle.symptoms')}</p>
               <div className="flex gap-2 flex-wrap">
                 {SYMPTOMS.map(s => (
-                  <Chip key={s.id} emoji={s.emoji} label={s.label}
+                  <Chip key={s.id} emoji={s.emoji} label={t(s.key)}
                     active={selLog.symptoms.includes(s.id)}
                     bg={s.bg} color={s.color}
                     onClick={() => toggle('symptoms', s.id)} />

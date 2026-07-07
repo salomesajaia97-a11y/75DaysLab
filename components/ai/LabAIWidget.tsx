@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Loader2, Bot } from 'lucide-react'
 import { ChatMessage } from '@/components/ai/ChatMessage'
+import { useLanguage } from '@/lib/i18n'
 import type { MacroData, ProgressContext } from '@/lib/ai'
 
 interface Message {
@@ -41,6 +42,7 @@ function MacroCard({ macros }: { macros: MacroData }) {
 }
 
 export function LabAIWidget() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -129,7 +131,7 @@ export function LabAIWidget() {
       const data = await res.json()
 
       if (!res.ok) {
-        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: data.error ?? 'Something went wrong.' }])
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: data.error ?? t('ai.error_generic') }])
         return
       }
 
@@ -154,7 +156,7 @@ export function LabAIWidget() {
     } catch {
       setMessages(prev => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' },
+        { id: crypto.randomUUID(), role: 'ai', content: t('ai.error_unavailable') },
       ])
     } finally {
       setLoading(false)
@@ -175,7 +177,7 @@ export function LabAIWidget() {
         onClick={() => setOpen(o => !o)}
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95"
         style={{ background: 'var(--foreground)', color: 'var(--background)' }}
-        aria-label={open ? 'Close LabAI' : 'Open LabAI coach'}
+        aria-label={open ? t('ai.close') : t('ai.open')}
       >
         {open ? <X className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
         <span className="text-sm font-semibold">{open ? 'Close' : 'LabAI'}</span>
@@ -199,7 +201,7 @@ export function LabAIWidget() {
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4" style={{ color: 'var(--foreground)' }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                LabAI Coach
+                {t('ai.coach')}
               </span>
             </div>
             {challengeDay !== null && (
@@ -207,7 +209,7 @@ export function LabAIWidget() {
                 className="text-xs font-medium px-2 py-0.5 rounded-full"
                 style={{ background: 'var(--muted)', color: 'var(--muted-foreground)' }}
               >
-                Day {challengeDay}/75
+                {t('ai.day_of', { n: challengeDay })}
               </span>
             )}
           </div>
@@ -219,7 +221,7 @@ export function LabAIWidget() {
                 className="text-center text-xs mt-8"
                 style={{ color: 'var(--muted-foreground)' }}
               >
-                Ask about nutrition, workouts, or recipes. I know your goal.
+                {t('ai.intro')}
               </p>
             )}
             {messages.map((msg) => (
@@ -235,7 +237,7 @@ export function LabAIWidget() {
                   style={{ background: 'var(--muted)', color: 'var(--muted-foreground)', borderBottomLeftRadius: '4px' }}
                 >
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>LabAI is thinking…</span>
+                  <span>{t('ai.thinking')}</span>
                 </div>
               </div>
             )}
@@ -251,7 +253,7 @@ export function LabAIWidget() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask LabAI…"
+              placeholder={t('ai.placeholder')}
               disabled={loading}
               className="flex-1 rounded-xl bg-transparent px-3 py-2 text-sm outline-none"
               style={{
@@ -268,7 +270,7 @@ export function LabAIWidget() {
                 color: input.trim() && !loading ? 'var(--background)' : 'var(--muted-foreground)',
                 opacity: !input.trim() || loading ? 0.5 : 1,
               }}
-              aria-label="Send"
+              aria-label={t('ai.send')}
             >
               <Send className="h-4 w-4" />
             </button>

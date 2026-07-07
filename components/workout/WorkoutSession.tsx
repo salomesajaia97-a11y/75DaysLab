@@ -2,6 +2,7 @@
 import { Play, Pause, RotateCcw } from 'lucide-react'
 import { CheckCircle2, Circle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/lib/i18n'
 import type { WorkoutSessionState } from '@/types'
 import { INDOOR_VIDEOS, OUTDOOR_VIDEOS } from './workoutVideos'
 
@@ -32,7 +33,10 @@ export function WorkoutSession({
   onToggleVideos,
   onManualToggle,
 }: WorkoutSessionProps) {
-  const label = type === 'indoor' ? '🏠 Indoor Workout' : '🌤️ Outdoor Workout'
+  const { t } = useLanguage()
+  const label = type === 'indoor'
+    ? `🏠 ${t('dashboard.workout.indoor')}`
+    : `🌤️ ${t('dashboard.workout.outdoor')}`
   const videos = type === 'indoor' ? INDOOR_VIDEOS : OUTDOOR_VIDEOS
   const timerComplete = session.timerSeconds === 0
   const showReset = session.timerFinished || session.timerSeconds < 2700
@@ -55,7 +59,7 @@ export function WorkoutSession({
         <span className={cn('text-sm font-semibold flex-1', session.done && 'line-through text-muted-foreground')}>
           {label}
         </span>
-        <span className="text-xs text-muted-foreground">45 min</span>
+        <span className="text-xs text-muted-foreground">{t('dashboard.workout.min')}</span>
       </div>
 
       {/* Timer display (hidden when done) */}
@@ -64,7 +68,7 @@ export function WorkoutSession({
           <div className="text-2xl font-bold tabular-nums tracking-wider">
             {formatTime(session.timerSeconds)}
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">countdown timer</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{t('dashboard.workout.countdown')}</div>
         </div>
       )}
 
@@ -81,8 +85,8 @@ export function WorkoutSession({
             )}
           >
             {session.timerRunning
-              ? <><Pause className="h-3 w-3" />Pause</>
-              : <><Play className="h-3 w-3" />{timerComplete ? 'Done' : 'Start'}</>
+              ? <><Pause className="h-3 w-3" />{t('dashboard.workout.pause')}</>
+              : <><Play className="h-3 w-3" />{timerComplete ? t('dashboard.workout.done') : t('dashboard.workout.start')}</>
             }
           </button>
           {showReset && (
@@ -101,20 +105,20 @@ export function WorkoutSession({
       {session.showConfirm && (
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 mb-2">
           <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2">
-            ⏰ Timer complete! Did you finish your {type} workout?
+            {type === 'indoor' ? t('dashboard.workout.confirm_indoor') : t('dashboard.workout.confirm_outdoor')}
           </p>
           <div className="flex gap-2">
             <button
               onClick={onConfirmDone}
               className="flex-1 bg-green-600 text-white rounded-lg py-1.5 text-xs font-semibold hover:bg-green-700 transition-colors"
             >
-              ✓ Yes, mark done
+              ✓ {t('dashboard.workout.yes_done')}
             </button>
             <button
               onClick={onDismissConfirm}
               className="flex-1 border border-border rounded-lg py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
             >
-              Keep going
+              {t('dashboard.workout.keep_going')}
             </button>
           </div>
         </div>
@@ -127,7 +131,7 @@ export function WorkoutSession({
         aria-label={session.showVideos ? 'Hide workout suggestions' : 'Show AI workout suggestions'}
         className="w-full border border-dashed border-border rounded-lg py-1.5 text-xs text-muted-foreground hover:bg-accent transition-colors"
       >
-        {session.showVideos ? '▲ Hide suggestions' : '✨ Get AI Suggestions'}
+        {session.showVideos ? `▲ ${t('dashboard.workout.hide_suggestions')}` : `✨ ${t('dashboard.workout.get_suggestions')}`}
       </button>
 
       {/* Video cards */}

@@ -123,7 +123,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
           <h3 className="text-lg font-semibold">{lex.name}</h3>
           <p className="text-xs text-muted-foreground">{lex.targetMuscles.join(' · ')}</p>
           <div className="mt-1 flex items-center justify-center gap-2">
-            <Badge variant="outline"><Repeat className="h-3 w-3" /> {cur.sets} × {cur.reps}</Badge>
+            <Badge variant="outline"><Repeat className="h-3 w-3" /> {lex.sets} × {lex.reps}</Badge>
           </div>
         </div>
 

@@ -47,7 +47,7 @@ interface ExerciseGe {
 
 const EXERCISE_GE: Record<string, ExerciseGe> = {
   squat: {
-    name: 'სქუატი',
+    name: 'ჩაჯდომა',
     instructions: [
       'დადექი ფეხებზე მხრების სიგანეზე, წინდები ოდნავ გარეთ.',
       'გადაწიე მენჯი უკან და მოხარე მუხლები დასაშვებად.',
@@ -59,7 +59,7 @@ const EXERCISE_GE: Record<string, ExerciseGe> = {
     advancedOption: 'დაიჭირე წყვილი განტელი მხრებთან დამატებითი დატვირთვისთვის.',
   },
   'wall-pushup': {
-    name: 'კედლის პუშ-აპი',
+    name: 'კედლის აზიდვა',
     instructions: [
       'დადექი კედლიდან ხელის სიგრძეზე, ხელები მხრების სიმაღლეზე.',
       'მოხარე იდაყვები და მიიტანე გულმკერდი კედელთან.',
@@ -67,7 +67,7 @@ const EXERCISE_GE: Record<string, ExerciseGe> = {
     ],
     safetyTips: ['კორი ოდნავ დაჭიმული გეჭიროს.', 'იმოძრავე ნელა და კონტროლით.'],
     beginnerModification: 'დადექი კედელთან ახლოს დატვირთვის შესამცირებლად.',
-    advancedOption: 'გადადი მყარ სკამზე დახრილ პუშ-აპზე.',
+    advancedOption: 'გადადი მყარ სკამზე დახრილ აზიდვაზე.',
   },
   'glute-bridge': {
     name: 'დუნდულოს ხიდი',
@@ -114,25 +114,25 @@ const EXERCISE_GE: Record<string, ExerciseGe> = {
     advancedOption: 'დაამატე წინაღობის რეზინა მუხლების ზემოთ.',
   },
   pushup: {
-    name: 'პუშ-აპი',
+    name: 'აზიდვა',
     instructions: [
       'დაიწყე პლანკიდან, ხელები მხრებზე ოდნავ განიერად.',
       'ჩაუშვი გულმკერდი იატაკისკენ, იდაყვები ~45°-ზე.',
       'ისევ ამოიწიე, სხეული სწორ ხაზზე შენარჩუნებით.',
     ],
     safetyTips: ['კორი დაჭიმული გეჭიროს — მენჯი არ ჩამოეშვას.', 'შეჩერდი უკმარისობამდე ერთი გამეორებით ადრე.'],
-    beginnerModification: 'ჩამოდი მუხლებზე ან გააკეთე დახრილი პუშ-აპი.',
+    beginnerModification: 'ჩამოდი მუხლებზე ან გააკეთე დახრილი აზიდვა.',
     advancedOption: 'შეანელე ჩაშვების ფაზა 3-წამიან ათვლამდე.',
   },
   'walking-lunge': {
-    name: 'სიარულით ლანჯი',
+    name: 'სიარულით გაბიჯება',
     instructions: [
       'გადადგი წინ და ჩაიხარე სანამ ორივე მუხლი ~90°-ს მიაღწევს.',
-      'წინა ქუსლზე დაწოლით გადადგი წინ შემდეგ ლანჯში.',
+      'წინა ქუსლზე დაწოლით გადადგი წინ შემდეგ გაბიჯებაში.',
       'ტანი სწორად გეჭიროს მთელი დროის განმავლობაში.',
     ],
     safetyTips: ['წინა მუხლი ტერფის ზემოთ გეჭიროს.', 'საჭიროების შემთხვევაში გამოიყენე კედელი ბალანსისთვის.'],
-    beginnerModification: 'გააკეთე ადგილზე ლანჯები საყრდენზე დაჭერით.',
+    beginnerModification: 'გააკეთე ადგილზე გაბიჯებები საყრდენზე დაჭერით.',
     advancedOption: 'დაიჭირე განტელები გვერდებზე.',
   },
   plank: {
@@ -187,29 +187,29 @@ const EXERCISE_GE: Record<string, ExerciseGe> = {
       'დააბრუნე ფეხები და წამოდექი ან ახტი.',
     ],
     safetyTips: ['დაეშვი რბილად მოხრილი მუხლებით.', 'გაანაწილე ძალა — ხარისხი სისწრაფეზე მნიშვნელოვანია.'],
-    beginnerModification: 'გადადგი უკან და წინ ხტომის ნაცვლად, პუშ-აპის გარეშე.',
-    advancedOption: 'დაამატე პუშ-აპი ქვემოთ და ხტომა ზემოთ.',
+    beginnerModification: 'გადადგი უკან და წინ ხტომის ნაცვლად, აზიდვის გარეშე.',
+    advancedOption: 'დაამატე აზიდვა ქვემოთ და ხტომა ზემოთ.',
   },
   'jump-squat': {
-    name: 'ხტუნვითი სქუატი',
+    name: 'ახტომით ჩაჯდომა',
     instructions: [
-      'ჩაიხარე სქუატში.',
+      'ჩაიხარე ჩაჯდომაში.',
       'ააფეთქე ზემოთ მცირე ხტომით.',
-      'დაეშვი რბილად ისევ სქუატში.',
+      'დაეშვი რბილად ისევ ჩაჯდომაში.',
     ],
     safetyTips: ['ხტომის დაშვება მოხრილი მუხლებით შეამსუბუქე.', 'გამოტოვე, თუ მუხლებში დისკომფორტი გაქვს.'],
-    beginnerModification: 'გააკეთე ჩვეულებრივი სქუატები ხტომის გარეშე.',
+    beginnerModification: 'გააკეთე ჩვეულებრივი ჩაჯდომები ხტომის გარეშე.',
     advancedOption: 'დაამატე პაუზა ქვემოთ ხტომამდე.',
   },
   'pike-pushup': {
-    name: 'პაიქ პუშ-აპი',
+    name: 'პაიკ-აზიდვა',
     instructions: [
       'დაიწყე "ქვევით მიმართული ძაღლის" პოზაში, მენჯი მაღლა.',
       'მოხარე იდაყვები და ჩაუშვი თავის ზედა ნაწილი იატაკისკენ.',
       'ისევ ამოიწიე საწყის მდგომარეობამდე.',
     ],
     safetyTips: ['კისერი გაგრძელებული და მოძრაობა კონტროლირებული გეჭიროს.', 'შეჩერდი, თუ მხრები იძაბება.'],
-    beginnerModification: 'გააკეთე მხრებზე ორიენტირებული დახრილი პუშ-აპი.',
+    beginnerModification: 'გააკეთე მხრებზე ორიენტირებული დახრილი აზიდვა.',
     advancedOption: 'ასწიე ფეხები საფეხურზე მეტი დატვირთვისთვის.',
   },
   'high-knees': {
@@ -224,14 +224,14 @@ const EXERCISE_GE: Record<string, ExerciseGe> = {
     advancedOption: 'გაზარდე სისწრაფე მთელი ინტერვალისთვის.',
   },
   'jump-lunge': {
-    name: 'ხტუნვითი ლანჯი',
+    name: 'ახტომით გაბიჯება',
     instructions: [
-      'დაიწყე ლანჯის პოზიციიდან.',
+      'დაიწყე გაბიჯების პოზიციიდან.',
       'ახტი და შეცვალე ფეხები ჰაერში.',
-      'დაეშვი რბილად მოპირდაპირე ლანჯში.',
+      'დაეშვი რბილად მოპირდაპირე გაბიჯებაში.',
     ],
     safetyTips: ['ყოველი დაშვება რბილი მუხლებით შეამსუბუქე.', 'გამოტოვე, თუ სახსრებში დისკომფორტი გაქვს.'],
-    beginnerModification: 'გააკეთე მონაცვლეობითი ადგილზე ლანჯები ხტომის გარეშე.',
+    beginnerModification: 'გააკეთე მონაცვლეობითი ადგილზე გაბიჯებები ხტომის გარეშე.',
     advancedOption: 'გაზარდე ტემპი კონტროლირებული დაშვებების შენარჩუნებით.',
   },
   'bicycle-crunch': {
@@ -318,7 +318,19 @@ const FOCUS_AREA_GE: Record<string, string> = {
 
 // ── Locale-aware accessors ───────────────────────────────────────────────────
 
-/** Localize a whole catalog exercise (name + prose + muscles) for the locale. */
+/**
+ * Localize the English rep-string qualifiers baked into EXERCISE_META.reps
+ * (e.g. "10 / side", "20–40s hold", "45s"). Numbers/ranges stay as-is.
+ */
+export function localizeReps(reps: string, locale: Locale): string {
+  if (locale !== 'ge') return reps
+  return reps
+    .replace(/\bhold\b/gi, 'შეკავება')
+    .replace(/\/\s*side/gi, '/ მხარე')
+    .replace(/(\d)\s*s\b/g, '$1წმ')
+}
+
+/** Localize a whole catalog exercise (name + prose + muscles + reps) for the locale. */
 export function localizeExercise(ex: CatalogExercise, locale: Locale): CatalogExercise {
   if (locale !== 'ge') return ex
   const g = EXERCISE_GE[ex.slug]
@@ -326,6 +338,7 @@ export function localizeExercise(ex: CatalogExercise, locale: Locale): CatalogEx
   return {
     ...ex,
     name: g.name,
+    reps: localizeReps(ex.reps, locale),
     targetMuscles: ex.targetMuscles.map(m => MUSCLE_GE[m] ?? m),
     instructions: g.instructions,
     safetyTips: g.safetyTips,

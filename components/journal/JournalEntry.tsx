@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { BookOpen, Loader2, CheckCircle } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n'
 
 interface JournalEntryFormProps {
   existingEntry?: { bookTitle: string; pagesRead: number; notes: string }
@@ -12,6 +13,7 @@ interface JournalEntryFormProps {
 }
 
 export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormProps) {
+  const { t } = useLanguage()
   const [bookTitle, setBookTitle] = useState(existingEntry?.bookTitle ?? '')
   const [pagesRead, setPagesRead] = useState(existingEntry?.pagesRead?.toString() ?? '')
   const [notes, setNotes] = useState(existingEntry?.notes ?? '')
@@ -47,13 +49,13 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
       })
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error ?? 'Failed to save')
+        setError(data.error ?? t('journal.save_failed'))
         return
       }
       setSaved(true)
       onSaved()
     } catch {
-      setError('Failed to save. Try again.')
+      setError(t('journal.save_failed_retry'))
     } finally {
       setLoading(false)
     }
@@ -63,9 +65,9 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center">
         <CheckCircle className="h-12 w-12 text-green-500" />
-        <p className="font-semibold text-lg">Reading logged!</p>
-        <p className="text-muted-foreground text-sm">{bookTitle} · {pagesRead} pages</p>
-        <Button variant="outline" onClick={() => setSaved(false)}>Log more</Button>
+        <p className="font-semibold text-lg">{t('journal.logged')}</p>
+        <p className="text-muted-foreground text-sm">{t('journal.pages_summary', { title: bookTitle, pages: pagesRead })}</p>
+        <Button variant="outline" onClick={() => setSaved(false)}>{t('journal.log_more')}</Button>
       </div>
     )
   }
@@ -74,30 +76,30 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-muted-foreground mb-2">
         <BookOpen className="h-4 w-4" />
-        <span className="text-sm">Minimum 10 pages required to complete today&apos;s reading</span>
+        <span className="text-sm">{t('journal.min_pages')}</span>
       </div>
       <div className="space-y-2">
-        <Label>Book Title</Label>
-        <Input placeholder="What are you reading?" value={bookTitle} onChange={e => setBookTitle(e.target.value)} />
+        <Label>{t('journal.book_title')}</Label>
+        <Input placeholder={t('journal.book_placeholder')} value={bookTitle} onChange={e => setBookTitle(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Label>Pages Read Today</Label>
+        <Label>{t('journal.pages_today')}</Label>
         <Input type="number" min="0" placeholder="10" value={pagesRead} onChange={e => setPagesRead(e.target.value)} />
         {pages > 0 && pages < 10 && (
-          <p className="text-xs text-destructive">{10 - pages} more pages needed</p>
+          <p className="text-xs text-destructive">{t('journal.pages_needed', { n: 10 - pages })}</p>
         )}
         {pages >= 10 && (
-          <p className="text-xs text-green-500">✓ Reading goal met</p>
+          <p className="text-xs text-green-500">✓ {t('journal.goal_met')}</p>
         )}
       </div>
       <div className="space-y-2">
-        <Label>Notes (optional)</Label>
-        <Textarea placeholder="Key insights, quotes, reflections..." value={notes} onChange={e => setNotes(e.target.value)} rows={4} />
+        <Label>{t('journal.notes')}</Label>
+        <Textarea placeholder={t('journal.notes_placeholder')} value={notes} onChange={e => setNotes(e.target.value)} rows={4} />
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <Button className="w-full" onClick={save} disabled={!isComplete || loading}>
         {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-        Save Reading Log
+        {t('journal.save')}
       </Button>
     </div>
   )

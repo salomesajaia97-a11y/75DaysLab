@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import NextImage from 'next/image'
 import { ArrowLeft, Flame, Clock, Users } from 'lucide-react'
 import { ShopIngredients } from '@/components/recipes/ShopIngredients'
+import { useLanguage } from '@/lib/i18n'
 
 interface FullRecipe {
   _id: string
@@ -28,6 +29,7 @@ interface FullRecipe {
 }
 
 export default function RecipeDetailPage() {
+  const { t } = useLanguage()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [recipe, setRecipe] = useState<FullRecipe | null>(null)
@@ -58,9 +60,9 @@ export default function RecipeDetailPage() {
     return (
       <div className="max-w-2xl mx-auto py-20 text-center space-y-3">
         <p className="text-4xl">🍽️</p>
-        <p className="font-semibold" style={{ color: 'var(--foreground)' }}>Recipe not found</p>
+        <p className="font-semibold" style={{ color: 'var(--foreground)' }}>{t('recipe.not_found')}</p>
         <button onClick={() => router.back()} className="text-sm underline" style={{ color: 'var(--muted-foreground)' }}>
-          Go back
+          {t('recipe.go_back')}
         </button>
       </div>
     )
@@ -80,7 +82,7 @@ export default function RecipeDetailPage() {
         style={{ color: 'var(--muted-foreground)' }}
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to recipes
+        {t('recipe.back_to_recipes')}
       </button>
 
       {/* Hero */}
@@ -133,19 +135,19 @@ export default function RecipeDetailPage() {
           {recipe.calories && (
             <div className="flex items-center gap-1.5 text-sm">
               <Flame className="h-4 w-4 text-orange-400" />
-              <span style={{ color: 'var(--foreground)' }}>{recipe.calories} kcal</span>
+              <span style={{ color: 'var(--foreground)' }}>{recipe.calories} {t('recipes.kcal')}</span>
             </div>
           )}
           {recipe.totalTimeMin && (
             <div className="flex items-center gap-1.5 text-sm">
               <Clock className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
-              <span style={{ color: 'var(--foreground)' }}>{recipe.totalTimeMin} min</span>
+              <span style={{ color: 'var(--foreground)' }}>{recipe.totalTimeMin} {t('recipes.min')}</span>
             </div>
           )}
           {recipe.servings && (
             <div className="flex items-center gap-1.5 text-sm">
               <Users className="h-4 w-4" style={{ color: 'var(--muted-foreground)' }} />
-              <span style={{ color: 'var(--foreground)' }}>{recipe.servings} servings</span>
+              <span style={{ color: 'var(--foreground)' }}>{recipe.servings} {t('recipe.servings')}</span>
             </div>
           )}
         </div>
@@ -160,19 +162,19 @@ export default function RecipeDetailPage() {
           {recipe.protein !== undefined && (
             <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
               <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.protein}g</span>
-              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Protein</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{t('nutrition.macro_protein')}</span>
             </div>
           )}
           {recipe.carbs !== undefined && (
             <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
               <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.carbs}g</span>
-              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Carbs</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{t('nutrition.macro_carbs')}</span>
             </div>
           )}
           {recipe.fat !== undefined && (
             <div className="flex flex-col items-center rounded-2xl py-3" style={{ background: 'var(--muted)' }}>
               <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{recipe.fat}g</span>
-              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Fat</span>
+              <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{t('nutrition.macro_fat')}</span>
             </div>
           )}
         </div>
@@ -196,7 +198,7 @@ export default function RecipeDetailPage() {
       {/* Ingredients */}
       {recipe.ingredients && recipe.ingredients.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Ingredients</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>{t('recipe.ingredients')}</h2>
           <ul className="space-y-2.5">
             {recipe.ingredients.map((ing, i) => (
               <li key={i} className="flex items-start gap-3 text-sm" style={{ color: 'var(--foreground)' }}>
@@ -214,7 +216,7 @@ export default function RecipeDetailPage() {
       {/* Instructions */}
       {recipe.instructions && recipe.instructions.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Instructions</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>{t('recipe.instructions')}</h2>
           <ol className="space-y-5">
             {recipe.instructions.map((step, i) => (
               <li key={i} className="flex gap-4 text-sm leading-relaxed">
@@ -233,7 +235,7 @@ export default function RecipeDetailPage() {
 
       {/* Attribution — small, at bottom */}
       <p className="pt-4 border-t text-xs" style={{ borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}>
-        Originally from{' '}
+        {t('recipe.originally_from')}{' '}
         <a
           href={recipe.sourceUrl}
           target="_blank"

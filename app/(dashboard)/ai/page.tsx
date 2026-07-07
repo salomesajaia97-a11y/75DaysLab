@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Bot } from 'lucide-react'
 import { ChatMessage } from '@/components/ai/ChatMessage'
 import { Aurora } from '@/components/shared/Motion'
+import { useLanguage } from '@/lib/i18n'
 import type { MacroData, ProgressContext } from '@/lib/ai'
 
 interface Message {
@@ -23,13 +24,13 @@ function detectMode(message: string): 'food_log' | 'fitness' | 'chat' {
   return 'chat'
 }
 
-function MacroCard({ macros }: { macros: MacroData }) {
+function MacroCard({ macros, loggedLabel }: { macros: MacroData; loggedLabel: string }) {
   return (
     <div
       className="mt-2 rounded-xl px-4 py-3 text-xs"
       style={{ background: 'var(--accent)', color: 'var(--accent-foreground)', border: '1px solid var(--border)' }}
     >
-      <p className="font-semibold mb-1 text-[11px] uppercase tracking-wide opacity-60">Logged</p>
+      <p className="font-semibold mb-1 text-[11px] uppercase tracking-wide opacity-60">{loggedLabel}</p>
       <p className="font-medium mb-1">{macros.food}</p>
       <div className="flex gap-3 opacity-80">
         <span>{macros.calories} cal</span>
@@ -42,6 +43,7 @@ function MacroCard({ macros }: { macros: MacroData }) {
 }
 
 export default function LabAIPage() {
+  const { t } = useLanguage()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -105,7 +107,7 @@ export default function LabAIPage() {
       })
       const data = await res.json()
       if (!res.ok) {
-        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: data.error ?? 'Something went wrong.' }])
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: data.error ?? t('ai.error_generic') }])
         return
       }
       const aiMsg: Message = { id: crypto.randomUUID(), role: 'ai', content: data.message, macros: data.macros ?? undefined }
@@ -120,7 +122,7 @@ export default function LabAIPage() {
         }).catch(() => {})
       }
     } catch {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: 'LabAI is unavailable right now. Try again shortly.' }])
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'ai', content: t('ai.error_unavailable') }])
     } finally {
       setLoading(false)
     }
@@ -142,9 +144,9 @@ export default function LabAIPage() {
           <Bot className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">LabAI Coach</h1>
+          <h1 className="text-xl font-bold">{t('ai.coach')}</h1>
           {challengeDay !== null && (
-            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Day {challengeDay} of 75</p>
+            <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>{t('ai.day_of', { n: challengeDay })}</p>
           )}
         </div>
       </div>
@@ -158,14 +160,14 @@ export default function LabAIPage() {
           <div className="flex flex-col items-center justify-center h-full gap-3 py-12">
             <Bot className="h-12 w-12 opacity-20" style={{ color: 'var(--foreground)' }} />
             <p className="text-sm text-center" style={{ color: 'var(--muted-foreground)' }}>
-              Ask about nutrition, workouts, or recipes.<br />I know your goal and today&apos;s progress.
+              {t('ai.intro_l1')}<br />{t('ai.intro_l2')}
             </p>
           </div>
         )}
         {messages.map((msg) => (
           <div key={msg.id}>
             <ChatMessage role={msg.role} content={msg.content} />
-            {msg.macros && <MacroCard macros={msg.macros} />}
+            {msg.macros && <MacroCard macros={msg.macros} loggedLabel={t('ai.logged')} />}
           </div>
         ))}
         {loading && (
@@ -175,7 +177,7 @@ export default function LabAIPage() {
               style={{ background: 'var(--background)', color: 'var(--muted-foreground)', borderBottomLeftRadius: '4px' }}
             >
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span>LabAI is thinking…</span>
+              <span>{t('ai.thinking')}</span>
             </div>
           </div>
         )}
@@ -190,7 +192,7 @@ export default function LabAIPage() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Ask LabAI anything…"
+          placeholder={t('ai.placeholder_long')}
           disabled={loading}
           className="flex-1 bg-transparent px-3 py-2 text-sm outline-none"
           style={{ color: 'var(--foreground)' }}
@@ -204,7 +206,7 @@ export default function LabAIPage() {
             color: input.trim() && !loading ? 'var(--background)' : 'var(--muted-foreground)',
             opacity: !input.trim() || loading ? 0.5 : 1,
           }}
-          aria-label="Send"
+          aria-label={t('ai.send')}
         >
           <Send className="h-4 w-4" />
         </button>
