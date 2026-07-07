@@ -9,6 +9,8 @@ import {
   thumbLottieFor,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
+import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
+import { useLanguage } from '@/lib/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
 import { ExerciseThumb } from './ExerciseThumb'
@@ -19,12 +21,14 @@ interface Props {
   onDetails: (exercise: CatalogExercise) => void
 }
 
-function equipmentLabel(id: string) {
+function equipmentEn(id: string) {
   return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
 }
 
-export function ExerciseCard({ exercise, gender, onDetails }: Props) {
+export function ExerciseCard({ exercise: rawExercise, gender, onDetails }: Props) {
+  const { t, locale } = useLanguage()
   const { done, markComplete } = useMarkComplete()
+  const exercise = localizeExercise(rawExercise, locale)
   const lottieSrc = exercise.lottieAvailable ? thumbLottieFor(exercise.slug, gender) : null
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
@@ -33,7 +37,7 @@ export function ExerciseCard({ exercise, gender, onDetails }: Props) {
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-start justify-between gap-2">
           <h4 className="text-sm font-semibold leading-tight">{exercise.name}</h4>
-          <Badge variant="secondary" className="shrink-0">{DIFFICULTY_LABEL[exercise.level]}</Badge>
+          <Badge variant="secondary" className="shrink-0">{difficultyLabel(exercise.level, locale, DIFFICULTY_LABEL[exercise.level])}</Badge>
         </div>
 
         <p className="text-xs text-muted-foreground">{exercise.targetMuscles.join(' · ')}</p>
@@ -43,7 +47,7 @@ export function ExerciseCard({ exercise, gender, onDetails }: Props) {
           <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" />{exercise.sets} × {exercise.reps}</span>
         </div>
 
-        <Badge variant="outline" className="w-fit">{equipmentLabel(exercise.equipment)}</Badge>
+        <Badge variant="outline" className="w-fit">{geEquipmentLabel(exercise.equipment, locale, equipmentEn(exercise.equipment))}</Badge>
 
         <div className="mt-auto flex gap-2 pt-1">
           <Button
@@ -61,10 +65,10 @@ export function ExerciseCard({ exercise, gender, onDetails }: Props) {
               })
             }
           >
-            <CheckCircle2 className="h-3.5 w-3.5" /> {done ? 'Done' : 'Complete'}
+            <CheckCircle2 className="h-3.5 w-3.5" /> {done ? t('fitness.done_short') : t('fitness.complete_short')}
           </Button>
-          <Button size="sm" variant="outline" className="flex-1" onClick={() => onDetails(exercise)}>
-            <Info className="h-3.5 w-3.5" /> Details
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => onDetails(rawExercise)}>
+            <Info className="h-3.5 w-3.5" /> {t('fitness.details')}
           </Button>
         </div>
       </div>

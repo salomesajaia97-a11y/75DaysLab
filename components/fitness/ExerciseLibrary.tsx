@@ -3,12 +3,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { getProfile } from '@/lib/storage'
+import { useLanguage } from '@/lib/i18n'
 import type { ExerciseLevel, ExerciseFocus, Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import {
   getCatalogByLevel,
   resolveGender,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
+import { difficultyLabel, localizeExercise } from '@/lib/fitness/i18n'
 import { ExerciseCard } from './ExerciseCard'
 import { ExerciseDetailModal } from './ExerciseDetailModal'
 import { SessionRunner } from './SessionRunner'
@@ -26,6 +28,7 @@ interface Props {
 }
 
 export function ExerciseLibrary({ focusFilter = null }: Props) {
+  const { t, locale } = useLanguage()
   const [gender, setGender] = useState<Gender>('male')
   const [selected, setSelected] = useState<CatalogExercise | null>(null)
   const [open, setOpen] = useState(false)
@@ -57,9 +60,9 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
       <CardHeader className="pb-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-base">🏃 Exercise Library</CardTitle>
+            <CardTitle className="text-base">{t('fitness.library_title')}</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Guided animations for every level.
+              {t('fitness.library_desc')}
             </p>
           </div>
           {/* Gender toggle for the animation figure */}
@@ -70,11 +73,11 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
                 type="button"
                 aria-pressed={gender === g}
                 onClick={() => setGender(g)}
-                className={`rounded-lg px-3 py-1 text-xs font-medium capitalize transition-colors ${
+                className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
                   gender === g ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {g}
+                {g === 'female' ? t('fitness.gender_female') : t('fitness.gender_male')}
               </button>
             ))}
           </div>
@@ -86,7 +89,7 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
           <TabsList className="w-full">
             {LEVELS.map(level => (
               <TabsTrigger key={level} value={level} className="flex-1">
-                {LEVEL_LABEL[level]}
+                {difficultyLabel(level, locale, LEVEL_LABEL[level])}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -98,7 +101,7 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
               <TabsContent key={level} value={level} className="pt-4">
                 {list.length === 0 ? (
                   <p className="py-8 text-center text-sm text-muted-foreground">
-                    No {LEVEL_LABEL[level].toLowerCase()} exercises for this focus.
+                    {t('fitness.no_exercises', { level: difficultyLabel(level, locale, LEVEL_LABEL[level]).toLowerCase() })}
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -130,7 +133,7 @@ export function ExerciseLibrary({ focusFilter = null }: Props) {
         <SessionRunner
           open={runnerOpen}
           onOpenChange={setRunnerOpen}
-          title={runnerEx.name}
+          title={localizeExercise(runnerEx, locale).name}
           source="exercise"
           exercises={runnerExercises}
           gender={gender}

@@ -13,6 +13,8 @@ import {
   EQUIPMENT_OPTIONS,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
+import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
+import { useLanguage } from '@/lib/i18n'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
 
 interface Props {
@@ -24,17 +26,19 @@ interface Props {
   onStartSession?: (exercise: CatalogExercise) => void
 }
 
-function equipmentLabel(id: string) {
+function equipmentEn(id: string) {
   return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
 }
 
-export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onStartSession }: Props) {
+export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpenChange, onStartSession }: Props) {
+  const { t, locale } = useLanguage()
   const { done, markComplete, reset } = useMarkComplete()
-  const slug = exercise?.slug
+  const slug = rawExercise?.slug
   // reset the completion guard whenever a different exercise is shown
   useEffect(() => { reset() }, [slug, reset])
 
-  if (!exercise) return null
+  if (!rawExercise) return null
+  const exercise = localizeExercise(rawExercise, locale)
   const file = lottieFileFor(exercise.slug, gender)
 
   return (
@@ -43,8 +47,8 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
         <DialogHeader>
           <DialogTitle className="text-lg font-heading">{exercise.name}</DialogTitle>
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <Badge variant="secondary">{DIFFICULTY_LABEL[exercise.level]}</Badge>
-            <Badge variant="outline">{equipmentLabel(exercise.equipment)}</Badge>
+            <Badge variant="secondary">{difficultyLabel(exercise.level, locale, DIFFICULTY_LABEL[exercise.level])}</Badge>
+            <Badge variant="outline">{geEquipmentLabel(exercise.equipment, locale, equipmentEn(exercise.equipment))}</Badge>
           </div>
         </DialogHeader>
 
@@ -57,13 +61,13 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-2">
-          <Stat icon={<Repeat className="h-4 w-4" />} label="Sets × Reps" value={`${exercise.sets} × ${exercise.reps}`} />
-          <Stat icon={<Timer className="h-4 w-4" />} label="Work" value={`${exercise.durationSec}s`} />
-          <Stat icon={<Pause className="h-4 w-4" />} label="Rest" value={`${exercise.restSec}s`} />
+          <Stat icon={<Repeat className="h-4 w-4" />} label={t('fitness.sets_reps')} value={`${exercise.sets} × ${exercise.reps}`} />
+          <Stat icon={<Timer className="h-4 w-4" />} label={t('fitness.work')} value={`${exercise.durationSec}s`} />
+          <Stat icon={<Pause className="h-4 w-4" />} label={t('fitness.rest')} value={`${exercise.restSec}s`} />
         </div>
 
         {/* Target muscles */}
-        <Section icon={<Target className="h-4 w-4 text-primary" />} title="Target muscles">
+        <Section icon={<Target className="h-4 w-4 text-primary" />} title={t('fitness.target_muscles')}>
           <div className="flex flex-wrap gap-1.5">
             {exercise.targetMuscles.map(m => (
               <Badge key={m} variant="outline">{m}</Badge>
@@ -72,14 +76,14 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
         </Section>
 
         {/* Instructions */}
-        <Section icon={<Dumbbell className="h-4 w-4 text-primary" />} title="How to do it">
+        <Section icon={<Dumbbell className="h-4 w-4 text-primary" />} title={t('fitness.how_to')}>
           <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
             {exercise.instructions.map((s, i) => <li key={i}>{s}</li>)}
           </ol>
         </Section>
 
         {/* Safety tips */}
-        <Section icon={<ShieldCheck className="h-4 w-4 text-primary" />} title="Safety tips">
+        <Section icon={<ShieldCheck className="h-4 w-4 text-primary" />} title={t('fitness.safety_tips')}>
           <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
             {exercise.safetyTips.map((s, i) => <li key={i}>{s}</li>)}
           </ul>
@@ -89,13 +93,13 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-border bg-background p-3">
             <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
-              <ArrowDownCircle className="h-4 w-4 text-primary" /> Beginner
+              <ArrowDownCircle className="h-4 w-4 text-primary" /> {t('fitness.beginner')}
             </p>
             <p className="text-xs text-muted-foreground">{exercise.beginnerModification}</p>
           </div>
           <div className="rounded-xl border border-border bg-background p-3">
             <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
-              <ArrowUpCircle className="h-4 w-4 text-primary" /> Advanced
+              <ArrowUpCircle className="h-4 w-4 text-primary" /> {t('fitness.advanced')}
             </p>
             <p className="text-xs text-muted-foreground">{exercise.advancedOption}</p>
           </div>
@@ -103,8 +107,8 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
 
         <div className="flex gap-2">
           {onStartSession && (
-            <Button variant="outline" className="flex-1" onClick={() => onStartSession(exercise)}>
-              <Play className="h-4 w-4" /> Start session
+            <Button variant="outline" className="flex-1" onClick={() => onStartSession(rawExercise)}>
+              <Play className="h-4 w-4" /> {t('fitness.start_session')}
             </Button>
           )}
           <Button
@@ -121,7 +125,7 @@ export function ExerciseDetailModal({ exercise, gender, open, onOpenChange, onSt
               })
             }
           >
-            <CheckCircle2 className="h-4 w-4" /> {done ? 'Completed' : 'Mark complete'}
+            <CheckCircle2 className="h-4 w-4" /> {done ? t('fitness.completed') : t('fitness.mark_complete')}
           </Button>
         </div>
       </DialogContent>

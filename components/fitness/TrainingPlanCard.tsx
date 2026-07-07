@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { DIFFICULTY_LABEL, GOAL_LABEL, type TrainingPlan } from '@/lib/fitness/workoutPlans'
+import { localizePlan, difficultyLabel, goalLabel, locationLabel } from '@/lib/fitness/i18n'
+import { useLanguage } from '@/lib/i18n'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
 
 interface Props {
@@ -14,10 +16,13 @@ interface Props {
 /** Recommended plans have no per-session length yet — use a sensible default. */
 const PLAN_SESSION_MINUTES = 30
 
-export function TrainingPlanCard({ plan }: Props) {
+export function TrainingPlanCard({ plan: rawPlan }: Props) {
+  const { t, locale } = useLanguage()
+  const plan = localizePlan(rawPlan, locale)
   const [open, setOpen] = useState(false)
   const { done, markComplete } = useMarkComplete()
   const LocIcon = plan.location === 'home' ? Home : Dumbbell
+  const loc = locationLabel(plan.location, locale)
 
   const complete = () =>
     markComplete({
@@ -43,10 +48,10 @@ export function TrainingPlanCard({ plan }: Props) {
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex flex-wrap gap-1.5">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/75 px-2.5 py-1 text-[11px] font-semibold text-[#2d3142] backdrop-blur-sm">
-                <LocIcon className="h-3 w-3" /> {plan.location === 'home' ? 'Home' : 'Gym'}
+                <LocIcon className="h-3 w-3" /> {loc}
               </span>
               <span className="inline-flex items-center rounded-full bg-white/75 px-2.5 py-1 text-[11px] font-semibold text-[#2d3142] backdrop-blur-sm">
-                {DIFFICULTY_LABEL[plan.difficulty]}
+                {difficultyLabel(plan.difficulty, locale, DIFFICULTY_LABEL[plan.difficulty])}
               </span>
             </div>
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-2xl shadow-sm backdrop-blur-sm transition-transform duration-300 group-hover/plan:scale-110">
@@ -56,7 +61,7 @@ export function TrainingPlanCard({ plan }: Props) {
 
           <h3 className="relative mt-4 max-w-[85%] text-xl font-bold leading-tight text-[#2d3142] font-heading">{plan.title}</h3>
           <p className="relative mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#2d3142]/70">
-            <CalendarDays className="h-3.5 w-3.5" /> {plan.durationDays}-day plan
+            <CalendarDays className="h-3.5 w-3.5" /> {t('fitness.day_plan_n', { n: plan.durationDays })}
           </p>
         </div>
 
@@ -69,9 +74,9 @@ export function TrainingPlanCard({ plan }: Props) {
               disabled={done}
               onClick={complete}
             >
-              <CheckCircle2 className="h-4 w-4" /> {done ? 'Completed' : 'Mark complete'}
+              <CheckCircle2 className="h-4 w-4" /> {done ? t('fitness.completed') : t('fitness.mark_complete')}
             </Button>
-            <Button variant="outline" onClick={() => setOpen(true)}>Details</Button>
+            <Button variant="outline" onClick={() => setOpen(true)}>{t('fitness.details')}</Button>
           </div>
         </div>
       </div>
@@ -81,10 +86,10 @@ export function TrainingPlanCard({ plan }: Props) {
           <div className="-mx-4 -mt-4 mb-1 p-5" style={{ background: plan.gradient }}>
             <div className="mb-2 flex items-center gap-2">
               <Badge variant="outline" className="border-black/10 bg-white/70 text-[#2d3142]">
-                <LocIcon className="h-3 w-3" /> {plan.location === 'home' ? 'Home' : 'Gym'}
+                <LocIcon className="h-3 w-3" /> {loc}
               </Badge>
               <Badge variant="outline" className="border-black/10 bg-white/70 text-[#2d3142]">
-                {DIFFICULTY_LABEL[plan.difficulty]}
+                {difficultyLabel(plan.difficulty, locale, DIFFICULTY_LABEL[plan.difficulty])}
               </Badge>
             </div>
             <span className="text-3xl">{plan.emoji}</span>
@@ -96,22 +101,22 @@ export function TrainingPlanCard({ plan }: Props) {
 
           <dl className="grid grid-cols-3 gap-2 text-center">
             <div className="rounded-xl border border-border p-2.5">
-              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Duration</dt>
-              <dd className="text-sm font-semibold">{plan.durationDays} days</dd>
+              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('fitness.duration')}</dt>
+              <dd className="text-sm font-semibold">{t('fitness.days_count', { n: plan.durationDays })}</dd>
             </div>
             <div className="rounded-xl border border-border p-2.5">
-              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Level</dt>
-              <dd className="text-sm font-semibold">{DIFFICULTY_LABEL[plan.difficulty]}</dd>
+              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('fitness.level')}</dt>
+              <dd className="text-sm font-semibold">{difficultyLabel(plan.difficulty, locale, DIFFICULTY_LABEL[plan.difficulty])}</dd>
             </div>
             <div className="rounded-xl border border-border p-2.5">
-              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">Goal</dt>
-              <dd className="text-sm font-semibold leading-tight">{GOAL_LABEL[plan.goal]}</dd>
+              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{t('fitness.goal')}</dt>
+              <dd className="text-sm font-semibold leading-tight">{goalLabel(plan.goal, locale, GOAL_LABEL[plan.goal])}</dd>
             </div>
           </dl>
 
           <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/[0.04] p-3 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>Progress at your own pace. Warm up before each session, focus on good form, and rest when you need to.</span>
+            <span>{t('fitness.plan_safety_note')}</span>
           </div>
 
           <Button
@@ -120,7 +125,7 @@ export function TrainingPlanCard({ plan }: Props) {
             disabled={done}
             onClick={() => { complete(); setOpen(false) }}
           >
-            <CheckCircle2 className="h-4 w-4" /> {done ? 'Completed' : 'Mark complete'}
+            <CheckCircle2 className="h-4 w-4" /> {done ? t('fitness.completed') : t('fitness.mark_complete')}
           </Button>
         </DialogContent>
       </Dialog>

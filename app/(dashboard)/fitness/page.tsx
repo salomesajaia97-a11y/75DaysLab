@@ -15,7 +15,8 @@ import type { ExerciseFocus } from '@/lib/fitness/exerciseLottieRegistry'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 
 export default function FitnessPage() {
-  const { t } = useLanguage()
+  const { t, locale } = useLanguage()
+  const dateLocale = locale === 'ge' ? 'ka' : 'en'
   const { days, today, dayState, todayState, totalSessions, fullDays, completionRate } =
     useFitnessProgress()
 
@@ -94,7 +95,7 @@ export default function FitnessPage() {
             {days.map(day => {
               const s = dayState[day]
               const isToday = day === today
-              const dayLabel = new Date(day + 'T12:00:00').toLocaleDateString('en', { weekday: 'short' })
+              const dayLabel = new Date(day + 'T12:00:00').toLocaleDateString(dateLocale, { weekday: 'short' })
               return (
                 <div key={day} className="flex flex-col items-center gap-1.5">
                   <span className={`text-[10px] font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
@@ -102,11 +103,11 @@ export default function FitnessPage() {
                   </span>
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.structured ? 'bg-primary' : 'bg-muted'}`}
-                    title="Indoor"
+                    title={t('fitness.indoor')}
                   />
                   <div
                     className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.outdoor ? 'bg-primary' : 'bg-muted'}`}
-                    title="Outdoor"
+                    title={t('fitness.outdoor')}
                   />
                 </div>
               )
@@ -149,7 +150,7 @@ export default function FitnessPage() {
       <ScrollReveal>
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            Recommended Training Plans
+            {t('fitness.recommended_plans')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {TRAINING_PLANS.map(plan => (
@@ -164,7 +165,7 @@ export default function FitnessPage() {
         <div className="space-y-5">
           <div>
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              Focus Areas
+              {t('fitness.focus_areas')}
             </h2>
             <FocusAreaChips selected={focus} onSelect={setFocus} />
           </div>

@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { todayString } from '@/lib/storage'
 import { logWorkout, type WorkoutSource } from '@/lib/fitness/workoutLog'
 import { exerciseMinutes, thumbLottieFor, type CatalogExercise } from '@/lib/fitness/workoutPlans'
+import { localizeExercise } from '@/lib/fitness/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
+import { useLanguage } from '@/lib/i18n'
 import { ExerciseThumb } from './ExerciseThumb'
 
 interface Props {
@@ -32,6 +34,7 @@ function fmt(s: number) {
  * No audio / voice / advanced timing (deferred).
  */
 export function SessionRunner({ open, onOpenChange, title, source, exercises, gender }: Props) {
+  const { t, locale } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [secs, setSecs] = useState(0)
   const [running, setRunning] = useState(false)
@@ -70,6 +73,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
 
   if (!cur) return null
 
+  const lex = localizeExercise(cur, locale)
   const atFirst = idx === 0
   const atLast = idx === total - 1
   const lottieSrc = cur.lottieAvailable ? thumbLottieFor(cur.slug, gender) : null
@@ -85,7 +89,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
       exerciseSlugs: exercises.map(e => e.slug),
       minutes: exercises.reduce((a, e) => a + exerciseMinutes(e), 0),
     })
-    toast.success('Workout complete', { description: title })
+    toast.success(t('fitness.workout_complete_toast'), { description: title })
     onOpenChange(false)
   }
 
@@ -94,7 +98,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base font-heading">{title}</DialogTitle>
-          <p className="text-xs text-muted-foreground">Exercise {idx + 1} of {total}</p>
+          <p className="text-xs text-muted-foreground">{t('fitness.exercise_of', { current: idx + 1, total })}</p>
         </DialogHeader>
 
         {/* progress dots */}
@@ -116,8 +120,8 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
 
         {/* current exercise */}
         <div className="text-center">
-          <h3 className="text-lg font-semibold">{cur.name}</h3>
-          <p className="text-xs text-muted-foreground">{cur.targetMuscles.join(' · ')}</p>
+          <h3 className="text-lg font-semibold">{lex.name}</h3>
+          <p className="text-xs text-muted-foreground">{lex.targetMuscles.join(' · ')}</p>
           <div className="mt-1 flex items-center justify-center gap-2">
             <Badge variant="outline"><Repeat className="h-3 w-3" /> {cur.sets} × {cur.reps}</Badge>
           </div>
@@ -128,10 +132,10 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
           <span className="text-4xl font-bold tabular-nums">{fmt(secs)}</span>
           <div className="flex gap-2">
             <Button size="sm" variant={running ? 'outline' : 'default'} onClick={() => setRunning(r => !r)} disabled={secs === 0}>
-              {running ? <><Pause className="h-4 w-4" /> Pause</> : <><Play className="h-4 w-4" /> Start</>}
+              {running ? <><Pause className="h-4 w-4" /> {t('fitness.pause')}</> : <><Play className="h-4 w-4" /> {t('fitness.start')}</>}
             </Button>
             <Button size="sm" variant="outline" onClick={() => { setSecs(cur.durationSec); setRunning(false) }}>
-              <RotateCcw className="h-4 w-4" /> Reset
+              <RotateCcw className="h-4 w-4" /> {t('fitness.reset')}
             </Button>
           </div>
         </div>
@@ -139,15 +143,15 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
         {/* nav */}
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={atFirst}>
-            <ChevronLeft className="h-4 w-4" /> Prev
+            <ChevronLeft className="h-4 w-4" /> {t('fitness.prev')}
           </Button>
           {atLast ? (
             <Button className="flex-1" onClick={finish}>
-              <CheckCircle2 className="h-4 w-4" /> Finish Workout
+              <CheckCircle2 className="h-4 w-4" /> {t('fitness.finish_workout')}
             </Button>
           ) : (
             <Button className="flex-1" onClick={() => setIdx(i => Math.min(total - 1, i + 1))}>
-              Next <ChevronRight className="h-4 w-4" />
+              {t('fitness.next')} <ChevronRight className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -155,7 +159,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
         {/* always-available finish for short sessions */}
         {!atLast && (
           <Button variant="ghost" className="w-full" onClick={finish}>
-            Finish &amp; mark complete
+            {t('fitness.finish_mark_complete')}
           </Button>
         )}
       </DialogContent>

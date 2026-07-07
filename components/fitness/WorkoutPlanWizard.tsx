@@ -4,6 +4,7 @@ import { Home, Dumbbell, ArrowLeft, ArrowRight, Sparkles, RotateCcw } from 'luci
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getProfile } from '@/lib/storage'
+import { useLanguage } from '@/lib/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import {
   generateWeeklyPlan,
@@ -18,6 +19,7 @@ import {
   type PlanGoal,
   type Equipment,
 } from '@/lib/fitness/workoutPlans'
+import { difficultyLabel, goalLabel, equipmentLabel, locationLabel } from '@/lib/fitness/i18n'
 import type { ExerciseLevel } from '@/lib/fitness/exerciseLottieRegistry'
 import { useWorkoutWizard } from '@/hooks/useWorkoutWizard'
 import { ExerciseDetailModal } from './ExerciseDetailModal'
@@ -54,6 +56,7 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 export function WorkoutPlanWizard() {
+  const { t, locale } = useLanguage()
   const w = useWorkoutWizard()
   const { selection: sel, setField, step, stepIndex, steps, atFirst, isReview, canProceed } = w
 
@@ -75,9 +78,9 @@ export function WorkoutPlanWizard() {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">🧩 Workout Plan Wizard</CardTitle>
+        <CardTitle className="text-base">{t('fitness.wizard_title')}</CardTitle>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {plan ? 'Your personalized weekly plan.' : 'A few quick questions and we’ll build your week.'}
+          {plan ? t('fitness.wizard_ready') : t('fitness.wizard_desc')}
         </p>
       </CardHeader>
 
@@ -86,7 +89,7 @@ export function WorkoutPlanWizard() {
           <>
             <WeeklyPlanPreview plan={plan} gender={gender} onOpenDetail={openDetail} />
             <Button variant="outline" className="w-full" onClick={startOver}>
-              <RotateCcw className="h-4 w-4" /> Build another plan
+              <RotateCcw className="h-4 w-4" /> {t('fitness.wizard_build_another')}
             </Button>
           </>
         ) : (
@@ -106,9 +109,9 @@ export function WorkoutPlanWizard() {
             {/* step title */}
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step {stepIndex + 1} of {steps.length}
+                {t('fitness.wizard_step_of', { current: stepIndex + 1, total: steps.length })}
               </p>
-              <h3 className="mt-0.5 text-lg font-semibold font-heading">{step.title}</h3>
+              <h3 className="mt-0.5 text-lg font-semibold font-heading">{t(`fitness.step_${step.id}`)}</h3>
             </div>
 
             {/* step body */}
@@ -119,7 +122,7 @@ export function WorkoutPlanWizard() {
                     <Seg key={loc} active={sel.location === loc} onClick={() => setField('location', loc)}>
                       <span className="inline-flex items-center gap-1.5">
                         {loc === 'home' ? <Home className="h-3.5 w-3.5" /> : <Dumbbell className="h-3.5 w-3.5" />}
-                        {loc === 'home' ? 'Home Workout' : 'Gym Workout'}
+                        {loc === 'home' ? t('fitness.wizard_home_workout') : t('fitness.wizard_gym_workout')}
                       </span>
                     </Seg>
                   ))}
@@ -130,7 +133,7 @@ export function WorkoutPlanWizard() {
                 <div className="flex flex-wrap gap-1.5">
                   {GOAL_OPTIONS.map(g => (
                     <Seg key={g.id} active={sel.goal === g.id} onClick={() => setField('goal', g.id as PlanGoal)}>
-                      {g.label}
+                      {goalLabel(g.id, locale, g.label)}
                     </Seg>
                   ))}
                 </div>
@@ -140,7 +143,7 @@ export function WorkoutPlanWizard() {
                 <div className="flex flex-wrap gap-1.5">
                   {LEVELS.map(lv => (
                     <Seg key={lv} active={sel.level === lv} onClick={() => setField('level', lv)}>
-                      {DIFFICULTY_LABEL[lv]}
+                      {difficultyLabel(lv, locale, DIFFICULTY_LABEL[lv])}
                     </Seg>
                   ))}
                 </div>
@@ -150,7 +153,7 @@ export function WorkoutPlanWizard() {
                 <div className="flex flex-wrap gap-1.5">
                   {MINUTES.map(m => (
                     <Seg key={m} active={sel.minutes === m} onClick={() => setField('minutes', m)}>
-                      {m} min
+                      {t('fitness.min_n', { n: m })}
                     </Seg>
                   ))}
                 </div>
@@ -160,7 +163,7 @@ export function WorkoutPlanWizard() {
                 <div className="flex flex-wrap gap-1.5">
                   {DAYS.map(d => (
                     <Seg key={d} active={sel.daysPerWeek === d} onClick={() => setField('daysPerWeek', d)}>
-                      {d} days
+                      {t('fitness.days_n', { n: d })}
                     </Seg>
                   ))}
                 </div>
@@ -170,7 +173,7 @@ export function WorkoutPlanWizard() {
                 <div className="flex flex-wrap gap-1.5">
                   {EQUIPMENT_OPTIONS.map(e => (
                     <Seg key={e.id} active={sel.equipment === e.id} onClick={() => setField('equipment', e.id as Equipment)}>
-                      {e.label}
+                      {equipmentLabel(e.id, locale, e.label)}
                     </Seg>
                   ))}
                 </div>
@@ -178,14 +181,14 @@ export function WorkoutPlanWizard() {
 
               {step.id === 'review' && (
                 <div className="space-y-1.5">
-                  <SummaryRow label="Location" value={sel.location === 'home' ? 'Home' : 'Gym'} />
-                  <SummaryRow label="Goal" value={GOAL_LABEL[sel.goal]} />
-                  <SummaryRow label="Level" value={DIFFICULTY_LABEL[sel.level]} />
-                  <SummaryRow label="Session length" value={`${sel.minutes} min`} />
-                  <SummaryRow label="Days per week" value={`${sel.daysPerWeek} days`} />
+                  <SummaryRow label={t('fitness.review_location')} value={locationLabel(sel.location, locale)} />
+                  <SummaryRow label={t('fitness.review_goal')} value={goalLabel(sel.goal, locale, GOAL_LABEL[sel.goal])} />
+                  <SummaryRow label={t('fitness.review_level')} value={difficultyLabel(sel.level, locale, DIFFICULTY_LABEL[sel.level])} />
+                  <SummaryRow label={t('fitness.review_session_length')} value={t('fitness.min_n', { n: sel.minutes })} />
+                  <SummaryRow label={t('fitness.review_days_per_week')} value={t('fitness.days_n', { n: sel.daysPerWeek })} />
                   <SummaryRow
-                    label="Equipment"
-                    value={EQUIPMENT_OPTIONS.find(e => e.id === sel.equipment)?.label ?? sel.equipment}
+                    label={t('fitness.review_equipment')}
+                    value={equipmentLabel(sel.equipment, locale, EQUIPMENT_OPTIONS.find(e => e.id === sel.equipment)?.label ?? sel.equipment)}
                   />
                 </div>
               )}
@@ -194,15 +197,15 @@ export function WorkoutPlanWizard() {
             {/* footer nav */}
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={w.back} disabled={atFirst}>
-                <ArrowLeft className="h-4 w-4" /> Back
+                <ArrowLeft className="h-4 w-4" /> {t('fitness.back')}
               </Button>
               {isReview ? (
                 <Button className="flex-1" onClick={generate}>
-                  <Sparkles className="h-4 w-4" /> Generate Plan
+                  <Sparkles className="h-4 w-4" /> {t('fitness.wizard_generate')}
                 </Button>
               ) : (
                 <Button className="flex-1" onClick={w.next} disabled={!canProceed}>
-                  Next <ArrowRight className="h-4 w-4" />
+                  {t('fitness.next')} <ArrowRight className="h-4 w-4" />
                 </Button>
               )}
             </div>

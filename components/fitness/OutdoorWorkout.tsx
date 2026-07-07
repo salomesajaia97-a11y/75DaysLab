@@ -184,13 +184,13 @@ export function OutdoorWorkout() {
             markComplete({
               kind: 'outdoor',
               source: 'outdoor',
-              title: 'Outdoor Workout',
+              title: t('fitness.outdoor_title'),
               exerciseSlugs: [],
               minutes: 45,
             })
           }
         >
-          <CheckCircle2 className="h-4 w-4" /> {done ? 'Outdoor session completed' : 'Mark outdoor workout complete'}
+          <CheckCircle2 className="h-4 w-4" /> {done ? t('fitness.outdoor_complete') : t('fitness.outdoor_mark_complete')}
         </Button>
       </CardContent>
     </Card>

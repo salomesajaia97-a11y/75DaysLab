@@ -1,5 +1,7 @@
 'use client'
 import { FOCUS_AREAS, type FocusAreaDef } from '@/lib/fitness/workoutPlans'
+import { focusAreaLabel } from '@/lib/fitness/i18n'
+import { useLanguage } from '@/lib/i18n'
 
 interface Props {
   selected: FocusAreaDef['id'] | null
@@ -7,6 +9,7 @@ interface Props {
 }
 
 export function FocusAreaChips({ selected, onSelect }: Props) {
+  const { locale } = useLanguage()
   return (
     <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
       {FOCUS_AREAS.map(area => {
@@ -34,7 +37,7 @@ export function FocusAreaChips({ selected, onSelect }: Props) {
               {area.emoji}
             </span>
             <span className={`text-xs font-medium ${active ? 'text-primary' : 'text-muted-foreground'}`}>
-              {area.label}
+              {focusAreaLabel(area.id, locale, area.label)}
             </span>
           </button>
         )
