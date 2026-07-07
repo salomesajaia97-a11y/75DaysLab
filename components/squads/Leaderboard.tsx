@@ -1,8 +1,11 @@
+'use client'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Flame } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n'
 import type { SquadMember } from '@/types'
 
 export function Leaderboard({ members }: { members: SquadMember[] }) {
+  const { t } = useLanguage()
   const sorted = [...members].sort((a, b) => b.currentStreak - a.currentStreak)
   const medals = ['🥇', '🥈', '🥉']
 
@@ -16,7 +19,7 @@ export function Leaderboard({ members }: { members: SquadMember[] }) {
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-sm truncate">{member.username}</p>
-            <p className="text-xs text-muted-foreground">{member.completedDays} days completed</p>
+            <p className="text-xs text-muted-foreground">{t('squads.days_completed', { n: member.completedDays })}</p>
           </div>
           <div className="flex items-center gap-1 text-orange-400 shrink-0">
             <Flame className="h-4 w-4" />

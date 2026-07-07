@@ -443,5 +443,11 @@
   "water.unit_l": "L",
   "water.of_goal": "of {goal} L goal",
   "water.remaining": "{n} L remaining",
-  "water.goal_reached": "Goal reached! 🎉"
+  "water.goal_reached": "Goal reached! 🎉",
+
+  "squads.member": "{n} member",
+  "squads.members": "{n} members",
+  "squads.top_streak": "Top streak:",
+  "squads.days": "{n} days",
+  "squads.days_completed": "{n} days completed"
 }

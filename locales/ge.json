@@ -443,5 +443,11 @@
   "water.unit_l": "ლ",
   "water.of_goal": "{goal} ლ მიზნიდან",
   "water.remaining": "დარჩა {n} ლ",
-  "water.goal_reached": "მიზანი მიღწეულია! 🎉"
+  "water.goal_reached": "მიზანი მიღწეულია! 🎉",
+
+  "squads.member": "{n} წევრი",
+  "squads.members": "{n} წევრი",
+  "squads.top_streak": "საუკეთესო სერია:",
+  "squads.days": "{n} დღე",
+  "squads.days_completed": "{n} დღე დასრულებული"
 }
