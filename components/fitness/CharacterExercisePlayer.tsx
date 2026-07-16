@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
+import {
+  getCharacterAnimation,
+  type CharacterAnimationBundle,
+  type CharacterFrame,
+} from '@/lib/fitness/characterAnimationRegistry'
 
 const STACK = [
   'Torso Back', 'Thigh R', 'Calf R', 'Foot R', 'Thigh L', 'Calf L', 'Foot L',
@@ -10,26 +15,6 @@ const STACK = [
 ]
 
 const DEFAULT_STAGE = { width: 360, height: 620, pelvis: [180, 300] as const }
-
-type Frame = {
-  time: number
-  pelvis: { x: number; y: number }
-  rotation: Record<string, number>
-}
-
-type Pivot = { part: string; pivotX: number; pivotY: number }
-type Assembly = { part: string; parent: string; joint_xy: [number, number] }
-type Asset = { part: string; svg: string }
-
-type Bundle = {
-  exercise: { slug: string }
-  template: { duration: number; keyframes: Frame[] }
-  rig: {
-    pivots: Pivot[] | { parts: Pivot[] }
-    assembly: Assembly[] | { parts: Assembly[] }
-    artParts: Asset[]
-  }
-}
 
 interface Props {
   slug: string
@@ -46,7 +31,7 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
 
-function sample(frames: Frame[], progress: number) {
+function sample(frames: CharacterFrame[], progress: number) {
   for (let i = 0; i < frames.length - 1; i++) {
     const a = frames[i]
     const b = frames[i + 1]
@@ -58,8 +43,7 @@ function sample(frames: Frame[], progress: number) {
 }
 
 export function CharacterExercisePlayer({ slug, className, autoplay = true, fit = true }: Props) {
-  const [bundle, setBundle] = useState<Bundle | null>(null)
-  const [failed, setFailed] = useState(false)
+  const bundle = useMemo<CharacterAnimationBundle | null>(() => getCharacterAnimation(slug), [slug])
   const [scale, setScale] = useState(1)
   const rootRef = useRef<HTMLDivElement>(null)
   const pelvisRef = useRef<HTMLDivElement>(null)
@@ -67,17 +51,6 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
   const frameRef = useRef<number | null>(null)
   const startedRef = useRef(0)
 
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/fitness-character/exercises/${slug}.json`, { cache: 'force-cache' })
-      .then(res => {
-        if (!res.ok) throw new Error(`Missing character animation: ${slug}`)
-        return res.json() as Promise<Bundle>
-      })
-      .then(data => { if (!cancelled) { setBundle(data); setFailed(false) } })
-      .catch(() => { if (!cancelled) setFailed(true) })
-    return () => { cancelled = true }
-  }, [slug])
 
   useEffect(() => {
     if (!fit) return
@@ -102,7 +75,7 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
   }, [fit])
 
   useEffect(() => {
-    if (!bundle || !autoplay || failed) return
+    if (!bundle || !autoplay) return
     const pelvis = pelvisRef.current
     if (!pelvis) return
     const frames = bundle.template.keyframes
@@ -126,7 +99,7 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
       if (frameRef.current) cancelAnimationFrame(frameRef.current)
       frameRef.current = null
     }
-  }, [bundle, autoplay, failed])
+  }, [bundle, autoplay])
 
   const rig = useMemo(() => {
     if (!bundle) return null
@@ -147,7 +120,6 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
     return { assemblyByPart, pivotByPart, assetByPart, childrenByParent }
   }, [bundle])
 
-  if (failed) return null
 
   const renderPart = (part: string): ReactNode => {
     if (!rig) return null
