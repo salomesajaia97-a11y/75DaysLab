@@ -6,7 +6,6 @@ import {
   DIFFICULTY_LABEL,
   EQUIPMENT_OPTIONS,
   exerciseMinutes,
-  thumbLottieFor,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
 import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
@@ -25,14 +24,13 @@ function equipmentEn(id: string) {
   return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
 }
 
-export function ExerciseCard({ exercise: rawExercise, gender, onDetails }: Props) {
+export function ExerciseCard({ exercise: rawExercise, onDetails }: Props) {
   const { t, locale } = useLanguage()
   const { done, markComplete } = useMarkComplete()
   const exercise = localizeExercise(rawExercise, locale)
-  const lottieSrc = exercise.lottieAvailable ? thumbLottieFor(exercise.slug, gender) : null
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
-      <ExerciseThumb focus={exercise.focus} lottieSrc={lottieSrc} className="h-32" size={64} />
+      <ExerciseThumb focus={exercise.focus} exerciseSlug={exercise.slug} className="h-32" size={64} />
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-start justify-between gap-2">

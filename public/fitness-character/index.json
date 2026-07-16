@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "basePath": "/fitness-character",
+  "exercises": {
+    "squat": {
+      "slug": "squat",
+      "templateId": "bodyweight_squat_front",
+      "animationJson": "/fitness-character/exercises/squat.json"
+    },
+    "wall-pushup": {
+      "slug": "wall-pushup",
+      "templateId": "push_up_front",
+      "animationJson": "/fitness-character/exercises/wall-pushup.json"
+    },
+    "glute-bridge": {
+      "slug": "glute-bridge",
+      "templateId": "plank_hold_front",
+      "animationJson": "/fitness-character/exercises/glute-bridge.json"
+    },
+    "bird-dog": {
+      "slug": "bird-dog",
+      "templateId": "plank_hold_front",
+      "animationJson": "/fitness-character/exercises/bird-dog.json"
+    },
+    "march-in-place": {
+      "slug": "march-in-place",
+      "templateId": "jumping_jack_front",
+      "animationJson": "/fitness-character/exercises/march-in-place.json"
+    },
+    "side-steps": {
+      "slug": "side-steps",
+      "templateId": "jumping_jack_front",
+      "animationJson": "/fitness-character/exercises/side-steps.json"
+    },
+    "pushup": {
+      "slug": "pushup",
+      "templateId": "push_up_front",
+      "animationJson": "/fitness-character/exercises/pushup.json"
+    },
+    "walking-lunge": {
+      "slug": "walking-lunge",
+      "templateId": "alternating_lunge_front",
+      "animationJson": "/fitness-character/exercises/walking-lunge.json"
+    },
+    "plank": {
+      "slug": "plank",
+      "templateId": "plank_hold_front",
+      "animationJson": "/fitness-character/exercises/plank.json"
+    },
+    "step-up": {
+      "slug": "step-up",
+      "templateId": "bodyweight_squat_front",
+      "animationJson": "/fitness-character/exercises/step-up.json"
+    },
+    "mountain-climbers": {
+      "slug": "mountain-climbers",
+      "templateId": "plank_hold_front",
+      "animationJson": "/fitness-character/exercises/mountain-climbers.json"
+    },
+    "fire-hydrant": {
+      "slug": "fire-hydrant",
+      "templateId": "alternating_lunge_front",
+      "animationJson": "/fitness-character/exercises/fire-hydrant.json"
+    },
+    "burpee": {
+      "slug": "burpee",
+      "templateId": "push_up_front",
+      "animationJson": "/fitness-character/exercises/burpee.json"
+    },
+    "jump-squat": {
+      "slug": "jump-squat",
+      "templateId": "jumping_jack_front",
+      "animationJson": "/fitness-character/exercises/jump-squat.json"
+    },
+    "pike-pushup": {
+      "slug": "pike-pushup",
+      "templateId": "overhead_press_front",
+      "animationJson": "/fitness-character/exercises/pike-pushup.json"
+    },
+    "high-knees": {
+      "slug": "high-knees",
+      "templateId": "jumping_jack_front",
+      "animationJson": "/fitness-character/exercises/high-knees.json"
+    },
+    "jump-lunge": {
+      "slug": "jump-lunge",
+      "templateId": "alternating_lunge_front",
+      "animationJson": "/fitness-character/exercises/jump-lunge.json"
+    },
+    "bicycle-crunch": {
+      "slug": "bicycle-crunch",
+      "templateId": "ab_crunch_front",
+      "animationJson": "/fitness-character/exercises/bicycle-crunch.json"
+    }
+  }
+}

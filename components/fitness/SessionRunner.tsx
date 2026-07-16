@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { todayString } from '@/lib/storage'
 import { logWorkout, type WorkoutSource } from '@/lib/fitness/workoutLog'
-import { exerciseMinutes, thumbLottieFor, type CatalogExercise } from '@/lib/fitness/workoutPlans'
+import { exerciseMinutes, type CatalogExercise } from '@/lib/fitness/workoutPlans'
 import { localizeExercise } from '@/lib/fitness/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useLanguage } from '@/lib/i18n'
@@ -33,7 +33,7 @@ function fmt(s: number) {
  * simple countdown timer + rep target, Prev/Next, and Finish → logWorkout.
  * No audio / voice / advanced timing (deferred).
  */
-export function SessionRunner({ open, onOpenChange, title, source, exercises, gender }: Props) {
+export function SessionRunner({ open, onOpenChange, title, source, exercises }: Props) {
   const { t, locale } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [secs, setSecs] = useState(0)
@@ -76,7 +76,6 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
   const lex = localizeExercise(cur, locale)
   const atFirst = idx === 0
   const atLast = idx === total - 1
-  const lottieSrc = cur.lottieAvailable ? thumbLottieFor(cur.slug, gender) : null
 
   const finish = () => {
     if (finished) return
@@ -115,7 +114,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
 
         {/* animation / icon */}
         <div className="overflow-hidden rounded-2xl">
-          <ExerciseThumb focus={cur.focus} lottieSrc={lottieSrc} className="h-52" size={72} />
+          <ExerciseThumb focus={cur.focus} exerciseSlug={cur.slug} className="h-52" size={72} />
         </div>
 
         {/* current exercise */}
