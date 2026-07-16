@@ -6,7 +6,6 @@ import {
   DIFFICULTY_LABEL,
   EQUIPMENT_OPTIONS,
   exerciseMinutes,
-  thumbLottieFor,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
 import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
@@ -25,14 +24,13 @@ function equipmentEn(id: string) {
   return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
 }
 
-export function ExerciseCard({ exercise: rawExercise, gender, onDetails }: Props) {
+export function ExerciseCard({ exercise: rawExercise, onDetails }: Props) {
   const { t, locale } = useLanguage()
   const { done, markComplete } = useMarkComplete()
   const exercise = localizeExercise(rawExercise, locale)
-  const lottieSrc = exercise.lottieAvailable ? thumbLottieFor(exercise.slug, gender) : null
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
-      <ExerciseThumb focus={exercise.focus} lottieSrc={lottieSrc} className="h-32" size={64} />
+      <ExerciseThumb focus={exercise.focus} className="h-32" size={64} />
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-start justify-between gap-2">
@@ -40,11 +38,11 @@ export function ExerciseCard({ exercise: rawExercise, gender, onDetails }: Props
           <Badge variant="secondary" className="shrink-0">{difficultyLabel(exercise.level, locale, DIFFICULTY_LABEL[exercise.level])}</Badge>
         </div>
 
-        <p className="text-xs text-muted-foreground">{exercise.targetMuscles.join(' · ')}</p>
+        <p className="text-xs text-muted-foreground">{exercise.targetMuscles.join(' Â· ')}</p>
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{exercise.durationSec}s</span>
-          <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" />{exercise.sets} × {exercise.reps}</span>
+          <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" />{exercise.sets} Ã— {exercise.reps}</span>
         </div>
 
         <Badge variant="outline" className="w-fit">{geEquipmentLabel(exercise.equipment, locale, equipmentEn(exercise.equipment))}</Badge>

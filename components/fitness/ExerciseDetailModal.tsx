@@ -4,10 +4,8 @@ import { CheckCircle2, Repeat, Timer, Pause, Target, ShieldCheck, ArrowDownCircl
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { LottiePlayer } from '@/components/ui/LottiePlayer'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import {
-  lottieFileFor,
   exerciseMinutes,
   DIFFICULTY_LABEL,
   EQUIPMENT_OPTIONS,
@@ -30,7 +28,7 @@ function equipmentEn(id: string) {
   return EQUIPMENT_OPTIONS.find(e => e.id === id)?.label ?? id
 }
 
-export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpenChange, onStartSession }: Props) {
+export function ExerciseDetailModal({ exercise: rawExercise, open, onOpenChange, onStartSession }: Props) {
   const { t, locale } = useLanguage()
   const { done, markComplete, reset } = useMarkComplete()
   const slug = rawExercise?.slug
@@ -39,7 +37,6 @@ export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpe
 
   if (!rawExercise) return null
   const exercise = localizeExercise(rawExercise, locale)
-  const file = lottieFileFor(exercise.slug, gender)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,16 +49,9 @@ export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpe
           </div>
         </DialogHeader>
 
-        {/* Larger animation */}
-        {file && (
-          <div className="overflow-hidden rounded-2xl bg-muted">
-            <LottiePlayer src={file} className="aspect-square" />
-          </div>
-        )}
-
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-2">
-          <Stat icon={<Repeat className="h-4 w-4" />} label={t('fitness.sets_reps')} value={`${exercise.sets} × ${exercise.reps}`} />
+          <Stat icon={<Repeat className="h-4 w-4" />} label={t('fitness.sets_reps')} value={`${exercise.sets} Ã— ${exercise.reps}`} />
           <Stat icon={<Timer className="h-4 w-4" />} label={t('fitness.work')} value={`${exercise.durationSec}s`} />
           <Stat icon={<Pause className="h-4 w-4" />} label={t('fitness.rest')} value={`${exercise.restSec}s`} />
         </div>

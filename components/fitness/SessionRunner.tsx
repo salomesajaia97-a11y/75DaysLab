@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { todayString } from '@/lib/storage'
 import { logWorkout, type WorkoutSource } from '@/lib/fitness/workoutLog'
-import { exerciseMinutes, thumbLottieFor, type CatalogExercise } from '@/lib/fitness/workoutPlans'
+import { exerciseMinutes, type CatalogExercise } from '@/lib/fitness/workoutPlans'
 import { localizeExercise } from '@/lib/fitness/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useLanguage } from '@/lib/i18n'
@@ -30,10 +30,10 @@ function fmt(s: number) {
 
 /**
  * Minimal guided workout player. Steps through a session's exercises with a
- * simple countdown timer + rep target, Prev/Next, and Finish → logWorkout.
+ * simple countdown timer + rep target, Prev/Next, and Finish â†’ logWorkout.
  * No audio / voice / advanced timing (deferred).
  */
-export function SessionRunner({ open, onOpenChange, title, source, exercises, gender }: Props) {
+export function SessionRunner({ open, onOpenChange, title, source, exercises }: Props) {
   const { t, locale } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [secs, setSecs] = useState(0)
@@ -56,7 +56,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
     setSecs(exercises[idx]?.durationSec ?? 30); setRunning(false)
   }, [idx, exercises])
 
-  // tick — auto-stops when the countdown reaches zero
+  // tick â€” auto-stops when the countdown reaches zero
   useEffect(() => {
     if (!running) return
     const t = setInterval(() => {
@@ -76,7 +76,6 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
   const lex = localizeExercise(cur, locale)
   const atFirst = idx === 0
   const atLast = idx === total - 1
-  const lottieSrc = cur.lottieAvailable ? thumbLottieFor(cur.slug, gender) : null
 
   const finish = () => {
     if (finished) return
@@ -115,15 +114,15 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
 
         {/* animation / icon */}
         <div className="overflow-hidden rounded-2xl">
-          <ExerciseThumb focus={cur.focus} lottieSrc={lottieSrc} className="h-52" size={72} />
+          <ExerciseThumb focus={cur.focus} className="h-52" size={72} />
         </div>
 
         {/* current exercise */}
         <div className="text-center">
           <h3 className="text-lg font-semibold">{lex.name}</h3>
-          <p className="text-xs text-muted-foreground">{lex.targetMuscles.join(' · ')}</p>
+          <p className="text-xs text-muted-foreground">{lex.targetMuscles.join(' Â· ')}</p>
           <div className="mt-1 flex items-center justify-center gap-2">
-            <Badge variant="outline"><Repeat className="h-3 w-3" /> {lex.sets} × {lex.reps}</Badge>
+            <Badge variant="outline"><Repeat className="h-3 w-3" /> {lex.sets} Ã— {lex.reps}</Badge>
           </div>
         </div>
 
