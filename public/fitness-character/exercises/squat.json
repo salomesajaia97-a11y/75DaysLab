@@ -101,396 +101,370 @@
     "controllerParts": [
       "Pelvis"
     ],
-    "pivots": {
-      "document": "Male_Master_FINAL.ai",
-      "artboard": {
-        "width": 1156,
-        "height": 1361,
-        "origin": "top-left",
-        "yAxis": "down"
+    "pivots": [
+      {
+        "part": "Shorts",
+        "pivotX": 1099.9,
+        "pivotY": 123.3,
+        "joint": "hips",
+        "parent": "Pelvis",
+        "rotDir": "follow",
+        "rotMin": -15,
+        "rotMax": 15,
+        "hasArt": true
       },
-      "note": "pivotX/Y in artboard top-left coords (matches AE comp). Parts at breakdown-panel positions; if you reassemble, pivots move with their part.",
-      "parts": [
-        {
-          "part": "Pelvis",
-          "pivotX": 1099.9,
-          "pivotY": 156.6,
-          "joint": "root",
-          "parent": null,
-          "rotDir": "sway",
-          "rotMin": -15,
-          "rotMax": 15,
-          "hasArt": false
-        },
-        {
-          "part": "Shorts",
-          "pivotX": 1099.9,
-          "pivotY": 123.3,
-          "joint": "hips",
-          "parent": "Pelvis",
-          "rotDir": "follow",
-          "rotMin": -15,
-          "rotMax": 15,
-          "hasArt": true
-        },
-        {
-          "part": "Torso Back",
-          "pivotX": 1021.7,
-          "pivotY": 192.4,
-          "joint": "waist",
-          "parent": "Pelvis",
-          "rotDir": "follow",
-          "rotMin": -20,
-          "rotMax": 20,
-          "hasArt": true
-        },
-        {
-          "part": "Torso Front",
-          "pivotX": 937,
-          "pivotY": 192.4,
-          "joint": "waist",
-          "parent": "Pelvis",
-          "rotDir": "bend",
-          "rotMin": -20,
-          "rotMax": 20,
-          "hasArt": true
-        },
-        {
-          "part": "Neck",
-          "pivotX": 860.6,
-          "pivotY": 177.4,
-          "joint": "neck",
-          "parent": "Torso Front",
-          "rotDir": "tilt",
-          "rotMin": -15,
-          "rotMax": 15,
-          "hasArt": true
-        },
-        {
-          "part": "Head",
-          "pivotX": 686,
-          "pivotY": 194.2,
-          "joint": "atlas",
-          "parent": "Neck",
-          "rotDir": "nod/tilt",
-          "rotMin": -25,
-          "rotMax": 25,
-          "hasArt": true
-        },
-        {
-          "part": "Hair",
-          "pivotX": 769,
-          "pivotY": 153.3,
-          "joint": "rides head",
-          "parent": "Head",
-          "rotDir": "parented",
-          "rotMin": 0,
-          "rotMax": 0,
-          "hasArt": true
-        },
-        {
-          "part": "Upper Arm L",
-          "pivotX": 703,
-          "pivotY": 262,
-          "joint": "shoulder",
-          "parent": "Torso Front",
-          "rotDir": "flex",
-          "rotMin": -60,
-          "rotMax": 130,
-          "hasArt": true
-        },
-        {
-          "part": "Forearm L",
-          "pivotX": 703,
-          "pivotY": 317.7,
-          "joint": "elbow",
-          "parent": "Upper Arm L",
-          "rotDir": "flex",
-          "rotMin": 0,
-          "rotMax": 145,
-          "hasArt": true
-        },
-        {
-          "part": "Hand L",
-          "pivotX": 839.1,
-          "pivotY": 276.2,
-          "joint": "wrist",
-          "parent": "Forearm L",
-          "rotDir": "flex",
-          "rotMin": -30,
-          "rotMax": 30,
-          "hasArt": true
-        },
-        {
-          "part": "Upper Arm R",
-          "pivotX": 944.2,
-          "pivotY": 267.3,
-          "joint": "shoulder",
-          "parent": "Torso Front",
-          "rotDir": "flex",
-          "rotMin": -60,
-          "rotMax": 130,
-          "hasArt": true
-        },
-        {
-          "part": "Forearm R",
-          "pivotX": 944.2,
-          "pivotY": 322.6,
-          "joint": "elbow",
-          "parent": "Upper Arm R",
-          "rotDir": "flex",
-          "rotMin": 0,
-          "rotMax": 145,
-          "hasArt": true
-        },
-        {
-          "part": "Hand R",
-          "pivotX": 1092.5,
-          "pivotY": 275.5,
-          "joint": "wrist",
-          "parent": "Forearm R",
-          "rotDir": "flex",
-          "rotMin": -30,
-          "rotMax": 30,
-          "hasArt": true
-        },
-        {
-          "part": "Thigh L",
-          "pivotX": 695.3,
-          "pivotY": 450.4,
-          "joint": "hip",
-          "parent": "Pelvis",
-          "rotDir": "flex",
-          "rotMin": -30,
-          "rotMax": 90,
-          "hasArt": true
-        },
-        {
-          "part": "Calf L",
-          "pivotX": 769.2,
-          "pivotY": 449.3,
-          "joint": "knee",
-          "parent": "Thigh L",
-          "rotDir": "flex",
-          "rotMin": 0,
-          "rotMax": 130,
-          "hasArt": true
-        },
-        {
-          "part": "Foot L",
-          "pivotX": 852.6,
-          "pivotY": 431.4,
-          "joint": "ankle",
-          "parent": "Calf L",
-          "rotDir": "dorsi/plantar",
-          "rotMin": -30,
-          "rotMax": 20,
-          "hasArt": true
-        },
-        {
-          "part": "Thigh R",
-          "pivotX": 945.8,
-          "pivotY": 443.5,
-          "joint": "hip",
-          "parent": "Pelvis",
-          "rotDir": "flex",
-          "rotMin": -30,
-          "rotMax": 90,
-          "hasArt": true
-        },
-        {
-          "part": "Calf R",
-          "pivotX": 1019.9,
-          "pivotY": 442.7,
-          "joint": "knee",
-          "parent": "Thigh R",
-          "rotDir": "flex",
-          "rotMin": 0,
-          "rotMax": 130,
-          "hasArt": true
-        },
-        {
-          "part": "Foot R",
-          "pivotX": 1097.6,
-          "pivotY": 515.3,
-          "joint": "ankle",
-          "parent": "Calf R",
-          "rotDir": "dorsi/plantar",
-          "rotMin": -30,
-          "rotMax": 20,
-          "hasArt": true
-        }
-      ]
-    },
-    "assembly": {
-      "space": "artboard top-left, Y down, units=pt",
-      "overlap_pt": 8,
-      "note": "Corrected assembly: joints CHAINED from part segment lengths (fixes the wrong-scale front-figure coords). Anchor each part at 'joint', parent per 'parent'.",
-      "parts": [
-        {
-          "part": "Hair",
-          "joint_xy": [
-            180,
-            200
-          ],
-          "parent": "Head",
-          "segment_len": 58
-        },
-        {
-          "part": "Head",
-          "joint_xy": [
-            180,
-            200
-          ],
-          "parent": "Neck",
-          "segment_len": 102.5
-        },
-        {
-          "part": "Neck",
-          "joint_xy": [
-            180,
-            220
-          ],
-          "parent": "Torso Front",
-          "segment_len": 61.5
-        },
-        {
-          "part": "Forearm L",
-          "joint_xy": [
-            136,
-            283.5
-          ],
-          "parent": "Upper Arm L",
-          "segment_len": 67.5
-        },
-        {
-          "part": "Hand L",
-          "joint_xy": [
-            136,
-            351
-          ],
-          "parent": "Forearm L",
-          "segment_len": 43
-        },
-        {
-          "part": "Upper Arm L",
-          "joint_xy": [
-            136,
-            220
-          ],
-          "parent": "Torso Front",
-          "segment_len": 63.5
-        },
-        {
-          "part": "Forearm R",
-          "joint_xy": [
-            224,
-            283
-          ],
-          "parent": "Upper Arm R",
-          "segment_len": 67
-        },
-        {
-          "part": "Hand R",
-          "joint_xy": [
-            224,
-            350
-          ],
-          "parent": "Forearm R",
-          "segment_len": 43
-        },
-        {
-          "part": "Upper Arm R",
-          "joint_xy": [
-            224,
-            220
-          ],
-          "parent": "Torso Front",
-          "segment_len": 63
-        },
-        {
-          "part": "Torso Front",
-          "joint_xy": [
-            180,
-            300
-          ],
-          "parent": "Pelvis",
-          "segment_len": 90.5
-        },
-        {
-          "part": "Shorts",
-          "joint_xy": [
-            180,
-            300
-          ],
-          "parent": "Pelvis",
-          "segment_len": 67
-        },
-        {
-          "part": "Foot L",
-          "joint_xy": [
-            138,
-            545.3
-          ],
-          "parent": "Calf L",
-          "segment_len": 148.5
-        },
-        {
-          "part": "Calf L",
-          "joint_xy": [
-            130.6,
-            421
-          ],
-          "parent": "Thigh L",
-          "segment_len": 124.5
-        },
-        {
-          "part": "Thigh L",
-          "joint_xy": [
-            160,
-            300
-          ],
-          "parent": "Pelvis",
-          "segment_len": 124.5
-        },
-        {
-          "part": "Foot R",
-          "joint_xy": [
-            222,
-            545.3
-          ],
-          "parent": "Calf R",
-          "segment_len": 53.5
-        },
-        {
-          "part": "Calf R",
-          "joint_xy": [
-            218.8,
-            421.4
-          ],
-          "parent": "Thigh R",
-          "segment_len": 123.5
-        },
-        {
-          "part": "Thigh R",
-          "joint_xy": [
-            200,
-            300
-          ],
-          "parent": "Pelvis",
-          "segment_len": 122.5
-        },
-        {
-          "part": "Torso Back",
-          "joint_xy": [
-            180,
-            300
-          ],
-          "parent": "Pelvis",
-          "segment_len": 93
-        }
-      ]
-    },
+      {
+        "part": "Torso Back",
+        "pivotX": 1021.7,
+        "pivotY": 192.4,
+        "joint": "waist",
+        "parent": "Pelvis",
+        "rotDir": "follow",
+        "rotMin": -20,
+        "rotMax": 20,
+        "hasArt": true
+      },
+      {
+        "part": "Torso Front",
+        "pivotX": 937,
+        "pivotY": 192.4,
+        "joint": "waist",
+        "parent": "Pelvis",
+        "rotDir": "bend",
+        "rotMin": -20,
+        "rotMax": 20,
+        "hasArt": true
+      },
+      {
+        "part": "Neck",
+        "pivotX": 860.6,
+        "pivotY": 177.4,
+        "joint": "neck",
+        "parent": "Torso Front",
+        "rotDir": "tilt",
+        "rotMin": -15,
+        "rotMax": 15,
+        "hasArt": true
+      },
+      {
+        "part": "Head",
+        "pivotX": 686,
+        "pivotY": 194.2,
+        "joint": "atlas",
+        "parent": "Neck",
+        "rotDir": "nod/tilt",
+        "rotMin": -25,
+        "rotMax": 25,
+        "hasArt": true
+      },
+      {
+        "part": "Hair",
+        "pivotX": 769,
+        "pivotY": 153.3,
+        "joint": "rides head",
+        "parent": "Head",
+        "rotDir": "parented",
+        "rotMin": 0,
+        "rotMax": 0,
+        "hasArt": true
+      },
+      {
+        "part": "Upper Arm L",
+        "pivotX": 703,
+        "pivotY": 262,
+        "joint": "shoulder",
+        "parent": "Torso Front",
+        "rotDir": "flex",
+        "rotMin": -60,
+        "rotMax": 130,
+        "hasArt": true
+      },
+      {
+        "part": "Forearm L",
+        "pivotX": 703,
+        "pivotY": 317.7,
+        "joint": "elbow",
+        "parent": "Upper Arm L",
+        "rotDir": "flex",
+        "rotMin": 0,
+        "rotMax": 145,
+        "hasArt": true
+      },
+      {
+        "part": "Hand L",
+        "pivotX": 839.1,
+        "pivotY": 276.2,
+        "joint": "wrist",
+        "parent": "Forearm L",
+        "rotDir": "flex",
+        "rotMin": -30,
+        "rotMax": 30,
+        "hasArt": true
+      },
+      {
+        "part": "Upper Arm R",
+        "pivotX": 944.2,
+        "pivotY": 267.3,
+        "joint": "shoulder",
+        "parent": "Torso Front",
+        "rotDir": "flex",
+        "rotMin": -60,
+        "rotMax": 130,
+        "hasArt": true
+      },
+      {
+        "part": "Forearm R",
+        "pivotX": 944.2,
+        "pivotY": 322.6,
+        "joint": "elbow",
+        "parent": "Upper Arm R",
+        "rotDir": "flex",
+        "rotMin": 0,
+        "rotMax": 145,
+        "hasArt": true
+      },
+      {
+        "part": "Hand R",
+        "pivotX": 1092.5,
+        "pivotY": 275.5,
+        "joint": "wrist",
+        "parent": "Forearm R",
+        "rotDir": "flex",
+        "rotMin": -30,
+        "rotMax": 30,
+        "hasArt": true
+      },
+      {
+        "part": "Thigh L",
+        "pivotX": 695.3,
+        "pivotY": 450.4,
+        "joint": "hip",
+        "parent": "Pelvis",
+        "rotDir": "flex",
+        "rotMin": -30,
+        "rotMax": 90,
+        "hasArt": true
+      },
+      {
+        "part": "Calf L",
+        "pivotX": 769.2,
+        "pivotY": 449.3,
+        "joint": "knee",
+        "parent": "Thigh L",
+        "rotDir": "flex",
+        "rotMin": 0,
+        "rotMax": 130,
+        "hasArt": true
+      },
+      {
+        "part": "Foot L",
+        "pivotX": 852.6,
+        "pivotY": 431.4,
+        "joint": "ankle",
+        "parent": "Calf L",
+        "rotDir": "dorsi/plantar",
+        "rotMin": -30,
+        "rotMax": 20,
+        "hasArt": true
+      },
+      {
+        "part": "Thigh R",
+        "pivotX": 945.8,
+        "pivotY": 443.5,
+        "joint": "hip",
+        "parent": "Pelvis",
+        "rotDir": "flex",
+        "rotMin": -30,
+        "rotMax": 90,
+        "hasArt": true
+      },
+      {
+        "part": "Calf R",
+        "pivotX": 1019.9,
+        "pivotY": 442.7,
+        "joint": "knee",
+        "parent": "Thigh R",
+        "rotDir": "flex",
+        "rotMin": 0,
+        "rotMax": 130,
+        "hasArt": true
+      },
+      {
+        "part": "Foot R",
+        "pivotX": 1097.6,
+        "pivotY": 515.3,
+        "joint": "ankle",
+        "parent": "Calf R",
+        "rotDir": "dorsi/plantar",
+        "rotMin": -30,
+        "rotMax": 20,
+        "hasArt": true
+      }
+    ],
+    "assembly": [
+      {
+        "part": "Hair",
+        "joint_xy": [
+          180,
+          200
+        ],
+        "parent": "Head",
+        "segment_len": 58
+      },
+      {
+        "part": "Head",
+        "joint_xy": [
+          180,
+          200
+        ],
+        "parent": "Neck",
+        "segment_len": 102.5
+      },
+      {
+        "part": "Neck",
+        "joint_xy": [
+          180,
+          220
+        ],
+        "parent": "Torso Front",
+        "segment_len": 61.5
+      },
+      {
+        "part": "Forearm L",
+        "joint_xy": [
+          136,
+          283.5
+        ],
+        "parent": "Upper Arm L",
+        "segment_len": 67.5
+      },
+      {
+        "part": "Hand L",
+        "joint_xy": [
+          136,
+          351
+        ],
+        "parent": "Forearm L",
+        "segment_len": 43
+      },
+      {
+        "part": "Upper Arm L",
+        "joint_xy": [
+          136,
+          220
+        ],
+        "parent": "Torso Front",
+        "segment_len": 63.5
+      },
+      {
+        "part": "Forearm R",
+        "joint_xy": [
+          224,
+          283
+        ],
+        "parent": "Upper Arm R",
+        "segment_len": 67
+      },
+      {
+        "part": "Hand R",
+        "joint_xy": [
+          224,
+          350
+        ],
+        "parent": "Forearm R",
+        "segment_len": 43
+      },
+      {
+        "part": "Upper Arm R",
+        "joint_xy": [
+          224,
+          220
+        ],
+        "parent": "Torso Front",
+        "segment_len": 63
+      },
+      {
+        "part": "Torso Front",
+        "joint_xy": [
+          180,
+          300
+        ],
+        "parent": "Pelvis",
+        "segment_len": 90.5
+      },
+      {
+        "part": "Shorts",
+        "joint_xy": [
+          180,
+          300
+        ],
+        "parent": "Pelvis",
+        "segment_len": 67
+      },
+      {
+        "part": "Foot L",
+        "joint_xy": [
+          138,
+          545.3
+        ],
+        "parent": "Calf L",
+        "segment_len": 148.5
+      },
+      {
+        "part": "Calf L",
+        "joint_xy": [
+          130.6,
+          421
+        ],
+        "parent": "Thigh L",
+        "segment_len": 124.5
+      },
+      {
+        "part": "Thigh L",
+        "joint_xy": [
+          160,
+          300
+        ],
+        "parent": "Pelvis",
+        "segment_len": 124.5
+      },
+      {
+        "part": "Foot R",
+        "joint_xy": [
+          222,
+          545.3
+        ],
+        "parent": "Calf R",
+        "segment_len": 53.5
+      },
+      {
+        "part": "Calf R",
+        "joint_xy": [
+          218.8,
+          421.4
+        ],
+        "parent": "Thigh R",
+        "segment_len": 123.5
+      },
+      {
+        "part": "Thigh R",
+        "joint_xy": [
+          200,
+          300
+        ],
+        "parent": "Pelvis",
+        "segment_len": 122.5
+      },
+      {
+        "part": "Torso Back",
+        "joint_xy": [
+          180,
+          300
+        ],
+        "parent": "Pelvis",
+        "segment_len": 93
+      }
+    ],
     "artParts": [
       {
         "part": "Calf L",

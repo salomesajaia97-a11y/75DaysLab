@@ -25,8 +25,8 @@ type Bundle = {
   exercise: { slug: string }
   template: { duration: number; keyframes: Frame[] }
   rig: {
-    pivots: Pivot[]
-    assembly: Assembly[]
+    pivots: Pivot[] | { parts: Pivot[] }
+    assembly: Assembly[] | { parts: Assembly[] }
     artParts: Asset[]
   }
 }
@@ -130,14 +130,16 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
 
   const rig = useMemo(() => {
     if (!bundle) return null
-    const assemblyByPart = byPart(bundle.rig.assembly)
-    const pivotByPart = byPart(bundle.rig.pivots)
+    const assemblies = Array.isArray(bundle.rig.assembly) ? bundle.rig.assembly : bundle.rig.assembly.parts
+    const pivots = Array.isArray(bundle.rig.pivots) ? bundle.rig.pivots : bundle.rig.pivots.parts
+    const assemblyByPart = byPart(assemblies)
+    const pivotByPart = byPart(pivots)
     const assetByPart = byPart(bundle.rig.artParts)
     const childrenByParent: Record<string, string[]> = { Pelvis: [] }
     for (const part of STACK) childrenByParent[part] = []
-    for (const assembly of bundle.rig.assembly) {
-      if (!childrenByParent[assembly.parent]) childrenByParent[assembly.parent] = []
-      childrenByParent[assembly.parent].push(assembly.part)
+    for (const item of assemblies) {
+      if (!childrenByParent[item.parent]) childrenByParent[item.parent] = []
+      childrenByParent[item.parent].push(item.part)
     }
     for (const parent of Object.keys(childrenByParent)) {
       childrenByParent[parent].sort((a, b) => STACK.indexOf(a) - STACK.indexOf(b))
