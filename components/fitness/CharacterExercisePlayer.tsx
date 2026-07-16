@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import {
   getCharacterAnimation,
@@ -14,14 +14,16 @@ const STACK = [
   'Upper Arm L', 'Forearm L', 'Hand L', 'Neck', 'Head', 'Hair',
 ]
 
-const DEFAULT_STAGE = { width: 360, height: 620, pelvis: [180, 300] as const }
+const STAGE = { width: 360, height: 620, pelvis: [180, 300] as const }
+const ARTBOARD = { width: 1156, height: 1361 }
 
 interface Props {
   slug: string
   className?: string
   autoplay?: boolean
-  fit?: boolean
 }
+
+type RigNode = { el: SVGGElement | null; x: number; y: number }
 
 function byPart<T extends { part: string }>(items: T[]) {
   return Object.fromEntries(items.map(item => [item.part, item])) as Record<string, T>
@@ -42,64 +44,16 @@ function sample(frames: CharacterFrame[], progress: number) {
   return { a: frames[0], b: frames[0], t: 0 }
 }
 
-export function CharacterExercisePlayer({ slug, className, autoplay = true, fit = true }: Props) {
+function transform(x: number, y: number, rotation = 0) {
+  return `translate(${x} ${y}) rotate(${rotation})`
+}
+
+export function CharacterExercisePlayer({ slug, className, autoplay = true }: Props) {
   const bundle = useMemo<CharacterAnimationBundle | null>(() => getCharacterAnimation(slug), [slug])
-  const [scale, setScale] = useState(1)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const pelvisRef = useRef<HTMLDivElement>(null)
-  const nodesRef = useRef<Record<string, HTMLDivElement | null>>({})
+  const pelvisRef = useRef<SVGGElement | null>(null)
+  const nodesRef = useRef<Record<string, RigNode>>({})
   const frameRef = useRef<number | null>(null)
   const startedRef = useRef(0)
-
-
-  useEffect(() => {
-    if (!fit) return
-    const el = rootRef.current
-    if (!el) return
-    let frame = 0
-    const update = () => {
-      if (frame) cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => {
-        const rect = el.getBoundingClientRect()
-        const next = Math.min(rect.width / DEFAULT_STAGE.width, rect.height / DEFAULT_STAGE.height)
-        setScale(Number.isFinite(next) && next > 0 ? next : 1)
-      })
-    }
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(el)
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      observer.disconnect()
-    }
-  }, [fit])
-
-  useEffect(() => {
-    if (!bundle || !autoplay) return
-    const pelvis = pelvisRef.current
-    if (!pelvis) return
-    const frames = bundle.template.keyframes
-    startedRef.current = performance.now()
-
-    const tick = (now: number) => {
-      const duration = bundle.template.duration || 1000
-      const progress = ((now - startedRef.current) % duration) / duration
-      const { a, b, t } = sample(frames, progress)
-      pelvis.style.left = `${lerp(a.pelvis.x, b.pelvis.x, t)}px`
-      pelvis.style.top = `${lerp(a.pelvis.y, b.pelvis.y, t)}px`
-      for (const part of STACK) {
-        const node = nodesRef.current[part]
-        if (node) node.style.transform = `rotate(${lerp(a.rotation[part] || 0, b.rotation[part] || 0, t)}deg)`
-      }
-      frameRef.current = requestAnimationFrame(tick)
-    }
-
-    frameRef.current = requestAnimationFrame(tick)
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current)
-      frameRef.current = null
-    }
-  }, [bundle, autoplay])
 
   const rig = useMemo(() => {
     if (!bundle) return null
@@ -120,6 +74,33 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
     return { assemblyByPart, pivotByPart, assetByPart, childrenByParent }
   }, [bundle])
 
+  useEffect(() => {
+    if (!bundle || !autoplay) return
+    const pelvis = pelvisRef.current
+    if (!pelvis) return
+    const frames = bundle.template.keyframes
+    startedRef.current = performance.now()
+
+    const tick = (now: number) => {
+      const duration = bundle.template.duration || 1000
+      const progress = ((now - startedRef.current) % duration) / duration
+      const { a, b, t } = sample(frames, progress)
+      pelvis.setAttribute('transform', transform(lerp(a.pelvis.x, b.pelvis.x, t), lerp(a.pelvis.y, b.pelvis.y, t)))
+      for (const part of STACK) {
+        const node = nodesRef.current[part]
+        if (node?.el) {
+          node.el.setAttribute('transform', transform(node.x, node.y, lerp(a.rotation[part] || 0, b.rotation[part] || 0, t)))
+        }
+      }
+      frameRef.current = requestAnimationFrame(tick)
+    }
+
+    frameRef.current = requestAnimationFrame(tick)
+    return () => {
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      frameRef.current = null
+    }
+  }, [bundle, autoplay])
 
   const renderPart = (part: string): ReactNode => {
     if (!rig) return null
@@ -128,46 +109,45 @@ export function CharacterExercisePlayer({ slug, className, autoplay = true, fit 
     const asset = rig.assetByPart[part]
     if (!assembly || !pivot || !asset) return null
     const parentJoint = assembly.parent === 'Pelvis'
-      ? DEFAULT_STAGE.pelvis
-      : rig.assemblyByPart[assembly.parent]?.joint_xy ?? DEFAULT_STAGE.pelvis
+      ? STAGE.pelvis
+      : rig.assemblyByPart[assembly.parent]?.joint_xy ?? STAGE.pelvis
+    const x = assembly.joint_xy[0] - parentJoint[0]
+    const y = assembly.joint_xy[1] - parentJoint[1]
 
     return (
-      <div
+      <g
         key={part}
-        ref={node => { nodesRef.current[part] = node }}
-        className="absolute size-0 [transform-style:preserve-3d]"
-        style={{ left: assembly.joint_xy[0] - parentJoint[0], top: assembly.joint_xy[1] - parentJoint[1] }}
+        ref={node => { nodesRef.current[part] = { el: node, x, y } }}
+        transform={transform(x, y)}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={asset.svg}
-          alt=""
-          draggable={false}
-          className="pointer-events-none absolute h-[1361px] w-[1156px] select-none"
-          style={{ left: -pivot.pivotX, top: -pivot.pivotY }}
+        <image
+          href={asset.svg}
+          x={-pivot.pivotX}
+          y={-pivot.pivotY}
+          width={ARTBOARD.width}
+          height={ARTBOARD.height}
+          preserveAspectRatio="xMinYMin meet"
         />
         {rig.childrenByParent[part]?.map(renderPart)}
-      </div>
+      </g>
     )
   }
 
   return (
-    <div ref={rootRef} className={cn('relative grid size-full place-items-center overflow-hidden', className)}>
+    <div className={cn('relative flex size-full items-center justify-center overflow-hidden', className)}>
       {bundle && rig && (
-        <div
-          className="relative h-[620px] w-[360px] origin-center"
-          style={{ transform: `scale(${scale})` }}
+        <svg
+          viewBox={`0 40 ${STAGE.width} 560`}
+          className="block size-full"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
           aria-label={`${slug} character animation`}
         >
-          <div className="absolute bottom-6 left-12 right-12 h-4 rounded-full bg-slate-300/70" />
-          <div
-            ref={pelvisRef}
-            className="absolute size-0 [transform-style:preserve-3d]"
-            style={{ left: DEFAULT_STAGE.pelvis[0], top: DEFAULT_STAGE.pelvis[1] }}
-          >
+          <ellipse cx="180" cy="586" rx="118" ry="12" fill="rgb(203 213 225 / 0.7)" />
+          <g ref={pelvisRef} transform={transform(STAGE.pelvis[0], STAGE.pelvis[1])}>
             {rig.childrenByParent.Pelvis.map(renderPart)}
-          </div>
-        </div>
+          </g>
+        </svg>
       )}
     </div>
   )
