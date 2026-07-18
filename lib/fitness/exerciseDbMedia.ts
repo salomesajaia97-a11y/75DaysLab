@@ -20,6 +20,16 @@ export const EXERCISE_DB_MEDIA: readonly ExerciseDbMediaRecord[] = [
 ] as const
 
 /**
+ * Intentionally missing media — no ExerciseDB clip matches the actual exercise,
+ * body position and movement pattern, so these render the icon placeholder
+ * rather than a misleading substitute:
+ *   - Bird Dog        (quadruped opposite arm/leg raise)
+ *   - March in Place  (stationary high-knee march)
+ *   - Fire Hydrant    (quadruped hip abduction)
+ * Add a record above only if a faithful clip is sourced.
+ */
+
+/**
  * Verified matches where the app catalog name differs from the ExerciseDB clip
  * name, so exact normalized matching can't find them. Mapped by ExerciseDB ID.
  * Keys are the lowercased catalog display name (see `getCatalog`).
