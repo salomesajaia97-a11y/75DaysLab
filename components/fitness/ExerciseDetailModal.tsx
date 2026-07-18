@@ -14,6 +14,7 @@ import {
 import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
 import { useLanguage } from '@/lib/i18n'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
+import { ExerciseMedia } from './ExerciseMedia'
 
 interface Props {
   exercise: CatalogExercise | null
@@ -48,6 +49,13 @@ export function ExerciseDetailModal({ exercise: rawExercise, open, onOpenChange,
             <Badge variant="outline">{geEquipmentLabel(exercise.equipment, locale, equipmentEn(exercise.equipment))}</Badge>
           </div>
         </DialogHeader>
+
+        <ExerciseMedia
+          media={exercise.media}
+          alt={exercise.name + ' exercise demonstration'}
+          focus={exercise.focus}
+          placeholderSize={72}
+        />
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-2">

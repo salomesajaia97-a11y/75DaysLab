@@ -8,7 +8,7 @@ import { difficultyLabel, focusLabel, localizeExercise } from '@/lib/fitness/i18
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useLanguage } from '@/lib/i18n'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
-import { ExerciseThumb } from './ExerciseThumb'
+import { ExerciseMedia } from './ExerciseMedia'
 import { SessionRunner } from './SessionRunner'
 
 interface Props {
@@ -90,8 +90,13 @@ function DayCard({
             onClick={() => onOpenDetail(raw)}
             className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-1.5 text-left transition-colors hover:bg-muted"
           >
-            {/* tiny row thumbs use the clean icon — Lottie is illegible at this size */}
-            <ExerciseThumb focus={ex.focus} className="h-10 w-10 shrink-0 rounded-lg" size={22} />
+            <ExerciseMedia
+              media={ex.media}
+              alt={ex.name + ' exercise demonstration'}
+              focus={ex.focus}
+              className="h-10 w-10 shrink-0 rounded-lg"
+              placeholderSize={22}
+            />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">{ex.name}</span>
               <span className="block text-xs text-muted-foreground">{ex.sets} × {ex.reps} · {ex.targetMuscles[0]}</span>

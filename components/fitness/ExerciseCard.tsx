@@ -12,7 +12,7 @@ import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel }
 import { useLanguage } from '@/lib/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
-import { ExerciseThumb } from './ExerciseThumb'
+import { ExerciseMedia } from './ExerciseMedia'
 
 interface Props {
   exercise: CatalogExercise
@@ -30,7 +30,13 @@ export function ExerciseCard({ exercise: rawExercise, onDetails }: Props) {
   const exercise = localizeExercise(rawExercise, locale)
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition-shadow hover:shadow-md">
-      <ExerciseThumb focus={exercise.focus} className="h-32" size={64} />
+      <ExerciseMedia
+        media={exercise.media}
+        alt={exercise.name + ' exercise demonstration'}
+        focus={exercise.focus}
+        className="h-32 rounded-none"
+        placeholderSize={64}
+      />
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="flex items-start justify-between gap-2">
