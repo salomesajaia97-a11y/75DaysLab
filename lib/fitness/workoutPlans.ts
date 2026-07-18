@@ -287,6 +287,94 @@ export const EXERCISE_META: Record<string, ExerciseMeta> = {
   },
 }
 
+/**
+ * Extra library exercises that don't ship a Lottie rig — media comes from the
+ * ExerciseDB GIF layer only. Kept separate from EXERCISE_META so the
+ * registry-driven set stays untouched. Each carries its own name/level/focus.
+ */
+type ExtraExercise = ExerciseMeta & { name: string; level: ExerciseLevel; focus: ExerciseFocus[] }
+
+export const EXTRA_CATALOG_EXERCISES: ExtraExercise[] = [
+  {
+    slug: 'crunch', name: 'Crunch', level: 'beginner', focus: ['core'],
+    targetMuscles: ['Abs', 'Core'],
+    durationSec: 30, sets: 3, reps: '15–20', restSec: 30, equipment: 'yoga-mat',
+    instructions: [
+      'Lie on your back, knees bent, feet flat on the floor.',
+      'Curl your shoulders off the mat toward your knees.',
+      'Lower back down with control.',
+    ],
+    safetyTips: ['Don’t pull on your neck.', 'Keep the movement slow and controlled.'],
+    beginnerModification: 'Reduce the range — lift only your shoulder blades.',
+    advancedOption: 'Pause and squeeze at the top of each rep.',
+  },
+  {
+    slug: 'flutter-kicks', name: 'Flutter Kicks', level: 'beginner', focus: ['core'],
+    targetMuscles: ['Lower Abs', 'Hip Flexors', 'Core'],
+    durationSec: 30, sets: 3, reps: '30s', restSec: 30, equipment: 'yoga-mat',
+    instructions: [
+      'Lie on your back, legs straight, hands under your hips.',
+      'Lift your heels a few inches off the floor.',
+      'Alternately kick your legs up and down in small, quick motions.',
+    ],
+    safetyTips: ['Keep your lower back pressed into the floor.', 'Stop if your back arches.'],
+    beginnerModification: 'Bend your knees or raise the legs higher to reduce load.',
+    advancedOption: 'Lower the legs closer to the floor.',
+  },
+  {
+    slug: 'standing-calf-raise', name: 'Standing Calf Raise', level: 'beginner', focus: ['lower'],
+    targetMuscles: ['Calves'],
+    durationSec: 40, sets: 3, reps: '15–20', restSec: 30, equipment: 'none',
+    instructions: [
+      'Stand tall with feet hip-width apart.',
+      'Press up onto the balls of your feet, lifting your heels.',
+      'Pause at the top, then lower with control.',
+    ],
+    safetyTips: ['Hold a wall for balance if needed.', 'Move slowly — no bouncing.'],
+    beginnerModification: 'Hold onto support throughout.',
+    advancedOption: 'Do one leg at a time.',
+  },
+  {
+    slug: 'russian-twist', name: 'Russian Twist', level: 'intermediate', focus: ['core'],
+    targetMuscles: ['Obliques', 'Abs', 'Core'],
+    durationSec: 30, sets: 3, reps: '20 total', restSec: 35, equipment: 'yoga-mat',
+    instructions: [
+      'Sit with knees bent, leaning back slightly, feet lifted or on the floor.',
+      'Clasp your hands and rotate your torso to one side.',
+      'Rotate to the other side in a controlled motion.',
+    ],
+    safetyTips: ['Keep your back straight, not rounded.', 'Move from the waist, not the arms.'],
+    beginnerModification: 'Keep your feet on the floor and reduce the twist.',
+    advancedOption: 'Hold a light weight or lift your feet higher.',
+  },
+  {
+    slug: 'triceps-dip', name: 'Triceps Dip', level: 'intermediate', focus: ['upper'],
+    targetMuscles: ['Triceps', 'Shoulders', 'Chest'],
+    durationSec: 40, sets: 3, reps: '8–12', restSec: 45, equipment: 'none',
+    instructions: [
+      'Sit on the edge of a sturdy chair, hands gripping the edge.',
+      'Slide your hips off and bend your elbows to lower down.',
+      'Press back up until your arms are straight.',
+    ],
+    safetyTips: ['Keep your elbows pointing back, not flaring out.', 'Don’t shrug your shoulders.'],
+    beginnerModification: 'Keep your knees bent and feet close to reduce load.',
+    advancedOption: 'Extend your legs further out.',
+  },
+  {
+    slug: 'diamond-pushup', name: 'Diamond Push-up', level: 'advanced', focus: ['upper', 'core'],
+    targetMuscles: ['Triceps', 'Chest', 'Shoulders'],
+    durationSec: 40, sets: 3, reps: '6–10', restSec: 50, equipment: 'none',
+    instructions: [
+      'Start in a plank with hands together, forming a diamond shape.',
+      'Lower your chest toward your hands, elbows close to your body.',
+      'Press back up, keeping your body in a straight line.',
+    ],
+    safetyTips: ['Keep your core braced — no sagging hips.', 'Stop a rep short of failure.'],
+    beginnerModification: 'Do it from your knees or on an incline.',
+    advancedOption: 'Slow the lowering phase to a 3-second count.',
+  },
+]
+
 /** Combined view: registry entry (for the Lottie) + coaching metadata. */
 export interface CatalogExercise extends ExerciseMeta {
   /** ExerciseDB's stable primary identifier, when an exact media match exists. */
@@ -317,6 +405,22 @@ export function getCatalog(): CatalogExercise[] {
       name: e.name,
       level: e.level,
       focus: e.focus,
+      lottieAvailable: false,
+    })
+  }
+  // GIF-only library additions (no Lottie rig)
+  for (const x of EXTRA_CATALOG_EXERCISES) {
+    if (seen.has(x.slug)) continue
+    seen.add(x.slug)
+    const exerciseDb = inferExerciseDbMedia(x.name, EXERCISE_DB_MEDIA, EXERCISE_DB_OVERRIDES)
+    const { name, level, focus, ...meta } = x
+    out.push({
+      ...meta,
+      exerciseId: exerciseDb?.exerciseId ?? null,
+      media: { gifUrl: exerciseDb?.gifUrl, posterUrl: exerciseDb?.posterUrl },
+      name,
+      level,
+      focus,
       lottieAvailable: false,
     })
   }

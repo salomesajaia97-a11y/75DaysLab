@@ -17,17 +17,19 @@ export const EXERCISE_DB_MEDIA: readonly ExerciseDbMediaRecord[] = [
   { exerciseId: 'ealLwvX', name: 'high knee against wall', gifUrl: 'https://static.exercisedb.dev/media/ealLwvX.gif' },
   { exerciseId: 'PM1PZjg', name: 'lunge with jump', gifUrl: 'https://static.exercisedb.dev/media/PM1PZjg.gif' },
   { exerciseId: '1ZFqTDN', name: 'air bike', gifUrl: 'https://static.exercisedb.dev/media/1ZFqTDN.gif' },
+  // Approximate matches (no exact clip exists) — same target/intent, different
+  // body position. Flagged needs-review.
+  { exerciseId: 'iny3m5y', name: 'dead bug', gifUrl: 'https://static.exercisedb.dev/media/iny3m5y.gif' },
+  { exerciseId: 'J9zIWig', name: 'walking high knees lunge', gifUrl: 'https://static.exercisedb.dev/media/J9zIWig.gif' },
+  { exerciseId: '7WaDzyL', name: 'side hip abduction', gifUrl: 'https://static.exercisedb.dev/media/7WaDzyL.gif' },
+  // Additional bodyweight exercises added to the library.
+  { exerciseId: 'X6C6i5Y', name: 'triceps dip', gifUrl: 'https://static.exercisedb.dev/media/X6C6i5Y.gif' },
+  { exerciseId: 'soIB2rj', name: 'diamond push-up', gifUrl: 'https://static.exercisedb.dev/media/soIB2rj.gif' },
+  { exerciseId: 'TFqbd8t', name: 'crunch floor', gifUrl: 'https://static.exercisedb.dev/media/TFqbd8t.gif' },
+  { exerciseId: 'XVDdcoj', name: 'russian twist', gifUrl: 'https://static.exercisedb.dev/media/XVDdcoj.gif' },
+  { exerciseId: 'bJYHBIN', name: 'bodyweight standing calf raise', gifUrl: 'https://static.exercisedb.dev/media/bJYHBIN.gif' },
+  { exerciseId: 'UVo2Qs2', name: 'flutter kicks', gifUrl: 'https://static.exercisedb.dev/media/UVo2Qs2.gif' },
 ] as const
-
-/**
- * Intentionally missing media — no ExerciseDB clip matches the actual exercise,
- * body position and movement pattern, so these render the icon placeholder
- * rather than a misleading substitute:
- *   - Bird Dog        (quadruped opposite arm/leg raise)
- *   - March in Place  (stationary high-knee march)
- *   - Fire Hydrant    (quadruped hip abduction)
- * Add a record above only if a faithful clip is sourced.
- */
 
 /**
  * Verified matches where the app catalog name differs from the ExerciseDB clip
@@ -47,4 +49,11 @@ export const EXERCISE_DB_OVERRIDES: ExerciseDbOverrides = {
   'high knees': 'ealLwvX',       // clip: "high knee against wall"
   'jump lunge': 'PM1PZjg',       // clip: "lunge with jump"
   'bicycle crunch': '1ZFqTDN',   // clip: "air bike"
+  // Approximate (needs-review) — closest available, different body position:
+  'bird dog': 'iny3m5y',         // clip: "dead bug" (supine, same anti-rotation intent)
+  'march in place': 'J9zIWig',   // clip: "walking high knees lunge"
+  'fire hydrant': '7WaDzyL',     // clip: "side hip abduction" (side-lying glute med)
+  // Added library exercises whose catalog name differs from the clip name:
+  crunch: 'TFqbd8t',             // clip: "crunch floor"
+  'standing calf raise': 'bJYHBIN',
 }
