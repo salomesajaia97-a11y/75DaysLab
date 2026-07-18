@@ -13,11 +13,19 @@ export async function POST(req: NextRequest) {
 
   await connectDB()
 
+  // `.catch(() => null)` absorbs a CastError when the session carries an id that
+  // isn't a valid Mongo ObjectId (e.g. a stale cookie from a deleted user).
   const user = await User.findByIdAndUpdate(
     session.user.id,
     { age: Number(age), gender, heightCm: Number(heightCm), weightKg: Number(weightKg), goal, focusArea, onboardingComplete: true },
     { new: true }
-  )
+  ).catch(() => null)
+
+  // Authenticated but no matching user record → stale/orphaned session, not a
+  // server fault. Return a clear 404 instead of crashing on `user!._id`.
+  if (!user) {
+    return NextResponse.json({ error: 'User not found. Please sign in again.' }, { status: 404 })
+  }
 
   const challenge = await Challenge.findOneAndUpdate(
     { userId: session.user.id, isActive: true },
@@ -35,14 +43,14 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     success: true,
     profile: {
-      id: String(user!._id),
-      username: user!.username,
-      age: user!.age,
-      gender: user!.gender,
-      heightCm: user!.heightCm,
-      weightKg: user!.weightKg,
-      goal: user!.goal,
-      focusArea: user!.focusArea,
+      id: String(user._id),
+      username: user.username,
+      age: user.age,
+      gender: user.gender,
+      heightCm: user.heightCm,
+      weightKg: user.weightKg,
+      goal: user.goal,
+      focusArea: user.focusArea,
       startDate: challenge.startDate.toISOString().split('T')[0],
       totalDays: challenge.totalDays,
     },
