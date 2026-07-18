@@ -11,6 +11,8 @@ import {
   type Gender,
 } from '@/lib/fitness/exerciseLottieRegistry'
 import type { Gender as ProfileGender } from '@/types'
+import { EXERCISE_DB_MEDIA, EXERCISE_DB_OVERRIDES } from './exerciseDbMedia'
+import { inferExerciseDbMedia, type ExerciseMediaSources } from './exerciseMedia'
 
 export type WorkoutLocation = 'home' | 'gym'
 export type Equipment = 'none' | 'dumbbells' | 'resistance-band' | 'gym-machines' | 'yoga-mat'
@@ -287,6 +289,9 @@ export const EXERCISE_META: Record<string, ExerciseMeta> = {
 
 /** Combined view: registry entry (for the Lottie) + coaching metadata. */
 export interface CatalogExercise extends ExerciseMeta {
+  /** ExerciseDB's stable primary identifier, when an exact media match exists. */
+  exerciseId: string | null
+  media: ExerciseMediaSources
   name: string
   level: ExerciseLevel
   focus: ExerciseFocus[]
@@ -304,7 +309,16 @@ export function getCatalog(): CatalogExercise[] {
     if (!meta) continue
     seen.add(e.slug)
     // registry ships one asset per gender per slug → available for the catalog view
-    out.push({ ...meta, name: e.name, level: e.level, focus: e.focus, lottieAvailable: true })
+    const exerciseDb = inferExerciseDbMedia(e.name, EXERCISE_DB_MEDIA, EXERCISE_DB_OVERRIDES)
+    out.push({
+      ...meta,
+      exerciseId: exerciseDb?.exerciseId ?? null,
+      media: { gifUrl: exerciseDb?.gifUrl, posterUrl: exerciseDb?.posterUrl },
+      name: e.name,
+      level: e.level,
+      focus: e.focus,
+      lottieAvailable: false,
+    })
   }
   return out
 }

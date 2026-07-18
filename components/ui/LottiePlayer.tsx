@@ -9,31 +9,46 @@ interface Props {
   className?: string
   loop?: boolean
   autoplay?: boolean
+  /** Set false when a parent already controls viewport visibility. */
+  deferUntilVisible?: boolean
 }
 
-export function LottiePlayer({ src, className, loop = true, autoplay = true }: Props) {
+export function LottiePlayer({
+  src,
+  className,
+  loop = true,
+  autoplay = true,
+  deferUntilVisible = true,
+}: Props) {
   const [data, setData] = useState<object | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
+    const controller = new AbortController()
+    const load = () =>
+      fetch(src, { signal: controller.signal })
+        .then(r => r.json())
+        .then(setData)
+        .catch(() => {/* fallback remains visible */})
 
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          obs.disconnect()
-          fetch(src)
-            .then(r => r.json())
-            .then(setData)
-            .catch(() => {/* silently fail */})
-        }
-      },
-      { threshold: 0.1 },
-    )
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [src])
+    if (!deferUntilVisible) {
+      load()
+      return () => controller.abort()
+    }
+
+    const el = containerRef.current
+    if (!el) return () => controller.abort()
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return
+      observer.disconnect()
+      load()
+    }, { threshold: 0.1 })
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      controller.abort()
+    }
+  }, [src, deferUntilVisible])
 
   return (
     <div ref={containerRef} className={className}>

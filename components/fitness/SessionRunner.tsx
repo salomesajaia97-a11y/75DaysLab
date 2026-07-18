@@ -11,7 +11,7 @@ import { exerciseMinutes, type CatalogExercise } from '@/lib/fitness/workoutPlan
 import { localizeExercise } from '@/lib/fitness/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useLanguage } from '@/lib/i18n'
-import { ExerciseThumb } from './ExerciseThumb'
+import { ExerciseMedia } from './ExerciseMedia'
 
 interface Props {
   open: boolean
@@ -113,9 +113,13 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises }: 
         </div>
 
         {/* animation / icon */}
-        <div className="overflow-hidden rounded-2xl">
-          <ExerciseThumb focus={cur.focus} className="h-52" size={72} />
-        </div>
+        <ExerciseMedia
+          media={cur.media}
+          alt={lex.name + ' exercise demonstration'}
+          focus={cur.focus}
+          className="h-52"
+          placeholderSize={72}
+        />
 
         {/* current exercise */}
         <div className="text-center">
