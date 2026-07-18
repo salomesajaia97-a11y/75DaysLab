@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { todayString } from '@/lib/storage'
 import { logWorkout, type WorkoutSource } from '@/lib/fitness/workoutLog'
-import { exerciseMinutes, thumbLottieFor, type CatalogExercise } from '@/lib/fitness/workoutPlans'
+import { exerciseMinutes, type CatalogExercise } from '@/lib/fitness/workoutPlans'
+import { getExerciseMedia } from '@/lib/fitness/exerciseMedia'
 import { localizeExercise } from '@/lib/fitness/i18n'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import { useLanguage } from '@/lib/i18n'
@@ -76,7 +77,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
   const lex = localizeExercise(cur, locale)
   const atFirst = idx === 0
   const atLast = idx === total - 1
-  const lottieSrc = cur.lottieAvailable ? thumbLottieFor(cur.slug, gender) : null
+  const media = getExerciseMedia(cur.slug, gender)
 
   const finish = () => {
     if (finished) return
@@ -115,7 +116,7 @@ export function SessionRunner({ open, onOpenChange, title, source, exercises, ge
 
         {/* animation / icon */}
         <div className="overflow-hidden rounded-2xl">
-          <ExerciseThumb focus={cur.focus} lottieSrc={lottieSrc} className="h-52" size={72} />
+          <ExerciseThumb focus={cur.focus} media={media} className="h-52" size={72} />
         </div>
 
         {/* current exercise */}

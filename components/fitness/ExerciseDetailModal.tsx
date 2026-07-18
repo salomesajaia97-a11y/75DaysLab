@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { LottiePlayer } from '@/components/ui/LottiePlayer'
 import type { Gender } from '@/lib/fitness/exerciseLottieRegistry'
 import {
-  lottieFileFor,
   exerciseMinutes,
   DIFFICULTY_LABEL,
   EQUIPMENT_OPTIONS,
   type CatalogExercise,
 } from '@/lib/fitness/workoutPlans'
+import { getExerciseMedia } from '@/lib/fitness/exerciseMedia'
 import { localizeExercise, difficultyLabel, equipmentLabel as geEquipmentLabel } from '@/lib/fitness/i18n'
 import { useLanguage } from '@/lib/i18n'
 import { useMarkComplete } from '@/hooks/useMarkComplete'
@@ -39,7 +39,7 @@ export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpe
 
   if (!rawExercise) return null
   const exercise = localizeExercise(rawExercise, locale)
-  const file = lottieFileFor(exercise.slug, gender)
+  const media = getExerciseMedia(exercise.slug, gender)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,12 +52,17 @@ export function ExerciseDetailModal({ exercise: rawExercise, gender, open, onOpe
           </div>
         </DialogHeader>
 
-        {/* Larger animation */}
-        {file && (
+        {/* Larger media (GIF or Lottie) */}
+        {media.kind === 'gif' && media.src ? (
           <div className="overflow-hidden rounded-2xl bg-muted">
-            <LottiePlayer src={file} className="aspect-square" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF; next/image can't loop it */}
+            <img src={media.src} alt={exercise.name} className="aspect-square w-full object-contain" loading="lazy" decoding="async" />
           </div>
-        )}
+        ) : media.kind === 'lottie' && media.src ? (
+          <div className="overflow-hidden rounded-2xl bg-muted">
+            <LottiePlayer src={media.src} className="aspect-square" />
+          </div>
+        ) : null}
 
         {/* Quick stats */}
         <div className="grid grid-cols-3 gap-2">
