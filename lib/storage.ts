@@ -60,16 +60,26 @@ export function scopedKey(base: string): string {
   return `${base}::${uid ?? 'guest'}`
 }
 
-/** True when `key` holds user-scoped data (i.e. must be cleared on logout). */
+/**
+ * True when `key` is a NAMESPACED per-user cache we own (`<base>::<uid>`), i.e.
+ * safe to clear on logout. Deliberately excludes:
+ *  - the uid marker (`75lab_uid`)
+ *  - preference keys outside our prefixes (theme, locale)
+ *  - LEGACY un-namespaced keys (pre-Phase-1, e.g. `75lab_streak`,
+ *    `cycle_logged_period`) — these may hold not-yet-migrated progress and must
+ *    NOT be destroyed by cache cleanup. They are never read anymore (all reads
+ *    go through scopedKey → `base::uid`), so preserving them cannot leak across
+ *    accounts; it only keeps the door open for a safe future migration.
+ */
 export function isUserScopedKey(key: string): boolean {
   if (key === UID_KEY) return false
-  return USER_SCOPED_PREFIXES.some((p) => key.startsWith(p))
+  return USER_SCOPED_PREFIXES.some((p) => key.startsWith(p)) && key.includes('::')
 }
 
 /**
- * Remove ALL user-scoped cached data (profile, streak, daily, workout, water,
- * steps, cycle, …) plus the uid marker. Preferences that live outside the
- * `75lab_`/`cycle_` namespaces (theme, locale) are intentionally preserved.
+ * Remove per-user NAMESPACED cached data (profile, streak, daily, workout,
+ * water, steps, cycle, …) plus the uid marker. Preferences (theme, locale) and
+ * legacy un-namespaced keys are intentionally preserved — see isUserScopedKey.
  * Safe to call repeatedly.
  */
 export function clearUserScopedStorage(): void {

@@ -88,10 +88,16 @@ describe('user-scoped storage keys', () => {
 })
 
 describe('isUserScopedKey', () => {
-  it('flags 75lab_ and cycle_ keys', async () => {
+  it('flags NAMESPACED 75lab_ and cycle_ keys', async () => {
     const s = await freshModule()
     expect(s.isUserScopedKey('75lab_profile::userA')).toBe(true)
-    expect(s.isUserScopedKey('cycle_logged_period')).toBe(true)
+    expect(s.isUserScopedKey('cycle_logged_period::userA')).toBe(true)
+  })
+  it('does NOT flag legacy un-namespaced keys (preserved for migration)', async () => {
+    const s = await freshModule()
+    expect(s.isUserScopedKey('75lab_streak')).toBe(false)
+    expect(s.isUserScopedKey('75lab_daily_2026-07-22')).toBe(false)
+    expect(s.isUserScopedKey('cycle_logged_period')).toBe(false)
   })
   it('does not flag the uid marker or preference keys', async () => {
     const s = await freshModule()
@@ -102,26 +108,31 @@ describe('isUserScopedKey', () => {
 })
 
 describe('clearUserScopedStorage', () => {
-  it('removes all user-scoped data and the uid, but preserves preferences', async () => {
+  it('removes namespaced per-user data + uid, but preserves prefs AND legacy keys', async () => {
     const s = await freshModule()
     s.setStorageUser('userA')
-    s.saveProfile({ username: 'alice' } as never)
-    s.saveStreak(5, '2026-07-22')
+    s.saveProfile({ username: 'alice' } as never) // -> 75lab_profile::userA
+    s.saveStreak(5, '2026-07-22') // -> 75lab_streak::userA
+    // legacy pre-Phase-1 (un-namespaced) data — MUST survive so it can be migrated
+    store.setItem('75lab_streak', '33')
+    store.setItem('75lab_daily_2026-06-20', '{}')
     store.setItem('cycle_logged_period', '{}')
     store.setItem('theme', 'dark') // preference — must survive
     store.setItem('locale', 'ge') // preference — must survive
 
     s.clearUserScopedStorage()
 
+    // namespaced cache gone
+    expect(store.getItem('75lab_profile::userA')).toBeNull()
+    expect(store.getItem('75lab_streak::userA')).toBeNull()
+    expect(store.getItem('75lab_uid')).toBeNull()
+    // legacy data preserved (not destroyed by cache cleanup)
+    expect(store.getItem('75lab_streak')).toBe('33')
+    expect(store.getItem('75lab_daily_2026-06-20')).toBe('{}')
+    expect(store.getItem('cycle_logged_period')).toBe('{}')
+    // preferences preserved
     expect(store.getItem('theme')).toBe('dark')
     expect(store.getItem('locale')).toBe('ge')
-    expect(store.getItem('75lab_uid')).toBeNull()
-    // every 75lab_/cycle_ payload gone
-    for (let i = 0; i < store.length; i++) {
-      const k = store.key(i)!
-      expect(k.startsWith('75lab_')).toBe(false)
-      expect(k.startsWith('cycle_')).toBe(false)
-    }
     // after clear, scope is guest again
     expect(s.getStorageUser()).toBeNull()
   })
