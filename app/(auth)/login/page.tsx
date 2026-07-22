@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,7 @@ import { AuthShell } from '@/components/auth/AuthShell'
 import { useLanguage } from '@/lib/i18n'
 
 export default function LoginPage() {
+  const router = useRouter()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,10 +31,13 @@ export default function LoginPage() {
       setLoading(false)
       setError(t('auth.login.error'))
     } else {
-      // Full navigation (not router.push) rebuilds the SessionProvider and RSC
-      // tree from the new cookie, so no previous account's role/profile can
-      // flash. replace() keeps the login page out of history.
-      window.location.replace('/dashboard')
+      // Soft SPA navigation keeps the app responsive (no full-bundle reload).
+      // Account isolation does NOT depend on a hard reload here: logout does a
+      // full teardown (performLogout), so a login always starts from a clean,
+      // null SessionProvider — there is no prior account's role/profile to
+      // flash. refresh() re-pulls the RSC tree for the new session.
+      router.push('/dashboard')
+      router.refresh()
     }
   }
 
