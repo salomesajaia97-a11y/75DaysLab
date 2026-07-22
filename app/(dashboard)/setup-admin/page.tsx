@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Shield, CheckCircle2, AlertCircle } from 'lucide-react'
-import { signOut } from 'next-auth/react'
+import { performLogout } from '@/lib/auth-client'
 
 export default function SetupAdminPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error' | 'already'>('idle')
@@ -64,7 +64,7 @@ export default function SetupAdminPage() {
           <CheckCircle2 className="h-8 w-8 text-green-500" />
           <p className="text-sm" style={{ color: 'var(--foreground)' }}>{message}</p>
           <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={() => performLogout()}
             className="px-6 py-2 rounded-2xl text-sm font-semibold"
             style={{ background: 'var(--foreground)', color: 'var(--background)' }}
           >

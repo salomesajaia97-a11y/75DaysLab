@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { signOut, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
+import { performLogout } from '@/lib/auth-client'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher'
 import { useLanguage } from '@/lib/i18n'
@@ -92,7 +93,7 @@ export function DashboardSidebar() {
           <LanguageSwitcher />
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={() => performLogout()}
           className="group flex items-center gap-3 px-3 py-2.5 rounded-2xl w-full text-sm font-medium transition-all duration-200"
           style={{ color: 'var(--muted-foreground)', '--nav': '#e05252' } as React.CSSProperties}
         >

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, createContext } from 'react'
 import { Calendar, CalendarDayButton } from '@/components/ui/calendar'
 import { useLanguage } from '@/lib/i18n'
+import { scopedKey } from '@/lib/storage'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CyclePrediction {
@@ -120,25 +121,25 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
 
   useEffect(() => {
     try {
-      const p = localStorage.getItem(LS_KEY)
+      const p = localStorage.getItem(scopedKey(LS_KEY))
       if (p) {
         const { start, end } = JSON.parse(p)
         setLoggedPeriod({ start: new Date(start), end: new Date(end) })
       }
-      const l = localStorage.getItem(LS_LOGS_KEY)
+      const l = localStorage.getItem(scopedKey(LS_LOGS_KEY))
       if (l) setDailyLogs(JSON.parse(l))
     } catch {}
   }, [])
 
   function saveLogs(logs: DailyLogs) {
     setDailyLogs(logs)
-    localStorage.setItem(LS_LOGS_KEY, JSON.stringify(logs))
+    localStorage.setItem(scopedKey(LS_LOGS_KEY), JSON.stringify(logs))
   }
 
   function commitPeriod(s: Date, e: Date) {
     const period = { start: s, end: e }
     setLoggedPeriod(period)
-    localStorage.setItem(LS_KEY, JSON.stringify({ start: s.toISOString(), end: e.toISOString() }))
+    localStorage.setItem(scopedKey(LS_KEY), JSON.stringify({ start: s.toISOString(), end: e.toISOString() }))
     onPeriodLogged?.(s, e)
   }
 
@@ -178,7 +179,7 @@ export function CycleCalendar({ predictions, onPeriodLogged, onPeriodCleared }: 
 
   function clearPeriod() {
     setLoggedPeriod(null)
-    localStorage.removeItem(LS_KEY)
+    localStorage.removeItem(scopedKey(LS_KEY))
     onPeriodCleared?.()
   }
 

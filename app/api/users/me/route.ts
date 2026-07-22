@@ -5,6 +5,9 @@ import { User } from '@/models/User'
 import { Challenge } from '@/models/Challenge'
 import mongoose from 'mongoose'
 
+// Authenticated, per-user response — never cache or prerender it.
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const session = await auth()
   if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))

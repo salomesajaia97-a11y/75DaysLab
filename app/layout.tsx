@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react'
 import { ThemeProvider } from '@/components/shared/ThemeProvider'
 import { SuppressNextThemesWarning } from '@/components/shared/SuppressNextThemesWarning'
 import { LanguageProvider } from '@/components/shared/LanguageProvider'
+import { SessionBoot } from '@/components/shared/SessionBoot'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { getSiteConfig, buildThemeCssVars } from '@/lib/site-config'
@@ -65,7 +66,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SuppressNextThemesWarning />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <LanguageProvider>
-            <SessionProvider>{children}</SessionProvider>
+            <SessionProvider>
+              <SessionBoot />
+              {children}
+            </SessionProvider>
           </LanguageProvider>
         </ThemeProvider>
         <Analytics />

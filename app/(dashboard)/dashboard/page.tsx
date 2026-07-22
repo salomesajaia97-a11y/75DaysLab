@@ -23,6 +23,7 @@ import type { UserProfile } from '@/types'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
+import { useSession } from 'next-auth/react'
 import { useDailyProgress, type DailyFlags } from '@/hooks/useDailyProgress'
 
 interface Task {
@@ -48,6 +49,8 @@ const FALLBACK_TOTAL = 75
 
 export default function DashboardPage() {
   const { t } = useLanguage()
+  const { data: session } = useSession()
+  const sessionUserId = session?.user?.id ?? null
 
   const TASK_DEFS = [
     { id: 'water',     label: t('dashboard.task.water') },
@@ -67,20 +70,23 @@ export default function DashboardPage() {
   const { data: progress } = useDailyProgress()
 
   useEffect(() => {
-    const p = getProfile()
-    if (p) {
-      setProfile(p)
-    } else {
-      fetch('/api/users/me')
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data && !data.error) {
-            saveProfile(data)
-            setProfile(data)
-          }
-        })
-        .catch(() => {})
-    }
+    // Instant paint from the (now user-scoped) cache, then ALWAYS reconcile with
+    // the authenticated server user. The greeting name itself comes from the
+    // session (below), never from this cache, so no previous account can flash.
+    const cached = getProfile()
+    // Hydrating from the user-scoped localStorage cache — an intentional
+    // external-store sync (same idiom as the server-seed effect below).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (cached) setProfile(cached)
+    let active = true
+    fetch('/api/users/me', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!active || !data || data.error) return
+        saveProfile(data)
+        setProfile(data)
+      })
+      .catch(() => {})
 
     // Hard reset: if yesterday's tasks exist and were incomplete, reset streak
     const yesterday = yesterdayString()
@@ -109,7 +115,12 @@ export default function DashboardPage() {
     if (todayState) {
       setTasks(TASK_DEFS.map(t => ({ ...t, done: todayState.tasks[t.id] ?? false })))
     }
-  }, [today])
+
+    return () => { active = false }
+    // Re-run when the day rolls over OR the authenticated user changes, so a
+    // new account never reuses the previous user's profile/streak/tasks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [today, sessionUserId])
 
   // Server truth wins: once /api/daily-progress resolves, seed task completion
   // and streak from it. Overrides the localStorage seed above; on request
@@ -152,7 +163,8 @@ export default function DashboardPage() {
   const waterGoal = profile
     ? calculateWaterGoal(profile.age, profile.weightKg, profile.heightCm, profile.gender, profile.goal)
     : FALLBACK_WATER
-  const displayName = profile?.username ?? 'there'
+  // Identity comes from the validated server session — never the local cache.
+  const displayName = session?.user?.name ?? 'there'
 
   const autoCheckWorkout = useCallback(() => {
     const workoutTask = tasks.find(t => t.id === 'workout')

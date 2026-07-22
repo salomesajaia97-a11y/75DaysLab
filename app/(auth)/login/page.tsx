@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,7 +10,6 @@ import { AuthShell } from '@/components/auth/AuthShell'
 import { useLanguage } from '@/lib/i18n'
 
 export default function LoginPage() {
-  const router = useRouter()
   const { t } = useLanguage()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -22,13 +20,19 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const result = await signIn('credentials', { email, password, redirect: false })
-    setLoading(false)
+    const result = await signIn('credentials', {
+      email: email.trim().toLowerCase(),
+      password,
+      redirect: false,
+    })
     if (result?.error) {
+      setLoading(false)
       setError(t('auth.login.error'))
     } else {
-      router.push('/dashboard')
-      router.refresh()
+      // Full navigation (not router.push) rebuilds the SessionProvider and RSC
+      // tree from the new cookie, so no previous account's role/profile can
+      // flash. replace() keeps the login page out of history.
+      window.location.replace('/dashboard')
     }
   }
 
