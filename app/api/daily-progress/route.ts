@@ -6,6 +6,7 @@ import { DailyLog } from '@/models/DailyLog'
 import { WaterLog } from '@/models/WaterLog'
 import { Challenge } from '@/models/Challenge'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { isValidDayString, isFutureDay, buildChallengeView } from '@/lib/progress'
 import mongoose from 'mongoose'
 
 function computeCalorieTarget(
@@ -34,10 +35,14 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await connectDB()
-
   const today = new Date().toISOString().split('T')[0]
-  const date = req.nextUrl.searchParams.get('date') ?? today
+  const requested = req.nextUrl.searchParams.get('date')
+  // Reject malformed or future dates before any DB work (no writing the future).
+  if (requested !== null && (!isValidDayString(requested) || isFutureDay(requested, today)))
+    return NextResponse.json({ error: 'Invalid date' }, { status: 400 })
+  const date = requested ?? today
+
+  await connectDB()
 
   // Lazy self-heal: recompute today's flags from sources and advance the
   // challenge (reset-if-missed / streak). Non-fatal — a failure just serves the
@@ -50,11 +55,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [user, dailyLog, waterLogs, challenge] = await Promise.all([
+  const [user, dailyLog, waterLogs, challenge, totalCompletedDays] = await Promise.all([
     User.findById(session.user.id).select('age gender heightCm weightKg goal'),
     DailyLog.findOne({ userId: session.user.id, date }),
     WaterLog.find({ userId: session.user.id, date }),
     Challenge.findOne({ userId: session.user.id, isActive: true }),
+    // Historical verified completed days — survives attempt resets (never a
+    // calendar-day count). This is the honest "completed days" metric.
+    DailyLog.countDocuments({ userId: session.user.id, allComplete: true }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + l.amountMl, 0)
@@ -84,15 +92,30 @@ export async function GET(req: NextRequest) {
     calorieTarget,
     // --- full daily completion flags ---
     flags,
+    // Historical verified completed days (survives resets; not calendar days).
+    totalCompletedDays,
     // --- active challenge summary (null when none) ---
     challenge: challenge
       ? {
+          totalDays: challenge.totalDays,
           currentDay: challenge.currentDay,
           currentStreak: challenge.currentStreak,
           longestStreak: challenge.longestStreak,
           startDate: challenge.startDate,
           lastCompletedDate: challenge.lastCompletedDate ?? null,
         }
+      : null,
+    // Accurately-labeled, server-owned view for the dashboard (null when none).
+    view: challenge
+      ? buildChallengeView(
+          {
+            totalDays: challenge.totalDays,
+            currentDay: challenge.currentDay,
+            currentStreak: challenge.currentStreak,
+            longestStreak: challenge.longestStreak,
+          },
+          totalCompletedDays
+        )
       : null,
   })
 }

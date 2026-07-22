@@ -127,6 +127,11 @@
   "dashboard.stat.streak_value_plural": "{n} days",
   "dashboard.stat.day_value": "Day {n}",
   "dashboard.stat.days_left_value": "{n} days",
+  "dashboard.meta.best": "Best streak",
+  "dashboard.meta.completed": "Completed days",
+  "dashboard.meta.length": "{n}-day challenge",
+  "dashboard.meta.complete": "Challenge complete 🎉",
+  "dashboard.loading": "Loading your progress…",
 
   "fitness.title": "Fitness",
   "fitness.subtitle": "Your 75 Hard workout progress",

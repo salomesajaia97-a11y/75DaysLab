@@ -127,6 +127,11 @@
   "dashboard.stat.streak_value_plural": "{n} დღე",
   "dashboard.stat.day_value": "დღე {n}",
   "dashboard.stat.days_left_value": "{n} დღე",
+  "dashboard.meta.best": "საუკეთესო სერია",
+  "dashboard.meta.completed": "დასრულებული დღეები",
+  "dashboard.meta.length": "{n}-დღიანი გამოწვევა",
+  "dashboard.meta.complete": "გამოწვევა დასრულდა 🎉",
+  "dashboard.loading": "იტვირთება თქვენი პროგრესი…",
 
   "fitness.title": "ფიტნესი",
   "fitness.subtitle": "შენი 75 Hard-ის ვარჯიშის პროგრესი",

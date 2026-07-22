@@ -2,6 +2,7 @@
 import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { getStorageUser, setStorageUser, clearUserScopedStorage } from '@/lib/storage'
+import { runLegacyMigration } from '@/lib/legacy-migration'
 
 /**
  * Keeps the client storage namespace in lockstep with the authenticated
@@ -27,6 +28,9 @@ export function SessionBoot() {
       clearUserScopedStorage()
     }
     setStorageUser(uid)
+    // One-time, per-user legacy-storage migration policy (idempotent; never
+    // imports/attributes/deletes — see lib/legacy-migration).
+    if (typeof window !== 'undefined') runLegacyMigration(uid, window.localStorage)
   }, [data?.user?.id, status])
 
   return null

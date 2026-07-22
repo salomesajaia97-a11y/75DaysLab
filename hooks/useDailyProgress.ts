@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { ChallengeView } from '@/lib/progress'
 
 export interface DailyFlags {
   waterCompleted: boolean
@@ -13,6 +14,7 @@ export interface DailyFlags {
 }
 
 export interface ChallengeSummary {
+  totalDays: number
   currentDay: number
   currentStreak: number
   longestStreak: number
@@ -27,8 +29,12 @@ export interface DailyProgress {
   calorieTarget: number
   /** full daily completion flags */
   flags: DailyFlags
+  /** historical verified completed days (survives attempt resets) */
+  totalCompletedDays: number
   /** active challenge summary, or null when none */
   challenge: ChallengeSummary | null
+  /** accurately-labeled, server-owned challenge view, or null when none */
+  view: ChallengeView | null
 }
 
 /**
@@ -40,14 +46,18 @@ export function useDailyProgress() {
   const [data, setData] = useState<DailyProgress | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  // bump to force a re-fetch (e.g. after a completion elsewhere on the page)
+  const [nonce, setNonce] = useState(0)
+  const refetch = useCallback(() => setNonce(n => n + 1), [])
 
   useEffect(() => {
     let active = true
-    fetch('/api/daily-progress')
+    fetch('/api/daily-progress', { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((d: DailyProgress) => {
         if (!active) return
         setData(d)
+        setError(false)
         setLoading(false)
       })
       .catch(() => {
@@ -58,7 +68,7 @@ export function useDailyProgress() {
     return () => {
       active = false
     }
-  }, [])
+  }, [nonce])
 
-  return { data, loading, error }
+  return { data, loading, error, refetch }
 }
