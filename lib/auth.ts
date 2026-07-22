@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { authConfig } from '@/lib/auth.config'
+import { normalizeEmail } from '@/lib/validation/auth'
 
 declare module 'next-auth' {
   interface User {
@@ -55,7 +56,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           await connectDB()
           const user = await User.findOne({
-            email: String(credentials.email).trim().toLowerCase(),
+            email: normalizeEmail(String(credentials.email)),
           })
           if (!user || !user.passwordHash) return null
 
@@ -82,10 +83,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider === 'google') {
         try {
+          if (!user.email) return false
           await connectDB()
-          const existing = await User.findOne({ email: user.email })
+          // Look up (and store) the canonical trimmed + lowercased email so a
+          // provider-supplied casing can never create a duplicate account.
+          const email = normalizeEmail(user.email)
+          const existing = await User.findOne({ email })
           if (!existing) {
-            const username = (user.name ?? user.email!.split('@')[0])
+            const username = (user.name ?? email.split('@')[0])
               .replace(/\s+/g, '_')
               .toLowerCase()
             let finalUsername = username
@@ -95,7 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             }
             await User.create({
               username: finalUsername,
-              email: user.email,
+              email,
               onboardingComplete: false,
             })
           }
@@ -110,7 +115,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (account?.provider === 'google') {
           try {
             await connectDB()
-            const dbUser = await User.findOne({ email: token.email })
+            const dbUser = await User.findOne({
+              email: token.email ? normalizeEmail(token.email) : token.email,
+            })
             if (dbUser) {
               token.id = dbUser._id.toString()
               token.name = dbUser.username

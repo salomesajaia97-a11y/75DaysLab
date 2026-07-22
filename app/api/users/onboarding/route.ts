@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
 import { Challenge } from '@/models/Challenge'
+import { validateChallengeLength } from '@/lib/validation/challenge'
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -10,6 +11,14 @@ export async function POST(req: NextRequest) {
 
   const { age, gender, heightCm, weightKg, goal, focusArea, startDate, totalDays } =
     await req.json()
+
+  // Enforce the challenge-length whitelist BEFORE any DB write. An invalid or
+  // missing length is a hard 400 — never silently coerced to a default, which
+  // would enrol the user in a length they did not choose.
+  const lengthResult = validateChallengeLength(totalDays)
+  if (!lengthResult.ok) {
+    return NextResponse.json({ error: lengthResult.error }, { status: 400 })
+  }
 
   await connectDB()
 
@@ -32,7 +41,7 @@ export async function POST(req: NextRequest) {
     {
       userId: session.user.id,
       startDate: new Date(startDate),
-      totalDays: Number(totalDays) || 75,
+      totalDays: lengthResult.value,
       currentDay: 1,
       currentStreak: 0,
       isActive: true,
