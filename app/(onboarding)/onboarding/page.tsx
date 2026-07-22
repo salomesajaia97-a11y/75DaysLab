@@ -7,6 +7,7 @@ import { Loader2, Check, ArrowRight, ArrowLeft, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n'
 import { saveProfile } from '@/lib/storage'
+import { ALLOWED_CHALLENGE_LENGTHS } from '@/lib/validation/challenge'
 import type { Goal, FocusArea, Gender } from '@/types'
 
 // One question per screen — mirrors the reference flow, skinned in the
@@ -741,7 +742,21 @@ export default function OnboardingPage() {
                   {t('onboarding.timeline.total_days')}{' '}
                   <span className="text-muted-foreground font-normal">{t('onboarding.timeline.total_days_hint')}</span>
                 </Label>
-                <Input type="number" min="1" max="365" value={data.totalDays} onChange={e => update('totalDays', e.target.value)} />
+                {/* Fixed whitelist of supported lengths — the server rejects any
+                    other value, so the client only ever offers these four. */}
+                <span className="ob-toggle" role="group" aria-label={t('onboarding.timeline.total_days')}>
+                  {ALLOWED_CHALLENGE_LENGTHS.map(len => (
+                    <button
+                      key={len}
+                      type="button"
+                      className={cn(total === len && 'is-on')}
+                      aria-pressed={total === len}
+                      onClick={() => update('totalDays', String(len))}
+                    >
+                      {len}
+                    </button>
+                  ))}
+                </span>
               </div>
             </div>
           )}

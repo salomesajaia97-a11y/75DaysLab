@@ -115,9 +115,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (account?.provider === 'google') {
           try {
             await connectDB()
-            const dbUser = await User.findOne({
-              email: token.email ? normalizeEmail(token.email) : token.email,
-            })
+            // Guard against a token with no email: querying `{ email: undefined }`
+            // would let Mongoose strip the filter and match an arbitrary user.
+            const dbUser = token.email
+              ? await User.findOne({ email: normalizeEmail(token.email) })
+              : null
             if (dbUser) {
               token.id = dbUser._id.toString()
               token.name = dbUser.username
