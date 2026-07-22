@@ -1,375 +1,224 @@
 'use client'
 
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useMotionValueEvent,
-  useReducedMotion,
-  type MotionValue,
-  type Variants,
-} from 'framer-motion'
+import { Dumbbell, Droplets, Apple, NotebookPen, ArrowRight } from 'lucide-react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
-/* "Threshold — a training almanac" : 75 days as a scroll-driven slide deck.
-   Editorial dossier look — high-contrast Fraunces serif against mono utility
-   type, oversized ghost numerals, a vertical spine, registration ticks.
-   Each section is a full-viewport slide that SNAPS like PowerPoint; arrow
-   keys / Space advance, nav dots jump. The world brightens from pre-dawn
-   void to blinding daybreak as you advance. No photos — pure light + type. */
+/* Warm landing — matches the app's cream + charcoal + ember serif language.
+   A calm, light scroll (no dark deck): serif hero, glass discipline cards,
+   a Day 01 → Day 75 journey band, and a closing call to begin. */
 
-const EXPO = [0.16, 1, 0.3, 1] as const
+const MOVES = [
+  { icon: Dumbbell, word: 'Move', tail: 'Workouts · indoor & out' },
+  { icon: Droplets, word: 'Drink', tail: 'Water · by the liter' },
+  { icon: Apple, word: 'Fuel', tail: 'Nutrition · made simple' },
+  { icon: NotebookPen, word: 'Reflect', tail: 'Journal · every night' },
+]
 
-const SLIDES = [
-  { id: 'threshold', label: 'Before' },
-  { id: 'ignition', label: 'Day 01' },
-  { id: 'passage', label: 'Daily' },
-  { id: 'summit', label: 'Day 75' },
-  { id: 'daybreak', label: 'Begin' },
-] as const
+const JOURNEY = [
+  { day: '01', title: 'Day one', body: 'Set your baseline — age, weight, goal — and start tracking.' },
+  { day: '75', title: 'Day 75', body: 'Workouts, water, meals and journals — logged. See the change.' },
+]
 
 export function LandingExperience() {
-  const rootRef = useRef<HTMLDivElement>(null)
-  const slideRefs = useRef<(HTMLElement | null)[]>([])
-  const reduce = useReducedMotion()
-  const { scrollYProgress } = useScroll({ container: rootRef })
-  const [active, setActive] = useState(0)
-
-  /* Track which slide fills the viewport (deck "current slide") */
+  // Lightweight scroll-reveal — no heavy animation library.
   useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
+    const els = Array.from(document.querySelectorAll('.lh-reveal'))
     const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const i = Number((e.target as HTMLElement).dataset.index)
-            if (!Number.isNaN(i)) setActive(i)
-          }
-        }
-      },
-      { root, threshold: 0.55 },
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('lh-in'); io.unobserve(e.target) }
+      }),
+      { threshold: 0.16 },
     )
-    slideRefs.current.forEach((s) => s && io.observe(s))
+    els.forEach(el => io.observe(el))
     return () => io.disconnect()
   }, [])
 
-  const goTo = useCallback((i: number) => {
-    const target = slideRefs.current[Math.max(0, Math.min(SLIDES.length - 1, i))]
-    target?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' })
-  }, [reduce])
-
-  /* PowerPoint-style keyboard advance */
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(e.key)) {
-        e.preventDefault(); goTo(active + 1)
-      } else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) {
-        e.preventDefault(); goTo(active - 1)
-      } else if (e.key === 'Home') {
-        e.preventDefault(); goTo(0)
-      } else if (e.key === 'End') {
-        e.preventDefault(); goTo(SLIDES.length - 1)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [active, goTo])
-
-  const setRef = (i: number) => (el: HTMLElement | null) => { slideRefs.current[i] = el }
-
   return (
-    <div ref={rootRef} className="th-root">
-      <Atmosphere progress={scrollYProgress} reduce={!!reduce} />
-      <ProgressRail progress={scrollYProgress} reduce={!!reduce} />
+    <div className="lh-root">
+      <style>{`
+        .lh-root { position: relative; min-height: 100dvh; overflow-x: hidden; color: var(--foreground); }
+        .lh-aurora { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .lh-inner { position: relative; z-index: 1; }
 
-      {/* Deck chrome */}
-      <div className="th-wordmark" aria-hidden>
-        <span className="th-wordmark-dot" />75 Days Lab
+        /* Nav */
+        .lh-nav {
+          position: sticky; top: 0; z-index: 20;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 1.1rem clamp(1.2rem, 5vw, 3.5rem);
+          backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .lh-brand {
+          display: inline-flex; align-items: center; gap: 0.6rem;
+          font-family: var(--font-geist-mono), ui-monospace, monospace;
+          font-size: 0.7rem; letter-spacing: 0.26em; text-transform: uppercase; color: var(--foreground);
+        }
+        .lh-brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); box-shadow: 0 0 10px var(--brand); }
+        .lh-nav-right { display: flex; align-items: center; gap: 0.8rem; }
+        .lh-signin { font-size: 0.86rem; font-weight: 600; color: var(--foreground); text-decoration: none; padding: 0.4rem 0.6rem; border-radius: 10px; }
+        .lh-signin:hover { color: var(--brand); }
+
+        /* Shared section rhythm */
+        .lh-section { padding: clamp(3rem, 8vw, 6rem) clamp(1.3rem, 6vw, 4rem); max-width: 72rem; margin: 0 auto; }
+        .lh-eyebrow {
+          display: inline-flex; align-items: center; gap: 0.6rem;
+          font-family: var(--font-geist-mono), ui-monospace, monospace;
+          font-size: 0.66rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--brand);
+          margin-bottom: 1.1rem;
+        }
+        .lh-eyebrow::before { content: ''; width: 1.8rem; height: 1px; background: var(--brand); opacity: 0.6; }
+
+        /* Hero */
+        .lh-hero { position: relative; min-height: 88vh; display: flex; flex-direction: column; justify-content: center; }
+        .lh-ghost {
+          position: absolute; right: -2vw; top: 50%; transform: translateY(-50%); z-index: -1;
+          font-family: var(--font-fraunces), Georgia, serif; font-weight: 600; line-height: 0.7;
+          font-size: clamp(16rem, 40vw, 34rem); color: var(--foreground); opacity: 0.04; user-select: none; pointer-events: none;
+        }
+        .lh-h1 {
+          font-family: var(--font-fraunces), Georgia, serif; font-weight: 500;
+          font-size: clamp(3rem, 9vw, 6.4rem); line-height: 0.98; letter-spacing: -0.03em;
+          color: var(--foreground); margin: 0 0 1.6rem; max-width: 16ch;
+        }
+        .lh-em { font-style: italic; font-weight: 500; color: var(--brand); }
+        .lh-lead { font-size: clamp(1.05rem, 1.7vw, 1.3rem); line-height: 1.6; color: var(--muted-foreground); max-width: 34rem; margin: 0 0 2.4rem; }
+        .lh-actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+
+        /* Discipline cards */
+        .lh-moves-head { margin-bottom: 2.4rem; }
+        .lh-h2 {
+          font-family: var(--font-fraunces), Georgia, serif; font-weight: 500;
+          font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.04; letter-spacing: -0.02em; color: var(--foreground); margin: 0;
+        }
+        .lh-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.1rem; }
+        @media (max-width: 780px) { .lh-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 440px) { .lh-grid { grid-template-columns: 1fr; } }
+        .lh-card {
+          padding: 1.5rem 1.3rem; border-radius: 24px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.66) 100%);
+          backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4);
+          border: 1px solid rgba(255,255,255,0.7);
+          box-shadow: 0 1px 0 0 rgba(255,255,255,0.6) inset, 0 18px 40px -22px rgba(45,49,66,0.28);
+          transition: transform 0.35s cubic-bezier(0.34,1.4,0.5,1), box-shadow 0.35s ease;
+        }
+        .lh-card:hover { transform: translateY(-6px); box-shadow: 0 1px 0 0 rgba(255,255,255,0.7) inset, 0 28px 52px -22px rgba(45,49,66,0.32), 0 10px 24px -12px rgba(217,98,46,0.14); }
+        .lh-card-ic {
+          width: 2.9rem; height: 2.9rem; border-radius: 15px; display: grid; place-items: center; color: #fff; margin-bottom: 1rem;
+          background: linear-gradient(135deg, var(--brand), var(--brand-soft)); box-shadow: 0 8px 18px -8px rgba(217,98,46,0.55);
+        }
+        .lh-card-word { font-family: var(--font-fraunces), Georgia, serif; font-weight: 600; font-size: 1.4rem; color: var(--foreground); }
+        .lh-card-tail { font-size: 0.78rem; color: var(--muted-foreground); margin-top: 0.3rem; }
+
+        /* Journey band */
+        .lh-section--tight { padding-top: clamp(1.6rem, 4vw, 3rem); padding-bottom: clamp(1.6rem, 4vw, 3rem); }
+        .lh-h2--sm { font-size: clamp(1.6rem, 4vw, 2.3rem); }
+        .lh-journey { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem; max-width: 42rem; }
+        @media (max-width: 620px) { .lh-journey { grid-template-columns: 1fr; gap: 1rem; } }
+        .lh-step { border-top: 2px solid var(--border); padding-top: 0.9rem; }
+        .lh-step-day { font-family: var(--font-fraunces), Georgia, serif; font-weight: 700; font-size: 1.9rem; color: var(--brand); line-height: 1; }
+        .lh-step-title { font-family: var(--font-fraunces), Georgia, serif; font-weight: 600; font-size: 1.05rem; margin: 0.4rem 0 0.3rem; color: var(--foreground); }
+        .lh-step-body { font-size: 0.84rem; line-height: 1.5; color: var(--muted-foreground); margin: 0; }
+
+        /* Closing CTA */
+        .lh-cta { text-align: center; }
+        .lh-cta .lh-actions { justify-content: center; }
+        .lh-fine { margin-top: 1.6rem; font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted-foreground); }
+
+        /* Footer */
+        .lh-footer {
+          border-top: 1px solid var(--border); padding: 1.6rem; text-align: center;
+          display: flex; justify-content: center; gap: 0.55rem;
+          font-family: var(--font-geist-mono), ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted-foreground);
+        }
+
+        /* Scroll reveal */
+        .lh-reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.6s ease, transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+        .lh-reveal.lh-in { opacity: 1; transform: none; }
+        .lh-reveal.d1 { transition-delay: 0.08s; } .lh-reveal.d2 { transition-delay: 0.16s; }
+        .lh-reveal.d3 { transition-delay: 0.24s; } .lh-reveal.d4 { transition-delay: 0.32s; }
+        @media (prefers-reduced-motion: reduce) { .lh-reveal { opacity: 1; transform: none; } }
+      `}</style>
+
+      {/* Warm aurora — same living atmosphere the app uses */}
+      <div className="lh-aurora app-aurora" aria-hidden>
+        <span className="a1" /><span className="a2" /><span className="a3" />
       </div>
-      <span className="th-spine" aria-hidden>Laboratory of the self · Threshold</span>
-      <DayMarker progress={scrollYProgress} reduce={!!reduce} />
-      <SlideCounter active={active} total={SLIDES.length} />
-      <NavDots active={active} goTo={goTo} />
-      <div className="th-toggle"><ThemeToggle /></div>
 
-      {/* Registration ticks — frame the stage like a printed plate */}
-      <div className="th-frame" aria-hidden>
-        <span className="th-tick th-tick--tl" /><span className="th-tick th-tick--tr" />
-        <span className="th-tick th-tick--bl" /><span className="th-tick th-tick--br" />
-      </div>
+      <div className="lh-inner">
+        <nav className="lh-nav">
+          <span className="lh-brand"><span className="lh-brand-dot" />75 Days Lab</span>
+          <span className="lh-nav-right">
+            <Link href="/login" className="lh-signin">Sign in</Link>
+            <ThemeToggle />
+          </span>
+        </nav>
 
-      <main className="th-deck">
-        {/* 1 — Threshold (title slide) */}
-        <section ref={setRef(0)} data-index={0} className="th-slide th-slide--dark th-hero">
-          <span className="th-ghost" aria-hidden>00</span>
-          <Build reduce={!!reduce}>
-            <span className="th-eyebrow">The threshold · before day one</span>
-            <h1 className="th-mega">
-              It starts<br />in the <em className="th-em">dark.</em>
-            </h1>
-            <p className="th-lead">
-              75 days. One threshold. The version of you on the other side is already waiting —
-              you just have to walk through it.
-            </p>
-            <div className="th-actions">
-              <Link href="/register" className="th-btn th-btn--solid">Begin the crossing</Link>
-              <Link href="/login" className="th-btn th-btn--line">Sign in</Link>
-            </div>
-          </Build>
-          {!reduce && <ScrollCue />}
+        {/* Hero */}
+        <header className="lh-section lh-hero">
+          <span className="lh-ghost" aria-hidden>75</span>
+          <span className="lh-eyebrow lh-reveal">The threshold · before day one</span>
+          <h1 className="lh-h1 lh-reveal d1">It starts<br />in the <span className="lh-em">dark.</span></h1>
+          <p className="lh-lead lh-reveal d2">
+            75 days. One threshold. The version of you on the other side is already waiting —
+            you just have to walk through it.
+          </p>
+          <div className="lh-actions lh-reveal d3">
+            <Link href="/register" className="landing-btn-primary">Begin the crossing <ArrowRight size={18} style={{ marginLeft: 8 }} /></Link>
+            <Link href="/login" className="landing-btn-ghost">Sign in</Link>
+          </div>
+        </header>
+
+        {/* Disciplines */}
+        <section className="lh-section">
+          <div className="lh-moves-head">
+            <span className="lh-eyebrow lh-reveal">The daily passage</span>
+            <h2 className="lh-h2 lh-reveal d1">Four moves.<br />Every single day.</h2>
+          </div>
+          <div className="lh-grid">
+            {MOVES.map((m, i) => {
+              const Icon = m.icon
+              return (
+                <div key={m.word} className={`lh-card lh-reveal d${i + 1}`}>
+                  <span className="lh-card-ic"><Icon size={20} strokeWidth={2.2} /></span>
+                  <div className="lh-card-word">{m.word}</div>
+                  <div className="lh-card-tail">{m.tail}</div>
+                </div>
+              )
+            })}
+          </div>
         </section>
 
-        {/* 2 — Ignition */}
-        <section ref={setRef(1)} data-index={1} className="th-slide th-slide--dark th-center">
-          <span className="th-ghost th-ghost--left" aria-hidden>01</span>
-          <Build reduce={!!reduce}>
-            <span className="th-eyebrow">Day 01 · Ignition</span>
-            <h2 className="th-big">Everyone begins<br />before the <em className="th-em">light</em> does.</h2>
-            <p className="th-lead th-lead--mid">
-              No streak, no proof, no momentum. Just one honest decision, made in the dark,
-              that the next 75 days are yours.
-            </p>
-          </Build>
-        </section>
-
-        {/* 3 — The daily passage: four disciplines as an editorial index */}
-        <section ref={setRef(2)} data-index={2} className="th-slide th-slide--warm th-passage">
-          <span className="th-ghost" aria-hidden>·</span>
-          <Build reduce={!!reduce} className="th-passage-head">
-            <span className="th-eyebrow th-eyebrow--warm">The daily passage</span>
-            <h2 className="th-big th-big--warm">Four moves.<br />Every single day.</h2>
-          </Build>
-          <ul className="th-disc">
-            {[
-              { n: '01', word: 'Move', tail: 'Workouts · indoor & out' },
-              { n: '02', word: 'Drink', tail: 'Water · by the liter' },
-              { n: '03', word: 'Fuel', tail: 'Nutrition · made simple' },
-              { n: '04', word: 'Reflect', tail: 'Journal · every night' },
-            ].map((d, i) => (
-              <DiscLine key={d.word} {...d} index={i} reduce={!!reduce} />
+        {/* Journey */}
+        <section className="lh-section lh-section--tight">
+          <span className="lh-eyebrow lh-reveal">The 75 days</span>
+          <h2 className="lh-h2 lh-h2--sm lh-reveal d1" style={{ marginBottom: '1.6rem' }}>From day one to day 75.</h2>
+          <div className="lh-journey">
+            {JOURNEY.map((s, i) => (
+              <div key={s.title} className={`lh-step lh-reveal d${i + 1}`}>
+                <div className="lh-step-day">{s.day}</div>
+                <h3 className="lh-step-title">{s.title}</h3>
+                <p className="lh-step-body">{s.body}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
 
-        {/* 4 — Summit */}
-        <section ref={setRef(3)} data-index={3} className="th-slide th-slide--bright th-center">
-          <span className="th-ghost" aria-hidden>75</span>
-          <Build reduce={!!reduce}>
-            <span className="th-eyebrow th-eyebrow--ink">Day 75 · Summit</span>
-            <h2 className="th-big th-big--ink">You crossed <em className="th-em">over.</em></h2>
-            <p className="th-lead th-lead--ink th-lead--mid">
-              Stronger, sharper, unrecognizable from the person who stepped off in the dark.
-              The discipline isn&rsquo;t a challenge anymore. It&rsquo;s just who you are.
-            </p>
-          </Build>
+        {/* Closing CTA */}
+        <section className="lh-section lh-cta">
+          <span className="lh-eyebrow lh-reveal" style={{ justifyContent: 'center' }}>Daybreak</span>
+          <h2 className="lh-h2 lh-reveal d1">Step into the <span className="lh-em">light.</span></h2>
+          <div className="lh-actions lh-reveal d2" style={{ marginTop: '2rem' }}>
+            <Link href="/register" className="landing-btn-primary">Start your 75 days <ArrowRight size={18} style={{ marginLeft: 8 }} /></Link>
+            <Link href="/login" className="landing-btn-ghost">Sign in</Link>
+          </div>
+          <p className="lh-fine lh-reveal d3">Join thousands building unbreakable habits.</p>
         </section>
 
-        {/* 5 — Daybreak / CTA */}
-        <section ref={setRef(4)} data-index={4} className="th-slide th-slide--day th-center th-cta">
-          <Build reduce={!!reduce}>
-            <span className="th-eyebrow th-eyebrow--ink">Daybreak</span>
-            <h2 className="th-mega th-mega--ink">Step into<br />the <em className="th-em">light.</em></h2>
-            <div className="th-actions th-actions--center">
-              <Link href="/register" className="th-btn th-btn--day">Start your 75 days</Link>
-              <Link href="/login" className="th-btn th-btn--ink-line">Sign in</Link>
-            </div>
-            <p className="th-fine">Join thousands building unbreakable habits.</p>
-          </Build>
-          <footer className="th-footer">
-            <span>75 Days Lab</span><span className="th-dot">·</span><span>cross the threshold</span>
-          </footer>
-        </section>
-      </main>
-    </div>
-  )
-}
-
-/* ── Atmosphere: stacked gradient layers + rising sun, driven by scroll ── */
-function Atmosphere({ progress, reduce }: { progress: MotionValue<number>; reduce: boolean }) {
-  const indigo = useTransform(progress, [0, 0.22, 0.4], [1, 0.7, 0])
-  const ember = useTransform(progress, [0.18, 0.42, 0.62], [0, 1, 0.15])
-  const gold = useTransform(progress, [0.45, 0.68, 0.85], [0, 1, 0.4])
-  const day = useTransform(progress, [0.72, 0.9, 1], [0, 0.85, 1])
-
-  const sunY = useTransform(progress, [0, 1], ['18vh', '-46vh'])
-  const sunScale = useTransform(progress, [0, 0.6, 1], [0.85, 1.7, 3.4])
-  const sunOpacity = useTransform(progress, [0, 0.12, 0.85, 1], [0.5, 0.95, 1, 0.6])
-
-  if (reduce) {
-    return (
-      <div className="th-atmo" aria-hidden>
-        <div className="th-layer th-layer--static" />
+        <footer className="lh-footer">
+          <span>75 Days Lab</span><span>·</span><span>cross the threshold</span>
+        </footer>
       </div>
-    )
-  }
-
-  return (
-    <div className="th-atmo" aria-hidden>
-      <div className="th-layer th-layer--void" />
-      <motion.div className="th-layer th-layer--indigo" style={{ opacity: indigo }} />
-      <motion.div className="th-layer th-layer--ember" style={{ opacity: ember }} />
-      <motion.div className="th-layer th-layer--gold" style={{ opacity: gold }} />
-      <motion.div className="th-layer th-layer--day" style={{ opacity: day }} />
-      <motion.div
-        className="th-sun"
-        style={{ y: sunY, scale: sunScale, opacity: sunOpacity }}
-      />
-      <Particles />
-      <div className="th-grain" />
     </div>
   )
-}
-
-function Particles() {
-  const dots = [
-    { l: '12%', t: '24%', s: 5, d: '0s', dur: '13s' },
-    { l: '78%', t: '18%', s: 3, d: '2s', dur: '17s' },
-    { l: '64%', t: '62%', s: 6, d: '1s', dur: '15s' },
-    { l: '30%', t: '70%', s: 4, d: '3s', dur: '19s' },
-    { l: '88%', t: '48%', s: 3, d: '1.5s', dur: '14s' },
-    { l: '46%', t: '34%', s: 2, d: '0.5s', dur: '21s' },
-  ]
-  return (
-    <div className="th-particles">
-      {dots.map((p, i) => (
-        <span
-          key={i}
-          className="th-particle"
-          style={{
-            left: p.l, top: p.t, width: p.s, height: p.s,
-            animationDelay: p.d, animationDuration: p.dur,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
-
-/* ── Top progress rail: a daybreak meter that fills as you descend ── */
-function ProgressRail({ progress, reduce }: { progress: MotionValue<number>; reduce: boolean }) {
-  const scaleX = useTransform(progress, [0, 1], [0, 1])
-  return (
-    <div className="th-rail" aria-hidden>
-      <motion.div className="th-rail-fill" style={{ scaleX: reduce ? 1 : scaleX }} />
-    </div>
-  )
-}
-
-/* ── Day marker that climbs 01 → 75 (bottom-right) ── */
-function DayMarker({ progress, reduce }: { progress: MotionValue<number>; reduce: boolean }) {
-  const dayMV = useTransform(progress, [0, 1], [1, 75])
-  const [day, setDay] = useState(1)
-  useMotionValueEvent(dayMV, 'change', (v) => setDay(Math.min(75, Math.max(1, Math.round(v)))))
-  return (
-    <div className="th-marker" aria-hidden>
-      <span className="th-marker-lab">Day</span>
-      <span className="th-marker-num">{String(reduce ? 1 : day).padStart(2, '0')}</span>
-      <span className="th-marker-sep">/</span>
-      <span className="th-marker-total">75</span>
-    </div>
-  )
-}
-
-/* ── Slide counter: which deck slide is current (bottom-left) ── */
-function SlideCounter({ active, total }: { active: number; total: number }) {
-  return (
-    <div className="th-count" aria-hidden>
-      <span className="th-count-cur">{String(active + 1).padStart(2, '0')}</span>
-      <span className="th-count-sep">—</span>
-      <span className="th-count-total">{String(total).padStart(2, '0')}</span>
-    </div>
-  )
-}
-
-/* ── Right-rail nav dots: jump to any slide, like a deck overview ── */
-function NavDots({ active, goTo }: { active: number; goTo: (i: number) => void }) {
-  return (
-    <nav className="th-dots" aria-label="Slides">
-      {SLIDES.map((s, i) => (
-        <button
-          key={s.id}
-          type="button"
-          className={`th-dot-btn${i === active ? ' is-active' : ''}`}
-          onClick={() => goTo(i)}
-          aria-label={`Go to slide ${i + 1}: ${s.label}`}
-          aria-current={i === active}
-        >
-          <span className="th-dot-mark" />
-          <span className="th-dot-label">{s.label}</span>
-        </button>
-      ))}
-    </nav>
-  )
-}
-
-/* ── Build: stagger children with a clip-wipe + rise on slide entry ── */
-function Build({
-  children, reduce, className,
-}: { children: React.ReactNode; reduce: boolean; className?: string }) {
-  if (reduce) return <div className={`th-build${className ? ' ' + className : ''}`}>{children}</div>
-  const items = Array.isArray(children) ? children : [children]
-  return (
-    <motion.div
-      className={`th-build${className ? ' ' + className : ''}`}
-      variants={parent}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: false, amount: 0.5 }}
-    >
-      {items.map((c, i) => (
-        <motion.div key={i} variants={rise} className="th-build-item">
-          {c}
-        </motion.div>
-      ))}
-    </motion.div>
-  )
-}
-
-function DiscLine({
-  n, word, tail, index, reduce,
-}: { n: string; word: string; tail: string; index: number; reduce: boolean }) {
-  return (
-    <motion.li
-      className="th-disc-line"
-      initial={reduce ? false : { opacity: 0, x: -60, filter: 'blur(8px)' }}
-      whileInView={reduce ? undefined : { opacity: 1, x: 0, filter: 'blur(0px)' }}
-      viewport={{ once: false, amount: 0.8 }}
-      transition={{ duration: 0.7, ease: EXPO, delay: index * 0.1 }}
-    >
-      <span className="th-disc-n">{n}</span>
-      <span className="th-disc-word">{word}</span>
-      <span className="th-disc-tail">{tail}</span>
-    </motion.li>
-  )
-}
-
-function ScrollCue() {
-  return (
-    <motion.div
-      className="th-cue"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: [0.25, 0.9, 0.25], y: [0, 9, 0] }}
-      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-      aria-hidden
-    >
-      <span className="th-cue-word">advance</span>
-      <span className="th-cue-line" />
-    </motion.div>
-  )
-}
-
-const parent: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.13, delayChildren: 0.05 } },
-}
-/* clip-wipe reveal: content wipes up into view, blurred rise underneath */
-const rise: Variants = {
-  hidden: { opacity: 0, y: 40, filter: 'blur(10px)', clipPath: 'inset(0 0 100% 0)' },
-  visible: {
-    opacity: 1, y: 0, filter: 'blur(0px)', clipPath: 'inset(0 0 0% 0)',
-    transition: { duration: 0.9, ease: EXPO },
-  },
 }
