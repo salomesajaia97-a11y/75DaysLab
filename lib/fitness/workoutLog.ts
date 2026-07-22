@@ -7,7 +7,7 @@
 // exists for that date. "outdoor" comes from the legacy outdoor slot. This keeps
 // existing calendar/stats behavior identical while letting new completions count.
 
-import { getWorkoutState } from '@/lib/storage'
+import { getWorkoutState, scopedKey } from '@/lib/storage'
 
 const LOG_KEY = '75lab_workout_log'
 /** Fired after any log write so live subscribers (useFitnessProgress) recompute. */
@@ -40,7 +40,7 @@ function isBrowser() {
 }
 
 function keyFor(date: string) {
-  return `${LOG_KEY}_${date}`
+  return scopedKey(`${LOG_KEY}_${date}`)
 }
 
 function genId(): string {

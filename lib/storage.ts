@@ -1,95 +1,133 @@
 import type { UserProfile } from '@/types'
 import type { WorkoutTrackerState } from '@/types'
 
-const PROFILE_KEY = '75lab_profile'
-const STREAK_KEY = '75lab_streak'
-const STREAK_DATE_KEY = '75lab_streak_date'
-const DAILY_KEY = '75lab_daily'
+// ── User-scoped client cache ────────────────────────────────────────────────
+// All keys below are NON-authoritative caches of server data. Authenticated
+// identity (id/email/username/role) must always come from the server session,
+// never from here. To prevent cross-account leakage every key is namespaced by
+// the active authenticated user id, and `clearUserScopedStorage()` wipes the
+// whole namespace on logout/account switch.
 
-export interface DailyState {
-  date: string
-  tasks: Record<string, boolean>
-}
+const PROFILE_KEY = '75lab_profile'
+
+/** localStorage key that records which user the cached data belongs to. */
+const UID_KEY = '75lab_uid'
+
+/** Prefixes owned by user-scoped (non-preference) data. */
+const USER_SCOPED_PREFIXES = ['75lab_', 'cycle_'] as const
 
 function isBrowser() {
   return typeof window !== 'undefined'
 }
 
+// Cached in-module so repeated reads don't hit localStorage; `undefined` means
+// "not yet initialized", distinct from `null` ("no active user / guest").
+let activeUid: string | null | undefined
+
+function readUid(): string | null {
+  if (!isBrowser()) return null
+  if (activeUid === undefined) activeUid = localStorage.getItem(UID_KEY)
+  return activeUid ?? null
+}
+
+/** The user id the cached data is currently scoped to, or null for guest. */
+export function getStorageUser(): string | null {
+  return readUid()
+}
+
+/**
+ * Set the active user scope. Call right after a session is established (see
+ * SessionBoot). Subsequent reads/writes are partitioned under this id.
+ */
+export function setStorageUser(uid: string | null): void {
+  if (!isBrowser()) return
+  activeUid = uid
+  if (uid) localStorage.setItem(UID_KEY, uid)
+  else localStorage.removeItem(UID_KEY)
+}
+
+/** Namespace a base key by the active user (or `guest` when unauthenticated). */
+export function scopedKey(base: string): string {
+  const uid = readUid()
+  return `${base}::${uid ?? 'guest'}`
+}
+
+/**
+ * True when `key` is a NAMESPACED per-user cache we own (`<base>::<uid>`), i.e.
+ * safe to clear on logout. Deliberately excludes:
+ *  - the uid marker (`75lab_uid`)
+ *  - preference keys outside our prefixes (theme, locale)
+ *  - LEGACY un-namespaced keys (pre-Phase-1, e.g. `75lab_streak`,
+ *    `cycle_logged_period`) — these may hold not-yet-migrated progress and must
+ *    NOT be destroyed by cache cleanup. They are never read anymore (all reads
+ *    go through scopedKey → `base::uid`), so preserving them cannot leak across
+ *    accounts; it only keeps the door open for a safe future migration.
+ */
+export function isUserScopedKey(key: string): boolean {
+  if (key === UID_KEY) return false
+  return USER_SCOPED_PREFIXES.some((p) => key.startsWith(p)) && key.includes('::')
+}
+
+/**
+ * Remove per-user NAMESPACED cached data (profile, streak, daily, workout,
+ * water, steps, cycle, …) plus the uid marker. Preferences (theme, locale) and
+ * legacy un-namespaced keys are intentionally preserved — see isUserScopedKey.
+ * Safe to call repeatedly.
+ */
+export function clearUserScopedStorage(): void {
+  if (!isBrowser()) return
+  const toRemove: string[] = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i)
+    if (k && isUserScopedKey(k)) toRemove.push(k)
+  }
+  for (const k of toRemove) localStorage.removeItem(k)
+  activeUid = null
+  localStorage.removeItem(UID_KEY)
+}
+
+// ── Profile ────────────────────────────────────────────────────────────────
+
 export function saveProfile(profile: UserProfile): void {
   if (!isBrowser()) return
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
+  localStorage.setItem(scopedKey(PROFILE_KEY), JSON.stringify(profile))
 }
 
 export function getProfile(): UserProfile | null {
   if (!isBrowser()) return null
-  const raw = localStorage.getItem(PROFILE_KEY)
+  const raw = localStorage.getItem(scopedKey(PROFILE_KEY))
   return raw ? (JSON.parse(raw) as UserProfile) : null
-}
-
-export function getStreak(): number {
-  if (!isBrowser()) return 0
-  return parseInt(localStorage.getItem(STREAK_KEY) || '0', 10)
-}
-
-export function getLastStreakDate(): string | null {
-  if (!isBrowser()) return null
-  return localStorage.getItem(STREAK_DATE_KEY)
-}
-
-export function saveStreak(streak: number, date: string): void {
-  if (!isBrowser()) return
-  localStorage.setItem(STREAK_KEY, String(streak))
-  localStorage.setItem(STREAK_DATE_KEY, date)
-}
-
-export function resetStreak(): void {
-  if (!isBrowser()) return
-  localStorage.setItem(STREAK_KEY, '0')
-  localStorage.removeItem(STREAK_DATE_KEY)
-}
-
-export function getDailyState(date: string): DailyState | null {
-  if (!isBrowser()) return null
-  const raw = localStorage.getItem(`${DAILY_KEY}_${date}`)
-  return raw ? (JSON.parse(raw) as DailyState) : null
-}
-
-export function saveDailyState(state: DailyState): void {
-  if (!isBrowser()) return
-  localStorage.setItem(`${DAILY_KEY}_${state.date}`, JSON.stringify(state))
 }
 
 export function todayString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-export function yesterdayString(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return d.toISOString().split('T')[0]
-}
+// ── Workout tracker (legacy per-day slot state) ───────────────────────────────
 
 const WORKOUT_KEY = '75lab_workout'
 
 export function getWorkoutState(date: string): WorkoutTrackerState | null {
   if (!isBrowser()) return null
-  const raw = localStorage.getItem(`${WORKOUT_KEY}_${date}`)
+  const raw = localStorage.getItem(scopedKey(`${WORKOUT_KEY}_${date}`))
   return raw ? (JSON.parse(raw) as WorkoutTrackerState) : null
 }
 
 export function saveWorkoutState(date: string, state: WorkoutTrackerState): void {
   if (!isBrowser()) return
-  localStorage.setItem(`${WORKOUT_KEY}_${date}`, JSON.stringify(state))
+  localStorage.setItem(scopedKey(`${WORKOUT_KEY}_${date}`), JSON.stringify(state))
 }
+
+// ── Water ─────────────────────────────────────────────────────────────────────
 
 const WATER_KEY = '75lab_water'
 
 export function getWaterConsumed(date: string): number {
   if (!isBrowser()) return 0
-  return parseInt(localStorage.getItem(`${WATER_KEY}_${date}`) || '0', 10)
+  return parseInt(localStorage.getItem(scopedKey(`${WATER_KEY}_${date}`)) || '0', 10)
 }
 
 export function saveWaterConsumed(date: string, ml: number): void {
   if (!isBrowser()) return
-  localStorage.setItem(`${WATER_KEY}_${date}`, String(ml))
+  localStorage.setItem(scopedKey(`${WATER_KEY}_${date}`), String(ml))
 }

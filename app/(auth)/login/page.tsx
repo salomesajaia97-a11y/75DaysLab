@@ -22,11 +22,20 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const result = await signIn('credentials', { email, password, redirect: false })
-    setLoading(false)
+    const result = await signIn('credentials', {
+      email: email.trim().toLowerCase(),
+      password,
+      redirect: false,
+    })
     if (result?.error) {
+      setLoading(false)
       setError(t('auth.login.error'))
     } else {
+      // Soft SPA navigation keeps the app responsive (no full-bundle reload).
+      // Account isolation does NOT depend on a hard reload here: logout does a
+      // full teardown (performLogout), so a login always starts from a clean,
+      // null SessionProvider — there is no prior account's role/profile to
+      // flash. refresh() re-pulls the RSC tree for the new session.
       router.push('/dashboard')
       router.refresh()
     }

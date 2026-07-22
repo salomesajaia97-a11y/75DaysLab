@@ -4,7 +4,7 @@ import { Footprints, Plus, RotateCcw, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLanguage } from '@/lib/i18n'
-import { todayString } from '@/lib/storage'
+import { todayString, scopedKey } from '@/lib/storage'
 
 const GOAL_KEY = '75lab_step_goal'
 const STEPS_KEY = '75lab_steps'
@@ -13,11 +13,11 @@ const QUICK_ADD = [500, 1000, 2500]
 
 function readSteps(date: string): number {
   if (typeof window === 'undefined') return 0
-  return parseInt(localStorage.getItem(`${STEPS_KEY}_${date}`) || '0', 10)
+  return parseInt(localStorage.getItem(scopedKey(`${STEPS_KEY}_${date}`)) || '0', 10)
 }
 function readGoal(): number {
   if (typeof window === 'undefined') return DEFAULT_GOAL
-  return parseInt(localStorage.getItem(GOAL_KEY) || String(DEFAULT_GOAL), 10) || DEFAULT_GOAL
+  return parseInt(localStorage.getItem(scopedKey(GOAL_KEY)) || String(DEFAULT_GOAL), 10) || DEFAULT_GOAL
 }
 
 /** Minimalist daily step goal tracker with a circular SVG progress ring. */
@@ -40,12 +40,12 @@ export function StepTracker() {
 
   useEffect(() => {
     if (!hydrated) return
-    localStorage.setItem(`${STEPS_KEY}_${today}`, String(steps))
+    localStorage.setItem(scopedKey(`${STEPS_KEY}_${today}`), String(steps))
   }, [steps, today, hydrated])
 
   useEffect(() => {
     if (!hydrated) return
-    localStorage.setItem(GOAL_KEY, String(goal))
+    localStorage.setItem(scopedKey(GOAL_KEY), String(goal))
   }, [goal, hydrated])
 
   const safeGoal = Math.max(goal, 1)

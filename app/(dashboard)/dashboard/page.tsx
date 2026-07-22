@@ -1,35 +1,21 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StreakCounter } from '@/components/streak/StreakCounter'
 import { WaterTracker } from '@/components/water/WaterTracker'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, Circle, Flame } from 'lucide-react'
+import { CheckCircle2, Circle, Flame, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import {
-  getProfile,
-  saveProfile,
-  getStreak,
-  getLastStreakDate,
-  saveStreak,
-  resetStreak,
-  getDailyState,
-  saveDailyState,
-  todayString,
-  yesterdayString,
-} from '@/lib/storage'
-import { calculateWaterGoal, calculateCurrentDay } from '@/lib/calculations'
+import { getProfile, saveProfile } from '@/lib/storage'
+import { calculateWaterGoal } from '@/lib/calculations'
+import { EMPTY_CHALLENGE_VIEW } from '@/lib/progress'
 import type { UserProfile } from '@/types'
 import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
+import { useSession } from 'next-auth/react'
 import { useDailyProgress, type DailyFlags } from '@/hooks/useDailyProgress'
-
-interface Task {
-  id: string
-  label: string
-  done: boolean
-}
 
 /** Map a dashboard task id to its server completion flag. */
 function flagForTask(id: string, f: DailyFlags): boolean {
@@ -44,10 +30,22 @@ function flagForTask(id: string, f: DailyFlags): boolean {
 }
 
 const FALLBACK_WATER = 2500
-const FALLBACK_TOTAL = 75
+
+// Each task reflects a SERVER-derived completion flag; tapping navigates to the
+// feature page where the real action (and its server record) happens. The
+// checklist is never a local toggle — completion is authoritative on the server.
+const TASK_ROUTES: Record<string, string> = {
+  water: '/water',
+  journal: '/journal',
+  workout: '/fitness',
+  nutrition: '/nutrition',
+  photo: '/photos',
+}
 
 export default function DashboardPage() {
   const { t } = useLanguage()
+  const { data: session } = useSession()
+  const sessionUserId = session?.user?.id ?? null
 
   const TASK_DEFS = [
     { id: 'water',     label: t('dashboard.task.water') },
@@ -58,114 +56,52 @@ export default function DashboardPage() {
   ]
 
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [tasks, setTasks] = useState<Task[]>(TASK_DEFS.map(t => ({ ...t, done: false })))
-  const [streak, setStreak] = useState(0)
-  const today = todayString()
 
-  // Server-authoritative daily state (self-healing). localStorage below is the
-  // migration fallback used only until this resolves / on failure.
-  const { data: progress } = useDailyProgress()
+  // Server-authoritative daily + challenge state. This is the ONLY source of
+  // truth for completion, streak, and day — localStorage is never consulted here.
+  const { data: progress, loading, refetch } = useDailyProgress()
 
   useEffect(() => {
-    const p = getProfile()
-    if (p) {
-      setProfile(p)
-    } else {
-      fetch('/api/users/me')
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data && !data.error) {
-            saveProfile(data)
-            setProfile(data)
-          }
-        })
-        .catch(() => {})
-    }
-
-    // Hard reset: if yesterday's tasks exist and were incomplete, reset streak
-    const yesterday = yesterdayString()
-    const lastDate = getLastStreakDate()
-    const yesterdayState = getDailyState(yesterday)
-    const currentStreak = getStreak()
-
-    if (yesterdayState) {
-      const allDoneYesterday = TASK_DEFS.every(t => yesterdayState.tasks[t.id])
-      if (!allDoneYesterday && lastDate !== today) {
-        resetStreak()
-        setStreak(0)
-      } else {
-        setStreak(currentStreak)
-      }
-    } else if (lastDate && lastDate < yesterday) {
-      // Missed yesterday entirely
-      resetStreak()
-      setStreak(0)
-    } else {
-      setStreak(currentStreak)
-    }
-
-    // Restore today's task state
-    const todayState = getDailyState(today)
-    if (todayState) {
-      setTasks(TASK_DEFS.map(t => ({ ...t, done: todayState.tasks[t.id] ?? false })))
-    }
-  }, [today])
-
-  // Server truth wins: once /api/daily-progress resolves, seed task completion
-  // and streak from it. Overrides the localStorage seed above; on request
-  // failure `progress` stays null and the localStorage values remain in place.
-  useEffect(() => {
-    if (!progress) return
-    // Seeding React state from fetched server data (not a render-derivable value
-    // because tasks/streak are also locally mutable during the migration).
+    // Profile is used only for the (non-authoritative) water-goal calc. Instant
+    // paint from the user-scoped cache, then reconcile with the server (wins).
+    const cached = getProfile()
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTasks(prev => prev.map(t => ({ ...t, done: flagForTask(t.id, progress.flags) })))
-    if (progress.challenge) setStreak(progress.challenge.currentStreak)
-  }, [progress])
+    if (cached) setProfile(cached)
+    let active = true
+    fetch('/api/users/me', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!active || !data || data.error) return
+        saveProfile(data)
+        setProfile(data)
+      })
+      .catch(() => {})
+    return () => { active = false }
+    // Re-fetch when the authenticated user changes so no prior user's profile lingers.
+  }, [sessionUserId])
 
-  const toggleTask = useCallback((id: string) => {
-    setTasks(prev => {
-      const next = prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
-      const taskMap = Object.fromEntries(next.map(t => [t.id, t.done]))
-      saveDailyState({ date: today, tasks: taskMap })
-
-      const allDone = next.every(t => t.done)
-      const lastDate = getLastStreakDate()
-      if (allDone && lastDate !== today) {
-        const newStreak = getStreak() + 1
-        saveStreak(newStreak, today)
-        setStreak(newStreak)
-      }
-
-      return next
-    })
-  }, [today])
-
+  // Server-derived task completion (read-only reflection).
+  const flags = progress?.flags
+  const tasks = TASK_DEFS.map(d => ({ ...d, done: flags ? flagForTask(d.id, flags) : false }))
   const completedCount = tasks.filter(t => t.done).length
-  const allDone = completedCount === tasks.length
+  const allDone = Boolean(flags) && completedCount === tasks.length
 
-  const totalDays = profile?.totalDays ?? FALLBACK_TOTAL
-  // Prefer server challenge day; fall back to the local calendar calc.
-  const currentDay =
-    progress?.challenge?.currentDay ??
-    (profile ? calculateCurrentDay(profile.startDate, profile.totalDays) : 1)
+  // Accurately-labeled, server-owned challenge values. No calendar-day fudging.
+  const view = progress?.view ?? EMPTY_CHALLENGE_VIEW
   const waterGoal = profile
     ? calculateWaterGoal(profile.age, profile.weightKg, profile.heightCm, profile.gender, profile.goal)
     : FALLBACK_WATER
-  const displayName = profile?.username ?? 'there'
-
-  const autoCheckWorkout = useCallback(() => {
-    const workoutTask = tasks.find(t => t.id === 'workout')
-    if (workoutTask && !workoutTask.done) toggleTask('workout')
-  }, [tasks, toggleTask])
+  const consumedMl = progress?.waterMl ?? 0
+  // Identity comes from the validated server session — never the local cache.
+  const displayName = session?.user?.name ?? 'there'
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('dashboard.greeting.morning') : hour < 17 ? t('dashboard.greeting.afternoon') : t('dashboard.greeting.evening')
 
   const stats = [
-    { label: t('dashboard.stat.streak'), num: streak, icon: '🔥', grad: 'linear-gradient(135deg, #ff8a4c 0%, #ef4f2b 100%)', glow: 'rgba(239, 79, 43, 0.35)' },
-    { label: t('dashboard.stat.day'),    num: currentDay, icon: '📅', grad: 'linear-gradient(135deg, #5eb6f7 0%, #2f72d6 100%)', glow: 'rgba(47, 114, 214, 0.35)' },
-    { label: t('dashboard.stat.days_left'), num: Math.max(0, totalDays - currentDay), icon: '🏁', grad: 'linear-gradient(135deg, #5fd6a3 0%, #20a06b 100%)', glow: 'rgba(32, 160, 107, 0.35)' },
+    { label: t('dashboard.stat.streak'),    num: view.currentStreak, icon: '🔥', grad: 'linear-gradient(135deg, #ff8a4c 0%, #ef4f2b 100%)', glow: 'rgba(239, 79, 43, 0.35)' },
+    { label: t('dashboard.stat.day'),       num: view.attemptDay,    icon: '📅', grad: 'linear-gradient(135deg, #5eb6f7 0%, #2f72d6 100%)', glow: 'rgba(47, 114, 214, 0.35)' },
+    { label: t('dashboard.stat.days_left'), num: view.daysRemaining, icon: '🏁', grad: 'linear-gradient(135deg, #5fd6a3 0%, #20a06b 100%)', glow: 'rgba(32, 160, 107, 0.35)' },
   ]
 
   return (
@@ -189,13 +125,29 @@ export default function DashboardPage() {
               <span className="inline-block h-1.5 w-12 rounded-full mb-4" style={{ background: 'linear-gradient(90deg, #ff8a4c, #ef4f2b)' }} />
               <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] text-[#2d3142]">{greeting},<br />{displayName}</h1>
               <p className="text-[#2d3142]/70 mt-2 max-w-md">{t('dashboard.subtitle')}</p>
-              {allDone && (
+              {/* Accurately-labeled, server-owned challenge metadata */}
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[#2d3142]/80">
+                <Badge variant="outline" className="border-[#2d3142]/20 bg-white/40">
+                  {t('dashboard.meta.length', { n: view.totalDays })}
+                </Badge>
+                <Badge variant="outline" className="border-[#2d3142]/20 bg-white/40">
+                  {t('dashboard.meta.best')}: {view.longestStreak}
+                </Badge>
+                <Badge variant="outline" className="border-[#2d3142]/20 bg-white/40">
+                  {t('dashboard.meta.completed')}: {view.totalCompletedDays}
+                </Badge>
+              </div>
+              {view.isComplete ? (
+                <Badge className="mt-3 bg-green-500/20 text-green-700 border-green-500/30">
+                  <Flame className="h-3 w-3 mr-1" /> {t('dashboard.meta.complete')}
+                </Badge>
+              ) : allDone ? (
                 <Badge className="mt-3 bg-green-500/20 text-green-700 border-green-500/30">
                   <Flame className="h-3 w-3 mr-1" /> {t('dashboard.day_complete')} 🎉
                 </Badge>
-              )}
+              ) : null}
             </div>
-            <StreakCounter day={currentDay} totalDays={totalDays} />
+            <StreakCounter day={view.attemptDay} totalDays={view.totalDays} />
           </div>
         </div>
       </ScrollReveal>
@@ -224,35 +176,45 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.hydration')}</CardTitle></CardHeader>
           <CardContent className="flex justify-center py-2">
-            <WaterTracker consumedMl={0} goalMl={waterGoal} />
+            <WaterTracker consumedMl={consumedMl} goalMl={waterGoal} />
           </CardContent>
         </Card>
 
-        <WorkoutCard onBothComplete={autoCheckWorkout} />
+        <WorkoutCard onBothComplete={refetch} />
 
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.todays_tasks')}</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {tasks.map(task => (
-              <button
-                key={task.id}
-                onClick={() => toggleTask(task.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left',
-                  task.done
-                    ? 'border-primary/30 bg-primary/5'
-                    : 'border-border hover:bg-accent'
-                )}
-              >
-                {task.done
-                  ? <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
-                  : <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                }
-                <span className={cn('text-sm', task.done && 'line-through text-muted-foreground')}>
-                  {task.label}
-                </span>
-              </button>
-            ))}
+            {loading && !flags ? (
+              // Skeleton — never show zero/stale completion before the server answers.
+              <div className="space-y-2" aria-label={t('dashboard.loading')}>
+                {TASK_DEFS.map(d => (
+                  <div key={d.id} className="h-11 rounded-lg border border-border bg-muted/40 animate-pulse" />
+                ))}
+              </div>
+            ) : (
+              tasks.map(task => (
+                <Link
+                  key={task.id}
+                  href={TASK_ROUTES[task.id] ?? '/dashboard'}
+                  className={cn(
+                    'group w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left',
+                    task.done
+                      ? 'border-primary/30 bg-primary/5'
+                      : 'border-border hover:bg-accent'
+                  )}
+                >
+                  {task.done
+                    ? <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                    : <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                  }
+                  <span className={cn('text-sm flex-1', task.done && 'line-through text-muted-foreground')}>
+                    {task.label}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -273,7 +235,7 @@ export default function DashboardPage() {
               <span className="shine-sweep" style={{ animationDelay: `${i * 1.2}s` }} />
               <div className="relative text-3xl mb-1 drop-shadow-sm">{stat.icon}</div>
               <div className="relative text-4xl font-bold leading-none tracking-tight tabular-nums">
-                <CountUp value={stat.num} />
+                {loading && !progress ? <span className="opacity-60">—</span> : <CountUp value={stat.num} />}
               </div>
               <div className="relative text-xs font-medium uppercase tracking-wide text-white/80 mt-1.5">{stat.label}</div>
             </div>

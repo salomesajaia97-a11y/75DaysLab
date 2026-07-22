@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CycleCalendar, LS_KEY } from '@/components/cycle/CycleCalendar'
 import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
+import { scopedKey } from '@/lib/storage'
 import { Heart } from 'lucide-react'
 
 const CYCLE_LENGTH = 28
@@ -56,7 +57,7 @@ export default function CyclePage() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LS_KEY)
+      const saved = localStorage.getItem(scopedKey(LS_KEY))
       if (!saved) return
       const { start } = JSON.parse(saved)
       setPredictions(buildPredictions(new Date(start)))

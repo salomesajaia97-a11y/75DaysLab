@@ -198,4 +198,24 @@ describe('nextChallengeState', () => {
     )
     expect(s.currentDay).toBe(75)
   })
+
+  // Data-integrity regression (P1): a missed-day hard reset must NOT erase the
+  // user's best/history — longestStreak is authoritative server state and is
+  // preserved even as the current attempt restarts at day 1.
+  it('preserves longestStreak across a missed-day hard reset', () => {
+    const s = nextChallengeState(
+      base({
+        startDate: '2026-06-01',
+        currentDay: 33,
+        currentStreak: 32,
+        longestStreak: 33,
+        lastCompletedDate: '2026-07-02', // >1 day before today → attempt broken
+      }),
+      { today: '2026-07-22', todayComplete: false }
+    )
+    expect(s.currentStreak).toBe(0) // current attempt reset
+    expect(s.currentDay).toBe(1)
+    expect(s.startDate).toBe('2026-07-22')
+    expect(s.longestStreak).toBe(33) // best history NOT lost
+  })
 })

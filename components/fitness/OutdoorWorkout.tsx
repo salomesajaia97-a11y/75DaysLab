@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { useLanguage } from '@/lib/i18n'
 import { GEORGIAN_CITIES, DEFAULT_CITY_ID, findCity } from '@/lib/fitness/cities'
+import { scopedKey } from '@/lib/storage'
 import { StepTracker } from './StepTracker'
 import { TbilisiParks } from './TbilisiParks'
 import type { WeatherPayload } from '@/app/api/fitness/weather/route'
@@ -44,7 +45,7 @@ export function OutdoorWorkout() {
 
   // Restore last city after mount (hydration-safe localStorage sync).
   useEffect(() => {
-    const saved = localStorage.getItem(CITY_KEY)
+    const saved = localStorage.getItem(scopedKey(CITY_KEY))
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved && findCity(saved)) setCityId(saved)
   }, [])
@@ -71,7 +72,7 @@ export function OutdoorWorkout() {
   const onCityChange = (val: string | null) => {
     if (!val) return
     setCityId(val)
-    localStorage.setItem(CITY_KEY, val)
+    localStorage.setItem(scopedKey(CITY_KEY), val)
   }
 
   const city = findCity(cityId)
