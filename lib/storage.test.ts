@@ -76,14 +76,14 @@ describe('user-scoped storage keys', () => {
     expect(s.getProfile()?.username).toBe('alice')
   })
 
-  it('keeps streak state isolated per user', async () => {
+  it('keeps arbitrary namespaced cache isolated per user', async () => {
     const s = await freshModule()
     s.setStorageUser('userA')
-    s.saveStreak(12, '2026-07-22')
+    store.setItem(s.scopedKey('75lab_water_2026-07-22'), '2500')
     s.setStorageUser('userB')
-    expect(s.getStreak()).toBe(0)
+    expect(store.getItem(s.scopedKey('75lab_water_2026-07-22'))).toBeNull()
     s.setStorageUser('userA')
-    expect(s.getStreak()).toBe(12)
+    expect(store.getItem(s.scopedKey('75lab_water_2026-07-22'))).toBe('2500')
   })
 })
 
@@ -112,7 +112,7 @@ describe('clearUserScopedStorage', () => {
     const s = await freshModule()
     s.setStorageUser('userA')
     s.saveProfile({ username: 'alice' } as never) // -> 75lab_profile::userA
-    s.saveStreak(5, '2026-07-22') // -> 75lab_streak::userA
+    store.setItem(s.scopedKey('75lab_streak'), '5') // -> 75lab_streak::userA (namespaced cache)
     // legacy pre-Phase-1 (un-namespaced) data — MUST survive so it can be migrated
     store.setItem('75lab_streak', '33')
     store.setItem('75lab_daily_2026-06-20', '{}')

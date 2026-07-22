@@ -55,6 +55,6 @@ describe('runLegacyMigration', () => {
   it('marker carries the version', () => {
     const s = mem()
     runLegacyMigration('userA', s)
-    expect(s.getItem(`75lab_legacyMigration::userA`)).toBe(String(LEGACY_MIGRATION_VERSION))
+    expect(s.getItem(`migrated_legacy::userA`)).toBe(String(LEGACY_MIGRATION_VERSION))
   })
 })

@@ -9,20 +9,12 @@ import type { WorkoutTrackerState } from '@/types'
 // whole namespace on logout/account switch.
 
 const PROFILE_KEY = '75lab_profile'
-const STREAK_KEY = '75lab_streak'
-const STREAK_DATE_KEY = '75lab_streak_date'
-const DAILY_KEY = '75lab_daily'
 
 /** localStorage key that records which user the cached data belongs to. */
 const UID_KEY = '75lab_uid'
 
 /** Prefixes owned by user-scoped (non-preference) data. */
 const USER_SCOPED_PREFIXES = ['75lab_', 'cycle_'] as const
-
-export interface DailyState {
-  date: string
-  tasks: Record<string, boolean>
-}
 
 function isBrowser() {
   return typeof window !== 'undefined'
@@ -107,51 +99,8 @@ export function getProfile(): UserProfile | null {
   return raw ? (JSON.parse(raw) as UserProfile) : null
 }
 
-// ── Streak ───────────────────────────────────────────────────────────────
-
-export function getStreak(): number {
-  if (!isBrowser()) return 0
-  return parseInt(localStorage.getItem(scopedKey(STREAK_KEY)) || '0', 10)
-}
-
-export function getLastStreakDate(): string | null {
-  if (!isBrowser()) return null
-  return localStorage.getItem(scopedKey(STREAK_DATE_KEY))
-}
-
-export function saveStreak(streak: number, date: string): void {
-  if (!isBrowser()) return
-  localStorage.setItem(scopedKey(STREAK_KEY), String(streak))
-  localStorage.setItem(scopedKey(STREAK_DATE_KEY), date)
-}
-
-export function resetStreak(): void {
-  if (!isBrowser()) return
-  localStorage.setItem(scopedKey(STREAK_KEY), '0')
-  localStorage.removeItem(scopedKey(STREAK_DATE_KEY))
-}
-
-// ── Daily task state ─────────────────────────────────────────────────────────
-
-export function getDailyState(date: string): DailyState | null {
-  if (!isBrowser()) return null
-  const raw = localStorage.getItem(scopedKey(`${DAILY_KEY}_${date}`))
-  return raw ? (JSON.parse(raw) as DailyState) : null
-}
-
-export function saveDailyState(state: DailyState): void {
-  if (!isBrowser()) return
-  localStorage.setItem(scopedKey(`${DAILY_KEY}_${state.date}`), JSON.stringify(state))
-}
-
 export function todayString(): string {
   return new Date().toISOString().split('T')[0]
-}
-
-export function yesterdayString(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return d.toISOString().split('T')[0]
 }
 
 // ── Workout tracker (legacy per-day slot state) ───────────────────────────────

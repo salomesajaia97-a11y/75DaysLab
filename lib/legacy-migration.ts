@@ -15,7 +15,10 @@
 // per-user, versioned marker) and never writes server state.
 
 export const LEGACY_MIGRATION_VERSION = 1
-const MARKER_BASE = '75lab_legacyMigration'
+// Deliberately OUTSIDE the `75lab_`/`cycle_` namespaces so clearUserScopedStorage
+// never wipes it on logout — the marker must persist so migration runs exactly
+// once per user, ever (not once per login session).
+const MARKER_BASE = 'migrated_legacy'
 
 /** Minimal Storage surface (localStorage-compatible). */
 export interface KVStore {
