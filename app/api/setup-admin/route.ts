@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
+import { normalizeEmail } from '@/lib/validation/auth'
 
 export async function POST() {
   const session = await auth()
@@ -12,6 +13,9 @@ export async function POST() {
   const adminExists = await User.findOne({ role: 'admin' })
   if (adminExists) return NextResponse.json({ error: 'Admin already exists' }, { status: 403 })
 
-  const result = await User.updateOne({ email: session.user.email }, { $set: { role: 'admin' } })
-  return NextResponse.json({ ok: true, email: session.user.email, modified: result.modifiedCount })
+  // Query by the canonical (trimmed + lowercased) email so the lookup matches
+  // the stored form regardless of the session email's casing.
+  const email = normalizeEmail(session.user.email)
+  const result = await User.updateOne({ email }, { $set: { role: 'admin' } })
+  return NextResponse.json({ ok: true, email, modified: result.modifiedCount })
 }
