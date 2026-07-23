@@ -197,6 +197,8 @@
   "photos.uploading": "Saving...",
   "photos.change": "Choose Different",
   "photos.save_failed": "Save failed. Try again.",
+  "photos.file_too_large": "Image is too large. Maximum size is {mb} MB.",
+  "photos.invalid_file": "Please choose a JPEG, PNG, WebP, or GIF image.",
 
   "squads.title": "Squads",
   "squads.join": "Join",

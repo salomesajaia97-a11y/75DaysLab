@@ -27,6 +27,11 @@ export async function uploadPhoto(
   })
 }
 
+/** Delete a progress photo from Cloudinary by its public id. */
+export async function deletePhoto(publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(publicId, { resource_type: 'image' })
+}
+
 /** Upload a GIF or Lottie JSON file to Cloudinary. */
 export async function uploadFitnessMedia(
   buffer: Buffer,
