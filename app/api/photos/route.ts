@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { Photo } from '@/models/Photo'
-import { uploadPhoto } from '@/lib/cloudinary'
+import { uploadPhoto, deletePhoto } from '@/lib/cloudinary'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
 import { validateImage, MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 
@@ -83,12 +83,24 @@ export async function POST(req: NextRequest) {
     await connectDB()
     const date = new Date().toISOString().split('T')[0]
     // Upsert on the unique {userId,dayNumber} index: a second upload for the same
-    // day replaces the existing record rather than creating a duplicate.
-    const photo = await Photo.findOneAndUpdate(
+    // day replaces the existing record rather than creating a duplicate. `new: false`
+    // returns the PRE-update doc (null on first upload) so we can clean up the old
+    // Cloudinary asset it pointed at.
+    const prev = await Photo.findOneAndUpdate(
       { userId: session.user.id, dayNumber },
       { url, publicId, uploadedAt: new Date(), date },
-      { upsert: true, new: true }
+      { upsert: true, new: false }
     )
+
+    // Replacement: destroy the now-orphaned previous asset so storage does not
+    // leak on every re-upload (non-fatal — the new photo is already saved).
+    if (prev?.publicId && prev.publicId !== publicId) {
+      try {
+        await deletePhoto(prev.publicId)
+      } catch (cleanupErr) {
+        console.error('[POST /api/photos] orphan cleanup failed:', cleanupErr)
+      }
+    }
 
     // Recompute the daily completion spine (non-fatal — the photo is already saved).
     try {
@@ -97,7 +109,7 @@ export async function POST(req: NextRequest) {
       console.error('[POST /api/photos] recomputeDailyLog failed:', recomputeErr)
     }
 
-    return NextResponse.json({ url: photo.url }, { status: 201 })
+    return NextResponse.json({ url }, { status: 201 })
   } catch (err) {
     console.error('[POST /api/photos] persistence failed:', err)
     return NextResponse.json(

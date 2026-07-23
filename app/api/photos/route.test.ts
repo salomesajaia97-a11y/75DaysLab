@@ -7,18 +7,20 @@ import { MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 // re-upload replaces rather than duplicates, drives the daily-completion
 // recompute, and never leaks storage internals or crashes on failure.
 
-const { auth, connectDB, findOneAndUpdate, uploadPhoto, recomputeDailyLog } = vi.hoisted(() => ({
-  auth: vi.fn(),
-  connectDB: vi.fn().mockResolvedValue(undefined),
-  findOneAndUpdate: vi.fn(),
-  uploadPhoto: vi.fn(),
-  recomputeDailyLog: vi.fn(),
-}))
+const { auth, connectDB, findOneAndUpdate, uploadPhoto, deletePhoto, recomputeDailyLog } =
+  vi.hoisted(() => ({
+    auth: vi.fn(),
+    connectDB: vi.fn().mockResolvedValue(undefined),
+    findOneAndUpdate: vi.fn(),
+    uploadPhoto: vi.fn(),
+    deletePhoto: vi.fn(),
+    recomputeDailyLog: vi.fn(),
+  }))
 
 vi.mock('@/lib/auth', () => ({ auth }))
 vi.mock('@/lib/mongoose', () => ({ connectDB }))
 vi.mock('@/models/Photo', () => ({ Photo: { findOneAndUpdate, find: vi.fn() } }))
-vi.mock('@/lib/cloudinary', () => ({ uploadPhoto }))
+vi.mock('@/lib/cloudinary', () => ({ uploadPhoto, deletePhoto }))
 vi.mock('@/lib/recompute-daily-log', () => ({ recomputeDailyLog }))
 
 import { POST } from './route'
@@ -64,11 +66,14 @@ beforeEach(() => {
   connectDB.mockClear()
   findOneAndUpdate.mockReset()
   uploadPhoto.mockReset()
+  deletePhoto.mockReset()
   recomputeDailyLog.mockReset()
 
   auth.mockResolvedValue({ user: { id: VALID_USER_ID } })
-  uploadPhoto.mockResolvedValue({ url: 'https://cdn/photo.png', publicId: 'pid' })
-  findOneAndUpdate.mockResolvedValue({ url: 'https://cdn/photo.png' })
+  uploadPhoto.mockResolvedValue({ url: 'https://cdn/photo.png', publicId: 'pid-new' })
+  // Default: no prior photo for the day (first upload → upsert returns null).
+  findOneAndUpdate.mockResolvedValue(null)
+  deletePhoto.mockResolvedValue(undefined)
   recomputeDailyLog.mockResolvedValue({ log: {}, challenge: null })
 })
 
@@ -149,9 +154,35 @@ describe('POST /api/photos — success, dedup & recompute', () => {
     await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
     expect(findOneAndUpdate).toHaveBeenCalledWith(
       { userId: VALID_USER_ID, dayNumber: 5 },
-      expect.objectContaining({ url: 'https://cdn/photo.png', publicId: 'pid' }),
-      expect.objectContaining({ upsert: true, new: true })
+      expect.objectContaining({ url: 'https://cdn/photo.png', publicId: 'pid-new' }),
+      expect.objectContaining({ upsert: true, new: false })
     )
+  })
+
+  it('does NOT destroy any asset on a first upload (no prior photo)', async () => {
+    findOneAndUpdate.mockResolvedValue(null)
+    await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
+    expect(deletePhoto).not.toHaveBeenCalled()
+  })
+
+  it('destroys the orphaned previous asset when a day is re-uploaded', async () => {
+    findOneAndUpdate.mockResolvedValue({ url: 'https://cdn/old.png', publicId: 'pid-old' })
+    const res = await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
+    expect(res.status).toBe(201)
+    expect(deletePhoto).toHaveBeenCalledWith('pid-old')
+  })
+
+  it('does not destroy when the previous publicId is unchanged', async () => {
+    findOneAndUpdate.mockResolvedValue({ url: 'https://cdn/x.png', publicId: 'pid-new' })
+    await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
+    expect(deletePhoto).not.toHaveBeenCalled()
+  })
+
+  it('still returns 201 when orphan cleanup throws (non-fatal)', async () => {
+    findOneAndUpdate.mockResolvedValue({ url: 'https://cdn/old.png', publicId: 'pid-old' })
+    deletePhoto.mockRejectedValue(new Error('destroy failed'))
+    const res = await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
+    expect(res.status).toBe(201)
   })
 
   it('triggers the daily-log recompute for the upload date', async () => {
