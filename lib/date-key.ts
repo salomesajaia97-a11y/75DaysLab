@@ -114,3 +114,36 @@ export function resolveTimeZone(sources: TimeZoneSources = {}): string {
   }
   return DEFAULT_TIME_ZONE
 }
+
+/** Inputs for the version-gated "logical today" decision. */
+export interface LogicalTodayInput {
+  /** the instant to evaluate (typically currentInstant(clock)) */
+  instant: Date
+  /** the active challenge's timezone snapshot, if any (highest precedence) */
+  challengeTimeZone?: string | null
+  /** the user profile's timezone, if any */
+  userTimeZone?: string | null
+  /** the day-key convention version; defaults to 1 (legacy). */
+  dateKeyVersion?: number | null
+}
+
+/**
+ * The logical calendar day ('YYYY-MM-DD') for a given instant, gated by the
+ * day-key version:
+ *   - version 1 (legacy, the default): UTC-derived — byte-for-byte identical to
+ *     the historical `new Date().toISOString().split('T')[0]`. Stored timezones
+ *     are intentionally ignored so existing challenges behave EXACTLY as before.
+ *   - version >= 2: timezone-aware — the civil date in the resolved zone
+ *     (challenge -> user -> DEFAULT_TIME_ZONE).
+ */
+export function logicalToday(input: LogicalTodayInput): string {
+  const version = input.dateKeyVersion ?? 1
+  if (version >= 2) {
+    const timeZone = resolveTimeZone({
+      challengeTimeZone: input.challengeTimeZone,
+      userTimeZone: input.userTimeZone,
+    })
+    return dayKey(input.instant, timeZone)
+  }
+  return dayKey(input.instant, 'UTC')
+}

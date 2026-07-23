@@ -7,6 +7,7 @@
 import mongoose from 'mongoose'
 import { computeDailyFlags } from './daily-log'
 import { nextChallengeState, toDateStr } from './streak'
+import { logicalToday, currentInstant, systemClock, type Clock } from './date-key'
 import { connectDB } from './mongoose'
 import { calculateWaterGoal } from './calculations'
 import { User } from '@/models/User'
@@ -29,6 +30,10 @@ interface WaterGoalSource {
   goal?: 'lose' | 'gain' | 'maintain' | 'healthy'
 }
 
+/** User fields this module reads: water-goal inputs + the timezone used to
+ *  resolve the logical day (only consulted for version >= 2 challenges). */
+type RecomputeUser = WaterGoalSource & { timeZone?: string }
+
 function waterGoalFor(user: WaterGoalSource | null): number {
   if (!user || user.age == null || user.weightKg == null || user.heightCm == null) {
     return FALLBACK_WATER_ML
@@ -43,18 +48,15 @@ function waterGoalFor(user: WaterGoalSource | null): number {
 }
 
 /**
- * Advance the user's active Challenge for `date`. No-op (returns null) when the
- * user has no active challenge. Only ever called for the live UTC day so the
- * streak math stays anchored to "today".
+ * Advance an already-loaded active Challenge for `date`. Only ever called for
+ * the live logical day so the streak math stays anchored to "today". The streak
+ * engine (lib/streak.ts) is unchanged — this only persists its output.
  */
 async function updateChallengeForDay(
-  userId: string,
+  challenge: IChallenge,
   date: string,
   todayComplete: boolean
-): Promise<IChallenge | null> {
-  const challenge = await Challenge.findOne({ userId, isActive: true })
-  if (!challenge) return null
-
+): Promise<IChallenge> {
   const next = nextChallengeState(
     {
       startDate: toDateStr(challenge.startDate),
@@ -103,17 +105,24 @@ export interface WorkoutOverride {
  *  - The raw workout booleans are only written when passed via `workout` (the
  *    fitness API); otherwise they are read-only, so ordinary recomputes never
  *    clobber a workout write.
- *  - The Challenge is advanced only when `date` is the live UTC day.
+ *  - The Challenge is advanced only when `date` equals the live logical day.
+ *    That day is derived through the canonical date-key service: for a legacy
+ *    (dateKeyVersion 1) challenge it is UTC-derived — byte-for-byte the previous
+ *    behavior; for version >= 2 it is the civil date in the resolved timezone
+ *    (challenge.timeZone -> user.timeZone -> DEFAULT_TIME_ZONE). `clock` is
+ *    injectable purely so tests are deterministic; production uses the system
+ *    clock. No stored date key or historical record is ever rewritten here.
  */
 export async function recomputeDailyLog(
   userId: string,
   date: string,
-  workout?: WorkoutOverride
+  workout?: WorkoutOverride,
+  clock: Clock = systemClock
 ): Promise<RecomputeResult> {
   await connectDB()
 
-  const [user, waterLogs, journal, foodLogCount, photo, existing] = await Promise.all([
-    User.findById(userId).select('age gender heightCm weightKg goal').lean<WaterGoalSource>(),
+  const [user, waterLogs, journal, foodLogCount, photo, existing, challenge] = await Promise.all([
+    User.findById(userId).select('age gender heightCm weightKg goal timeZone').lean<RecomputeUser>(),
     WaterLog.find({ userId, date }).select('amountMl').lean<{ amountMl: number }[]>(),
     JournalEntry.findOne({ userId, date }).select('pagesRead').lean<{ pagesRead: number } | null>(),
     FoodLog.countDocuments({ userId, date }),
@@ -121,6 +130,7 @@ export async function recomputeDailyLog(
     DailyLog.findOne({ userId, date })
       .select('structuredWorkoutCompleted outdoorWorkoutCompleted')
       .lean<{ structuredWorkoutCompleted?: boolean; outdoorWorkoutCompleted?: boolean } | null>(),
+    Challenge.findOne({ userId, isActive: true }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + (l.amountMl ?? 0), 0)
@@ -158,11 +168,23 @@ export async function recomputeDailyLog(
 
   const log = await upsertDailyLog(userId, date, update)
 
-  const todayStr = toDateStr(new Date())
-  const challenge =
-    date === todayStr ? await updateChallengeForDay(userId, date, flags.allComplete) : null
+  // Derive the live logical day through the canonical service. Legacy (v1)
+  // challenges resolve to UTC (unchanged); v2+ resolve to the timezone snapshot.
+  const todayStr = logicalToday({
+    instant: currentInstant(clock),
+    challengeTimeZone: challenge?.timeZone,
+    userTimeZone: user?.timeZone,
+    dateKeyVersion: challenge?.dateKeyVersion,
+  })
 
-  return { log, challenge }
+  // Advance the streak only for the live day and only when an active challenge
+  // exists (no active challenge => no-op, exactly as before).
+  const advancedChallenge =
+    challenge && date === todayStr
+      ? await updateChallengeForDay(challenge, date, flags.allComplete)
+      : null
+
+  return { log, challenge: advancedChallenge }
 }
 
 /**
