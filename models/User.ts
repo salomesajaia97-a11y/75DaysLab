@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
+import { isValidTimeZone, DEFAULT_TIME_ZONE } from '@/lib/date-key'
 
 export interface IUser extends Document {
   username: string
@@ -11,6 +12,9 @@ export interface IUser extends Document {
   goal?: 'lose' | 'gain' | 'maintain' | 'healthy'
   focusArea?: 'nutrition' | 'workout' | 'sleep' | 'other'
   city?: string
+  /** IANA timezone for the user's local day boundaries (Phase 2D). Default Asia/Tbilisi.
+   *  Stored but NOT yet consumed by any route — future phases resolve it via the date service. */
+  timeZone: string
   onboardingComplete: boolean
   role: 'user' | 'admin'
   planId?: mongoose.Types.ObjectId
@@ -31,6 +35,14 @@ const UserSchema = new Schema<IUser>(
     goal: { type: String, enum: ['lose', 'gain', 'maintain', 'healthy'] },
     focusArea: { type: String, enum: ['nutrition', 'workout', 'sleep', 'other'] },
     city: { type: String },
+    timeZone: {
+      type: String,
+      default: DEFAULT_TIME_ZONE,
+      validate: {
+        validator: (v: unknown) => isValidTimeZone(v),
+        message: (props: { value: unknown }) => `Invalid IANA timezone: ${String(props.value)}`,
+      },
+    },
     onboardingComplete: { type: Boolean, default: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     planId: { type: Schema.Types.ObjectId, ref: 'Plan', default: null },
