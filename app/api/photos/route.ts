@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/mongoose'
 import { Photo } from '@/models/Photo'
 import { uploadPhoto } from '@/lib/cloudinary'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { validateImage, MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 
 /** Sanity bound on the challenge day number. */
 const MAX_DAY_NUMBER = 1000
@@ -24,8 +25,27 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const form = await req.formData()
-  const file = form.get('photo') as File
+  // Reject oversized bodies from the Content-Length header before reading any
+  // bytes, so a huge upload never gets buffered into memory. (The definitive
+  // size check happens again on the actual buffer below — headers are untrusted.)
+  const declaredLength = Number(req.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_UPLOAD_BYTES + 1024) {
+    const mb = Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))
+    return NextResponse.json(
+      { error: `Image is too large. Maximum size is ${mb} MB.` },
+      { status: 413 }
+    )
+  }
+
+  let form: FormData
+  try {
+    form = await req.formData()
+  } catch {
+    // Malformed multipart body — never let it bubble into a 500.
+    return NextResponse.json({ error: 'Invalid upload. Please try again.' }, { status: 400 })
+  }
+
+  const file = form.get('photo')
   const dayNumber = Number(form.get('dayNumber'))
 
   if (!file || typeof file === 'string')
@@ -33,19 +53,44 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > MAX_DAY_NUMBER)
     return NextResponse.json({ error: 'Invalid dayNumber' }, { status: 400 })
 
-  try {
-    const buffer = Buffer.from(await file.arrayBuffer())
-    const { url, publicId } = await uploadPhoto(buffer, `75dayslab/${session.user.id}`)
+  // Validate from the file's actual bytes — the client-provided File.type and
+  // filename are never trusted. Rejects renamed non-images, corrupt files,
+  // unsupported formats, oversized files, and out-of-range dimensions.
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const check = validateImage(buffer)
+  if (!check.ok) {
+    // 413 for size, 415 for format, 422 for everything else that is a bad payload.
+    const status =
+      check.reason === 'too-large' ? 413 : check.reason === 'unsupported-format' ? 415 : 422
+    return NextResponse.json({ error: check.message }, { status })
+  }
 
+  let url: string
+  let publicId: string
+  try {
+    ;({ url, publicId } = await uploadPhoto(buffer, `75dayslab/${session.user.id}`))
+  } catch (err) {
+    // Storage/network failure — log the detail server-side, return a generic
+    // message so provider internals are never leaked to the client.
+    console.error('[POST /api/photos] cloudinary upload failed:', err)
+    return NextResponse.json(
+      { error: 'Could not save your photo right now. Please try again.' },
+      { status: 502 }
+    )
+  }
+
+  try {
     await connectDB()
     const date = new Date().toISOString().split('T')[0]
+    // Upsert on the unique {userId,dayNumber} index: a second upload for the same
+    // day replaces the existing record rather than creating a duplicate.
     const photo = await Photo.findOneAndUpdate(
       { userId: session.user.id, dayNumber },
       { url, publicId, uploadedAt: new Date(), date },
       { upsert: true, new: true }
     )
 
-    // Update the daily completion spine (non-fatal — the photo is already saved).
+    // Recompute the daily completion spine (non-fatal — the photo is already saved).
     try {
       await recomputeDailyLog(session.user.id, date)
     } catch (recomputeErr) {
@@ -54,15 +99,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: photo.url }, { status: 201 })
   } catch (err) {
-    console.error('[POST /api/photos] failed:', err)
-    const message =
-      err instanceof Error
-        ? err.message
-        : typeof err === 'object' && err !== null && 'message' in err
-          ? String((err as { message: unknown }).message)
-          : typeof err === 'string'
-            ? err
-            : JSON.stringify(err)
-    return NextResponse.json({ error: message }, { status: 500 })
+    console.error('[POST /api/photos] persistence failed:', err)
+    return NextResponse.json(
+      { error: 'Could not save your photo right now. Please try again.' },
+      { status: 500 }
+    )
   }
 }

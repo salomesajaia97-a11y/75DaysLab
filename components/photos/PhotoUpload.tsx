@@ -1,10 +1,11 @@
 'use client'
 import { useState, useCallback } from 'react'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, type FileRejection } from 'react-dropzone'
 import { Camera, Loader2, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/lib/i18n'
+import { MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 
 interface PhotoUploadProps {
   dayNumber: number
@@ -28,10 +29,32 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
     setError(undefined)
   }, [])
 
+  // Client-side pre-check for a friendly error before the network round-trip.
+  // The server re-validates every upload from the raw bytes regardless.
+  const onDropRejected = useCallback(
+    (rejections: FileRejection[]) => {
+      const code = rejections[0]?.errors[0]?.code
+      const mb = Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))
+      setError(
+        code === 'file-too-large'
+          ? t('photos.file_too_large', { mb })
+          : t('photos.invalid_file')
+      )
+    },
+    [t]
+  )
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': [] },
+    onDropRejected,
+    accept: {
+      'image/jpeg': [],
+      'image/png': [],
+      'image/webp': [],
+      'image/gif': [],
+    },
     maxFiles: 1,
+    maxSize: MAX_UPLOAD_BYTES,
     noKeyboard: true,
   })
 
@@ -103,18 +126,21 @@ export function PhotoUpload({ dayNumber, onUploaded }: PhotoUploadProps) {
   }
 
   return (
-    <div
-      {...getRootProps()}
-      className={cn(
-        'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors',
-        isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
-      )}
-    >
-      <input {...getInputProps()} />
-      <Camera className="h-10 w-10 text-muted-foreground" />
-      <p className="text-sm text-muted-foreground mt-3 text-center">
-        {`Drop Day ${dayNumber} photo here or click to select`}
-      </p>
+    <div className="w-full space-y-2">
+      <div
+        {...getRootProps()}
+        className={cn(
+          'border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors',
+          isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+        )}
+      >
+        <input {...getInputProps()} />
+        <Camera className="h-10 w-10 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground mt-3 text-center">
+          {`Drop Day ${dayNumber} photo here or click to select`}
+        </p>
+      </div>
+      {error && <p className="text-sm text-red-500 text-center">{error}</p>}
     </div>
   )
 }

@@ -197,6 +197,8 @@
   "photos.uploading": "ინახება...",
   "photos.change": "სხვის არჩევა",
   "photos.save_failed": "შენახვა ვერ მოხერხდა. სცადე თავიდან.",
+  "photos.file_too_large": "სურათი ძალიან დიდია. მაქსიმალური ზომაა {mb} MB.",
+  "photos.invalid_file": "აირჩიე JPEG, PNG, WebP ან GIF სურათი.",
 
   "squads.title": "გუნდები",
   "squads.join": "შეერთება",
