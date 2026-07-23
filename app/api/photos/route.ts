@@ -15,9 +15,14 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
-  const photos = await Photo.find({ userId: session.user.id }).sort({ dayNumber: 1 })
+  // Return an explicit, minimal shape. Internal fields (publicId, _id, userId,
+  // uploadedAt, date, __v) are never exposed — the UI consumes only day + url.
+  const photos = await Photo.find({ userId: session.user.id })
+    .sort({ dayNumber: 1 })
+    .select('dayNumber url -_id')
+    .lean<{ dayNumber: number; url: string }[]>()
 
-  return NextResponse.json(photos)
+  return NextResponse.json(photos.map((p) => ({ dayNumber: p.dayNumber, url: p.url })))
 }
 
 export async function POST(req: NextRequest) {
@@ -112,6 +117,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url }, { status: 201 })
   } catch (err) {
     console.error('[POST /api/photos] persistence failed:', err)
+    // The upload succeeded but the DB record was never written — destroy the
+    // now-orphaned asset so a failed persist does not leak storage (non-fatal).
+    try {
+      await deletePhoto(publicId)
+    } catch (cleanupErr) {
+      console.error('[POST /api/photos] post-failure cleanup failed:', cleanupErr)
+    }
     return NextResponse.json(
       { error: 'Could not save your photo right now. Please try again.' },
       { status: 500 }

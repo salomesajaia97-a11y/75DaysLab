@@ -7,11 +7,12 @@ import { MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 // re-upload replaces rather than duplicates, drives the daily-completion
 // recompute, and never leaks storage internals or crashes on failure.
 
-const { auth, connectDB, findOneAndUpdate, uploadPhoto, deletePhoto, recomputeDailyLog } =
+const { auth, connectDB, findOneAndUpdate, find, uploadPhoto, deletePhoto, recomputeDailyLog } =
   vi.hoisted(() => ({
     auth: vi.fn(),
     connectDB: vi.fn().mockResolvedValue(undefined),
     findOneAndUpdate: vi.fn(),
+    find: vi.fn(),
     uploadPhoto: vi.fn(),
     deletePhoto: vi.fn(),
     recomputeDailyLog: vi.fn(),
@@ -19,11 +20,22 @@ const { auth, connectDB, findOneAndUpdate, uploadPhoto, deletePhoto, recomputeDa
 
 vi.mock('@/lib/auth', () => ({ auth }))
 vi.mock('@/lib/mongoose', () => ({ connectDB }))
-vi.mock('@/models/Photo', () => ({ Photo: { findOneAndUpdate, find: vi.fn() } }))
+vi.mock('@/models/Photo', () => ({ Photo: { findOneAndUpdate, find } }))
 vi.mock('@/lib/cloudinary', () => ({ uploadPhoto, deletePhoto }))
 vi.mock('@/lib/recompute-daily-log', () => ({ recomputeDailyLog }))
 
-import { POST } from './route'
+import { GET, POST } from './route'
+
+/** Chainable query stub: find().sort().select().lean() resolves to `rows`. */
+function mockFindChain(rows: unknown[]) {
+  const chain = {
+    sort: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    lean: vi.fn().mockResolvedValue(rows),
+  }
+  find.mockReturnValue(chain)
+  return chain
+}
 
 const VALID_USER_ID = '507f1f77bcf86cd799439011'
 
@@ -65,6 +77,7 @@ beforeEach(() => {
   auth.mockReset()
   connectDB.mockClear()
   findOneAndUpdate.mockReset()
+  find.mockReset()
   uploadPhoto.mockReset()
   deletePhoto.mockReset()
   recomputeDailyLog.mockReset()
@@ -75,6 +88,39 @@ beforeEach(() => {
   findOneAndUpdate.mockResolvedValue(null)
   deletePhoto.mockResolvedValue(undefined)
   recomputeDailyLog.mockResolvedValue({ log: {}, challenge: null })
+})
+
+describe('GET /api/photos — auth & safe response shape', () => {
+  it('401 when unauthenticated', async () => {
+    auth.mockResolvedValue(null)
+    const res = await GET()
+    expect(res.status).toBe(401)
+    expect(find).not.toHaveBeenCalled()
+  })
+
+  it('scopes the query to the session user', async () => {
+    mockFindChain([])
+    await GET()
+    expect(find).toHaveBeenCalledWith({ userId: VALID_USER_ID })
+  })
+
+  it('returns only { dayNumber, url } — never publicId, _id, userId or other internals', async () => {
+    // Even if extra fields somehow slip through the projection, the handler must
+    // strip them from the response.
+    mockFindChain([
+      { dayNumber: 1, url: 'https://cdn/1.png', publicId: 'secret', _id: 'oid', userId: 'uid', __v: 0 },
+      { dayNumber: 2, url: 'https://cdn/2.png' },
+    ])
+    const res = await GET()
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual([
+      { dayNumber: 1, url: 'https://cdn/1.png' },
+      { dayNumber: 2, url: 'https://cdn/2.png' },
+    ])
+    const serialized = JSON.stringify(body)
+    expect(serialized).not.toMatch(/publicId|secret|_id|userId|__v/)
+  })
 })
 
 describe('POST /api/photos — auth', () => {
@@ -213,5 +259,18 @@ describe('POST /api/photos — error handling (no crash, no leak)', () => {
     expect(res.status).toBe(500)
     const body = await res.json()
     expect(body.error).not.toMatch(/E11000|connection string/)
+  })
+
+  it('destroys the just-uploaded asset when the DB write fails (no orphan)', async () => {
+    findOneAndUpdate.mockRejectedValue(new Error('db down'))
+    await POST(makeRequest({ photo: validPng(), dayNumber: 1 }))
+    expect(deletePhoto).toHaveBeenCalledWith('pid-new')
+  })
+
+  it('still returns 500 when the post-failure cleanup also fails', async () => {
+    findOneAndUpdate.mockRejectedValue(new Error('db down'))
+    deletePhoto.mockRejectedValue(new Error('destroy also failed'))
+    const res = await POST(makeRequest({ photo: validPng(), dayNumber: 1 }))
+    expect(res.status).toBe(500)
   })
 })
