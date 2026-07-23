@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongoose'
 import { Recipe } from '@/models/Recipe'
 import { scrapeRecipePage, getRecipeUrlsSkinnyTaste, delay } from '@/lib/scrapers'
 import { scrapeAllRetailers } from '@/lib/grocery'
+import { verifyBearerSecret } from '@/lib/security'
 
 export const maxDuration = 300
 
@@ -13,8 +14,7 @@ const ST_SITEMAPS = [
 ]
 
 export async function GET(req: Request) {
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyBearerSecret(req.headers.get('authorization'), process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

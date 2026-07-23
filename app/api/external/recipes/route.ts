@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongoose'
 import { Recipe } from '@/models/Recipe'
 import { classifyRecipe } from '@/lib/classify'
+import { verifyBearerSecret } from '@/lib/security'
 
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.SCRAPER_SECRET}`) {
+  if (!verifyBearerSecret(req.headers.get('authorization'), process.env.SCRAPER_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

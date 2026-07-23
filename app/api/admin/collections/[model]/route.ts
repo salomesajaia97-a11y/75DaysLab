@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { MODEL_REGISTRY, isValidModelSlug } from '@/lib/admin-models'
+import { escapeRegex } from '@/lib/security'
 
 const PAGE_SIZE = 20
 
@@ -26,8 +27,10 @@ export async function GET(
   const meta = MODEL_REGISTRY[model]
   await connectDB()
 
+  // Escape user-controlled search text so it matches literally (no regex
+  // injection / ReDoS), even though this route is admin-gated.
   const query = search
-    ? { [meta.searchField]: { $regex: search, $options: 'i' } }
+    ? { [meta.searchField]: { $regex: escapeRegex(search), $options: 'i' } }
     : {}
 
   const [total, docs] = await Promise.all([
