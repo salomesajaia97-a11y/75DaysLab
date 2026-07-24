@@ -7,6 +7,8 @@ import {
   resolveTimeZone,
   dayKey,
   currentDayKey,
+  isValidCivilDate,
+  resolveOnboardingTimeZone,
   type Clock,
 } from './date-key'
 
@@ -189,5 +191,56 @@ describe('resolveTimeZone — precedence challenge → user → default', () => 
   })
   it('always returns a valid zone', () => {
     expect(isValidTimeZone(resolveTimeZone({ challengeTimeZone: 'bad', userTimeZone: 'worse' }))).toBe(true)
+  })
+})
+
+describe('isValidCivilDate — exact YYYY-MM-DD naming a real calendar day', () => {
+  it('accepts well-formed real dates', () => {
+    for (const s of ['2026-07-25', '2000-01-01', '2024-02-29', '2026-12-31', '1999-11-30']) {
+      expect(isValidCivilDate(s)).toBe(true)
+    }
+  })
+  it('rejects impossible dates JS would silently normalize', () => {
+    // '2026-02-31' → Date.UTC rolls to Mar 3; must be rejected, not accepted.
+    for (const s of ['2026-02-31', '2026-02-30', '2026-04-31', '2026-06-31', '2026-13-01', '2026-00-10', '2026-01-00', '2026-01-32']) {
+      expect(isValidCivilDate(s)).toBe(false)
+    }
+  })
+  it('rejects Feb 29 in a non-leap year', () => {
+    expect(isValidCivilDate('2026-02-29')).toBe(false)
+    expect(isValidCivilDate('2100-02-29')).toBe(false) // century non-leap
+  })
+  it('rejects wrong shapes, offsets, and non-strings', () => {
+    for (const s of ['2026-7-25', '26-07-25', '2026/07/25', '2026-07-25T00:00:00Z', '2026-07-25 ', ' 2026-07-25', '', 'today', '2026-07-2a']) {
+      expect(isValidCivilDate(s)).toBe(false)
+    }
+    for (const s of [null, undefined, 20260725, {}, [], NaN]) {
+      expect(isValidCivilDate(s)).toBe(false)
+    }
+  })
+})
+
+describe('resolveOnboardingTimeZone — submitted → stored user → default', () => {
+  it('uses a valid submitted tz over the stored user tz', () => {
+    expect(resolveOnboardingTimeZone('America/New_York', 'Asia/Tbilisi')).toBe('America/New_York')
+  })
+  it('falls back to the stored user tz when submitted is missing', () => {
+    expect(resolveOnboardingTimeZone(undefined, 'Europe/London')).toBe('Europe/London')
+    expect(resolveOnboardingTimeZone(null, 'Europe/London')).toBe('Europe/London')
+  })
+  it('falls back to the stored user tz when submitted is invalid (never overwrites a valid stored tz)', () => {
+    for (const bad of ['Europe/Tbilisi', '+04:00', 'UTC+4', 'GMT-5', 'junk', '']) {
+      expect(resolveOnboardingTimeZone(bad, 'America/New_York')).toBe('America/New_York')
+    }
+  })
+  it('falls back to DEFAULT_TIME_ZONE when both are absent/invalid', () => {
+    expect(resolveOnboardingTimeZone(undefined, undefined)).toBe(DEFAULT_TIME_ZONE)
+    expect(resolveOnboardingTimeZone('+04:00', 'Europe/Tbilisi')).toBe(DEFAULT_TIME_ZONE)
+  })
+  it('accepts UTC as a valid submitted zone', () => {
+    expect(resolveOnboardingTimeZone('UTC', 'Asia/Tbilisi')).toBe('UTC')
+  })
+  it('always returns a valid IANA zone', () => {
+    expect(isValidTimeZone(resolveOnboardingTimeZone('bad', 'worse'))).toBe(true)
   })
 })

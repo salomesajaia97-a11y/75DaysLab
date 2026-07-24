@@ -91,6 +91,41 @@ export function currentDayKey(timeZone: string, clock: Clock = systemClock): str
   return dayKey(currentInstant(clock), timeZone)
 }
 
+/**
+ * True when `s` is an exact 'YYYY-MM-DD' civil date that names a REAL calendar
+ * day. Rejects anything with the wrong shape and, critically, dates that JS would
+ * silently normalize (e.g. '2026-02-31' → Mar 3): the parsed parts must survive a
+ * round-trip through Date.UTC unchanged. Used to validate untrusted date input
+ * without ever reinterpreting it through a machine-local timezone.
+ */
+export function isValidCivilDate(s: unknown): s is string {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false
+  const [y, m, d] = s.split('-').map(Number)
+  const dt = new Date(Date.UTC(y, m - 1, d))
+  return (
+    dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d
+  )
+}
+
+/**
+ * Resolve the timezone for onboarding a NEW challenge. Thin, clearly-named
+ * wrapper over resolveTimeZone so the submitted-timezone precedence reads
+ * correctly at the call site (resolveTimeZone's `challengeTimeZone` slot is the
+ * highest-precedence source, which for onboarding is the browser-submitted tz):
+ *   valid submitted tz  →  stored user tz  →  DEFAULT_TIME_ZONE
+ * Invalid/absent sources are skipped, so bad input can never win and a valid
+ * stored user tz is never overwritten by garbage.
+ */
+export function resolveOnboardingTimeZone(
+  submittedTimeZone?: string | null,
+  storedUserTimeZone?: string | null
+): string {
+  return resolveTimeZone({
+    challengeTimeZone: submittedTimeZone,
+    userTimeZone: storedUserTimeZone,
+  })
+}
+
 /** Timezone resolution inputs. All optional — future user/challenge fields. */
 export interface TimeZoneSources {
   /** the timezone snapshotted on the active challenge (highest precedence) */

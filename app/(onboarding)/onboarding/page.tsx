@@ -7,6 +7,7 @@ import { Loader2, Check, ArrowRight, ArrowLeft, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/lib/i18n'
 import { saveProfile } from '@/lib/storage'
+import { dayKey } from '@/lib/date-key'
 import { ALLOWED_CHALLENGE_LENGTHS } from '@/lib/validation/challenge'
 import type { Goal, FocusArea, Gender } from '@/types'
 
@@ -232,8 +233,44 @@ export default function OnboardingPage() {
   const [data, setData] = useState<OnboardingData>({
     age: String(AGE.def), gender: '', heightCm: String(HEIGHT.def), weightKg: String(WEIGHT.def),
     goal: '', focusArea: '', totalDays: '75',
+    // SSR-safe placeholder (deterministic, UTC). Refined to the user's LOCAL
+    // civil date after mount — see the effect below — so there is no hydration
+    // mismatch (the effect runs only on the client, post-hydration).
     startDate: new Date().toISOString().split('T')[0],
   })
+
+  // Once the user picks a start date, never auto-override it.
+  const startDateEdited = useRef(false)
+
+  // After mount (client-only, so no hydration mismatch), refine the start-date
+  // default to the user's LOCAL civil date via the canonical date service — no
+  // toISOString slicing. Falls back to the deterministic UTC placeholder on any
+  // failure and never clobbers a date the user has already edited.
+  useEffect(() => {
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+      const local = dayKey(new Date(), tz)
+      if (!startDateEdited.current) {
+        // Intentional one-shot post-mount default: the local civil date depends
+        // on the browser timezone, which is unavailable during SSR — an effect is
+        // the correct place. Runs once ([] deps), so no cascading-render concern.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setData(prev => ({ ...prev, startDate: local }))
+      }
+    } catch {
+      /* keep the deterministic UTC placeholder */
+    }
+  }, [])
+
+  // Detect the browser IANA timezone at submit time (client-only). The server
+  // re-validates it and falls back safely, so a missing/blocked value is fine.
+  function detectTimeZone(): string {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || ''
+    } catch {
+      return ''
+    }
+  }
 
   const stepIndex = STEPS.indexOf(step)
 
@@ -268,7 +305,7 @@ export default function OnboardingPage() {
     const res = await fetch('/api/users/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, timeZone: detectTimeZone() }),
     })
     setLoading(false)
     if (!res.ok) { setError(t('onboarding.error_save')); return }
@@ -735,7 +772,7 @@ export default function OnboardingPage() {
             <div className="ob-tl">
               <div className="ob-tl-field">
                 <Label>{t('onboarding.timeline.start_date')}</Label>
-                <Input type="date" value={data.startDate} onChange={e => update('startDate', e.target.value)} />
+                <Input type="date" value={data.startDate} onChange={e => { startDateEdited.current = true; update('startDate', e.target.value) }} />
               </div>
               <div className="ob-tl-field">
                 <Label>
