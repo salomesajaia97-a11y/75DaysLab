@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { Challenge } from '@/models/Challenge'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 
 export async function GET() {
   const session = await auth()
@@ -18,9 +19,11 @@ export async function GET() {
   // we still return the last-stored challenge below. Safe when the user has no
   // active challenge (recompute's challenge step is a no-op) and when today's
   // DailyLog is missing (it gets upserted).
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const clock = () => now
+  const today = await resolveLogicalToday(session.user.id, clock)
   try {
-    const { challenge } = await recomputeDailyLog(session.user.id, today)
+    const { challenge } = await recomputeDailyLog(session.user.id, today, undefined, clock)
     if (challenge) return NextResponse.json(challenge)
   } catch (err) {
     console.error('[GET /api/challenge] self-heal failed:', err)

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { WaterLog } from '@/models/WaterLog'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 
 /** Guard against absurd single entries (data hygiene / anti-gaming). */
 const MAX_WATER_ML = 5000
@@ -30,12 +31,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
 
   await connectDB()
-  const date = new Date().toISOString().split('T')[0]
+  // One instant, one canonical logical day (shared with recomputeDailyLog).
+  const now = new Date()
+  const clock = () => now
+  const date = await resolveLogicalToday(session.user.id, clock)
   const log = await WaterLog.create({ userId: session.user.id, date, amountMl })
 
   // Update the daily completion spine (non-fatal — the water log is already saved).
   try {
-    await recomputeDailyLog(session.user.id, date)
+    await recomputeDailyLog(session.user.id, date, undefined, clock)
   } catch (err) {
     console.error('[POST /api/water] recomputeDailyLog failed:', err)
   }

@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/mongoose'
 import { FoodLog } from '@/models/FoodLog'
 import { mealFromTime, type MealType } from '@/lib/nutrition-meal'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 
 /** Coerce an optional macro/calorie field to a safe non-negative number. */
 function nonNegNum(v: unknown): number | null {
@@ -56,8 +57,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid photoUrl' }, { status: 400 })
 
   await connectDB()
+  // `now` (event time) drives the meal-of-day bucket; the logical DAY key comes
+  // from the shared contract (challenge/user timezone + version) — two distinct
+  // concepts, deliberately not conflated.
   const now = new Date()
-  const date = now.toISOString().split('T')[0]
+  const clock = () => now
+  const date = await resolveLogicalToday(session.user.id, clock)
   const validMeals: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
   const resolvedMeal: MealType = validMeals.includes(meal) ? meal : mealFromTime(now)
 
@@ -75,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   // Update the daily completion spine (non-fatal — the food log is already saved).
   try {
-    await recomputeDailyLog(session.user.id, date)
+    await recomputeDailyLog(session.user.id, date, undefined, clock)
   } catch (err) {
     console.error('[POST /api/nutrition] recomputeDailyLog failed:', err)
   }
