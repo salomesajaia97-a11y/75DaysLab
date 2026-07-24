@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/mongoose'
 import { Photo } from '@/models/Photo'
 import { uploadPhoto, deletePhoto } from '@/lib/cloudinary'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 import { validateImage, MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 
 /** Sanity bound on the challenge day number. */
@@ -86,14 +87,18 @@ export async function POST(req: NextRequest) {
 
   try {
     await connectDB()
-    const date = new Date().toISOString().split('T')[0]
+    // One instant, reused for the event timestamp AND the logical day key.
+    // `dayNumber` (client-supplied challenge day) is a separate concept, untouched.
+    const now = new Date()
+    const clock = () => now
+    const date = await resolveLogicalToday(session.user.id, clock)
     // Upsert on the unique {userId,dayNumber} index: a second upload for the same
     // day replaces the existing record rather than creating a duplicate. `new: false`
     // returns the PRE-update doc (null on first upload) so we can clean up the old
     // Cloudinary asset it pointed at.
     const prev = await Photo.findOneAndUpdate(
       { userId: session.user.id, dayNumber },
-      { url, publicId, uploadedAt: new Date(), date },
+      { url, publicId, uploadedAt: now, date },
       { upsert: true, new: false }
     )
 
@@ -109,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // Recompute the daily completion spine (non-fatal — the photo is already saved).
     try {
-      await recomputeDailyLog(session.user.id, date)
+      await recomputeDailyLog(session.user.id, date, undefined, clock)
     } catch (recomputeErr) {
       console.error('[POST /api/photos] recomputeDailyLog failed:', recomputeErr)
     }

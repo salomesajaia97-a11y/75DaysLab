@@ -7,22 +7,32 @@ import { MAX_UPLOAD_BYTES } from '@/lib/image-validation'
 // re-upload replaces rather than duplicates, drives the daily-completion
 // recompute, and never leaks storage internals or crashes on failure.
 
-const { auth, connectDB, findOneAndUpdate, find, uploadPhoto, deletePhoto, recomputeDailyLog } =
-  vi.hoisted(() => ({
-    auth: vi.fn(),
-    connectDB: vi.fn().mockResolvedValue(undefined),
-    findOneAndUpdate: vi.fn(),
-    find: vi.fn(),
-    uploadPhoto: vi.fn(),
-    deletePhoto: vi.fn(),
-    recomputeDailyLog: vi.fn(),
-  }))
+const {
+  auth,
+  connectDB,
+  findOneAndUpdate,
+  find,
+  uploadPhoto,
+  deletePhoto,
+  recomputeDailyLog,
+  resolveLogicalToday,
+} = vi.hoisted(() => ({
+  auth: vi.fn(),
+  connectDB: vi.fn().mockResolvedValue(undefined),
+  findOneAndUpdate: vi.fn(),
+  find: vi.fn(),
+  uploadPhoto: vi.fn(),
+  deletePhoto: vi.fn(),
+  recomputeDailyLog: vi.fn(),
+  resolveLogicalToday: vi.fn(),
+}))
 
 vi.mock('@/lib/auth', () => ({ auth }))
 vi.mock('@/lib/mongoose', () => ({ connectDB }))
 vi.mock('@/models/Photo', () => ({ Photo: { findOneAndUpdate, find } }))
 vi.mock('@/lib/cloudinary', () => ({ uploadPhoto, deletePhoto }))
 vi.mock('@/lib/recompute-daily-log', () => ({ recomputeDailyLog }))
+vi.mock('@/lib/logical-day-context', () => ({ resolveLogicalToday }))
 
 import { GET, POST } from './route'
 
@@ -81,6 +91,7 @@ beforeEach(() => {
   uploadPhoto.mockReset()
   deletePhoto.mockReset()
   recomputeDailyLog.mockReset()
+  resolveLogicalToday.mockReset()
 
   auth.mockResolvedValue({ user: { id: VALID_USER_ID } })
   uploadPhoto.mockResolvedValue({ url: 'https://cdn/photo.png', publicId: 'pid-new' })
@@ -88,6 +99,8 @@ beforeEach(() => {
   findOneAndUpdate.mockResolvedValue(null)
   deletePhoto.mockResolvedValue(undefined)
   recomputeDailyLog.mockResolvedValue({ log: {}, challenge: null })
+  // Canonical logical day is resolved via the shared helper (mocked here).
+  resolveLogicalToday.mockResolvedValue('2026-07-24')
 })
 
 describe('GET /api/photos — auth & safe response shape', () => {
@@ -231,9 +244,17 @@ describe('POST /api/photos — success, dedup & recompute', () => {
     expect(res.status).toBe(201)
   })
 
-  it('triggers the daily-log recompute for the upload date', async () => {
+  it('triggers the daily-log recompute for the canonical logical date (with shared clock)', async () => {
     await POST(makeRequest({ photo: validPng(), dayNumber: 5 }))
-    expect(recomputeDailyLog).toHaveBeenCalledWith(VALID_USER_ID, expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/))
+    // Same date the shared helper resolved, plus the shared clock threaded through
+    // (no workout override for photos).
+    expect(recomputeDailyLog).toHaveBeenCalledWith(
+      VALID_USER_ID,
+      '2026-07-24',
+      undefined,
+      expect.any(Function)
+    )
+    expect(resolveLogicalToday).toHaveBeenCalledWith(VALID_USER_ID, expect.any(Function))
   })
 
   it('still returns 201 when the recompute throws (non-fatal)', async () => {

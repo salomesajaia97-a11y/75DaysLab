@@ -147,3 +147,32 @@ export function logicalToday(input: LogicalTodayInput): string {
   }
   return dayKey(input.instant, 'UTC')
 }
+
+/** Minimal shapes the day-key contract reads from a loaded Challenge / User. */
+export interface ChallengeDayContext {
+  timeZone?: string | null
+  dateKeyVersion?: number | null
+}
+export interface UserDayContext {
+  timeZone?: string | null
+}
+
+/**
+ * THE shared caller-to-recompute contract. Given an instant and the loaded
+ * (challenge, user), return the logical day key. recomputeDailyLog and every
+ * direct caller call this exact function, so the date a caller writes/passes can
+ * never disagree with the day recomputeDailyLog treats as "today". Pure — does
+ * not mutate its inputs, performs no I/O.
+ */
+export function logicalTodayFor(
+  instant: Date,
+  challenge: ChallengeDayContext | null | undefined,
+  user: UserDayContext | null | undefined
+): string {
+  return logicalToday({
+    instant,
+    challengeTimeZone: challenge?.timeZone,
+    userTimeZone: user?.timeZone,
+    dateKeyVersion: challenge?.dateKeyVersion,
+  })
+}

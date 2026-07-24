@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { JournalEntry } from '@/models/JournalEntry'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 
 /** Sanity bound on pages read (data hygiene). */
 const MAX_PAGES = 100_000
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid notes' }, { status: 400 })
 
   await connectDB()
-  const date = new Date().toISOString().split('T')[0]
+  const now = new Date()
+  const clock = () => now
+  const date = await resolveLogicalToday(session.user.id, clock)
   const entry = await JournalEntry.findOneAndUpdate(
     { userId: session.user.id, date },
     { bookTitle: bookTitle.trim(), pagesRead, notes: notes ?? '' },
@@ -42,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   // Update the daily completion spine (non-fatal — the journal entry is already saved).
   try {
-    await recomputeDailyLog(session.user.id, date)
+    await recomputeDailyLog(session.user.id, date, undefined, clock)
   } catch (err) {
     console.error('[POST /api/journal] recomputeDailyLog failed:', err)
   }

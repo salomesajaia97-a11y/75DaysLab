@@ -7,7 +7,7 @@
 import mongoose from 'mongoose'
 import { computeDailyFlags } from './daily-log'
 import { nextChallengeState, toDateStr } from './streak'
-import { logicalToday, currentInstant, systemClock, type Clock } from './date-key'
+import { logicalTodayFor, currentInstant, systemClock, type Clock } from './date-key'
 import { connectDB } from './mongoose'
 import { calculateWaterGoal } from './calculations'
 import { User } from '@/models/User'
@@ -168,14 +168,10 @@ export async function recomputeDailyLog(
 
   const log = await upsertDailyLog(userId, date, update)
 
-  // Derive the live logical day through the canonical service. Legacy (v1)
-  // challenges resolve to UTC (unchanged); v2+ resolve to the timezone snapshot.
-  const todayStr = logicalToday({
-    instant: currentInstant(clock),
-    challengeTimeZone: challenge?.timeZone,
-    userTimeZone: user?.timeZone,
-    dateKeyVersion: challenge?.dateKeyVersion,
-  })
+  // Derive the live logical day through the shared contract (logicalTodayFor).
+  // Callers derive the date they pass via the SAME function, so they agree.
+  // Legacy (v1) challenges resolve to UTC (unchanged); v2+ use the tz snapshot.
+  const todayStr = logicalTodayFor(currentInstant(clock), challenge, user)
 
   // Advance the streak only for the live day and only when an active challenge
   // exists (no active challenge => no-op, exactly as before).

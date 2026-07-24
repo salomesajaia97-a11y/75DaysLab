@@ -6,6 +6,7 @@ import { DailyLog } from '@/models/DailyLog'
 import { WaterLog } from '@/models/WaterLog'
 import { Challenge } from '@/models/Challenge'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { resolveLogicalToday } from '@/lib/logical-day-context'
 import { isValidDayString, isFutureDay, buildChallengeView } from '@/lib/progress'
 import mongoose from 'mongoose'
 
@@ -35,21 +36,26 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id || !mongoose.Types.ObjectId.isValid(session.user.id))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const today = new Date().toISOString().split('T')[0]
+  await connectDB()
+
+  // Canonical "today" via the shared contract (one instant reused for self-heal).
+  const now = new Date()
+  const clock = () => now
+  const today = await resolveLogicalToday(session.user.id, clock)
+
   const requested = req.nextUrl.searchParams.get('date')
-  // Reject malformed or future dates before any DB work (no writing the future).
+  // Reject malformed or future dates before any further work (no reading the future).
+  // `requested` is a source/browse key supplied by the client — left as-is.
   if (requested !== null && (!isValidDayString(requested) || isFutureDay(requested, today)))
     return NextResponse.json({ error: 'Invalid date' }, { status: 400 })
   const date = requested ?? today
-
-  await connectDB()
 
   // Lazy self-heal: recompute today's flags from sources and advance the
   // challenge (reset-if-missed / streak). Non-fatal — a failure just serves the
   // last stored values. Only for the live day (past dates are read-only).
   if (date === today) {
     try {
-      await recomputeDailyLog(session.user.id, date)
+      await recomputeDailyLog(session.user.id, date, undefined, clock)
     } catch (err) {
       console.error('[GET /api/daily-progress] self-heal failed:', err)
     }
