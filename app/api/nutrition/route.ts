@@ -19,7 +19,11 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   await connectDB()
-  const date = req.nextUrl.searchParams.get('date') ?? new Date().toISOString().split('T')[0]
+  // Default to the canonical logical "today" (challenge/user timezone + version)
+  // instead of a raw UTC key. An explicit ?date= is a client-supplied browse key
+  // and passes through unchanged — query semantics are otherwise untouched.
+  const today = await resolveLogicalToday(session.user.id)
+  const date = req.nextUrl.searchParams.get('date') ?? today
   const logs = await FoodLog.find({ userId: session.user.id, date }).sort({ loggedAt: 1 })
 
   const totals = logs.reduce(
