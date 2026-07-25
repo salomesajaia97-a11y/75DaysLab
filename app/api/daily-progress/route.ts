@@ -7,6 +7,8 @@ import { WaterLog } from '@/models/WaterLog'
 import { Challenge } from '@/models/Challenge'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
 import { computeDayResult } from '@/lib/daily-log'
+import { diffDays } from '@/lib/streak'
+import { logicalTodayFor } from '@/lib/date-key'
 import { resolveLogicalToday } from '@/lib/logical-day-context'
 import { isValidDayString, isFutureDay, buildChallengeView } from '@/lib/progress'
 import mongoose from 'mongoose'
@@ -62,8 +64,8 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [user, dailyLog, waterLogs, challenge, totalCompletedDays] = await Promise.all([
-    User.findById(session.user.id).select('age gender heightCm weightKg goal'),
+  const [user, dailyLog, waterLogs, challenge, totalCompletedDays, perfectDays] = await Promise.all([
+    User.findById(session.user.id).select('age gender heightCm weightKg goal timeZone'),
     DailyLog.findOne({ userId: session.user.id, date }),
     WaterLog.find({ userId: session.user.id, date }),
     Challenge.findOne({ userId: session.user.id, isActive: true }),
@@ -75,6 +77,8 @@ export async function GET(req: NextRequest) {
       userId: session.user.id,
       $or: [{ isCompleted: true }, { allComplete: true }],
     }),
+    // Historical Perfect Days (all 5 tasks). Derived stat for the dashboard.
+    DailyLog.countDocuments({ userId: session.user.id, allComplete: true }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + l.amountMl, 0)
@@ -107,6 +111,20 @@ export async function GET(req: NextRequest) {
     isPerfectDay: dayResult.isPerfectDay,
   }
 
+  // "Challenge Day" = CALENDAR days since the challenge started (monotonic,
+  // completion-independent). The engine's currentDay/attemptDay resets to 1 on a
+  // missed day (that is completion-dependent and drives the streak), so it is NOT
+  // used here. We anchor on the challenge's immutable createdAt — the only start
+  // marker the engine never rewrites — converted to a day key through the SAME
+  // timezone-aware contract as `today` (v1 = UTC, v2 = tz), then count calendar
+  // days. Clamped to [1, totalDays]. The challenge engine is untouched.
+  let challengeDay = 1
+  if (challenge) {
+    const startKey = logicalTodayFor(challenge.createdAt, challenge, user)
+    const elapsed = diffDays(startKey, today)
+    challengeDay = Math.min(Math.max(elapsed + 1, 1), challenge.totalDays)
+  }
+
   return NextResponse.json({
     // --- backward-compatible fields (existing consumers, e.g. LabAIWidget) ---
     workoutCompleted: flags.workoutCompleted,
@@ -116,6 +134,8 @@ export async function GET(req: NextRequest) {
     flags,
     // Historical verified completed days (survives resets; not calendar days).
     totalCompletedDays,
+    // Historical Perfect Days (all 5 tasks; derived stat).
+    perfectDays,
     // --- active challenge summary (null when none) ---
     challenge: challenge
       ? {
@@ -136,7 +156,8 @@ export async function GET(req: NextRequest) {
             currentStreak: challenge.currentStreak,
             longestStreak: challenge.longestStreak,
           },
-          totalCompletedDays
+          totalCompletedDays,
+          challengeDay
         )
       : null,
   })
