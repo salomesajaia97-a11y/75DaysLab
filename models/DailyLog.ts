@@ -11,6 +11,11 @@ export interface IDailyLog extends Document {
   structuredWorkoutCompleted: boolean
   outdoorWorkoutCompleted: boolean
   photoUploaded: boolean
+  /** true when >= 3 of the 5 canonical tasks are done (Completed Day). Perfect
+   *  days (all 5) are always also Completed. Absent on pre-threshold docs → read
+   *  as false; historically-perfect days remain `allComplete: true`. */
+  isCompleted: boolean
+  /** true only when ALL five tasks are done (Perfect Day). Unchanged meaning. */
   allComplete: boolean
   createdAt: Date
   updatedAt: Date
@@ -27,6 +32,7 @@ const DailyLogSchema = new Schema<IDailyLog>(
     structuredWorkoutCompleted: { type: Boolean, default: false },
     outdoorWorkoutCompleted: { type: Boolean, default: false },
     photoUploaded: { type: Boolean, default: false },
+    isCompleted: { type: Boolean, default: false },
     allComplete: { type: Boolean, default: false },
   },
   { timestamps: true }

@@ -131,6 +131,9 @@
   "dashboard.meta.completed": "Completed days",
   "dashboard.meta.length": "{n}-day challenge",
   "dashboard.meta.complete": "Challenge complete 🎉",
+  "dashboard.status.completed_day": "Completed Day",
+  "dashboard.status.perfect_day": "Perfect Day",
+  "dashboard.status.tasks_completed": "{done} of {total} tasks completed",
   "dashboard.loading": "Loading your progress…",
 
   "fitness.title": "Fitness",

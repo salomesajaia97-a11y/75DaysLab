@@ -131,6 +131,9 @@
   "dashboard.meta.completed": "დასრულებული დღეები",
   "dashboard.meta.length": "{n}-დღიანი გამოწვევა",
   "dashboard.meta.complete": "გამოწვევა დასრულდა 🎉",
+  "dashboard.status.completed_day": "დასრულებული დღე",
+  "dashboard.status.perfect_day": "იდეალური დღე",
+  "dashboard.status.tasks_completed": "{done}/{total} დავალება შესრულებულია",
   "dashboard.loading": "იტვირთება თქვენი პროგრესი…",
 
   "fitness.title": "ფიტნესი",

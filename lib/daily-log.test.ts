@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { computeDailyFlags, JOURNAL_MIN_PAGES, type DailyFlagInputs } from './daily-log'
+import {
+  computeDailyFlags,
+  computeDayResult,
+  COMPLETED_DAY_THRESHOLD,
+  DAILY_TASK_COUNT,
+  JOURNAL_MIN_PAGES,
+  type CanonicalTasks,
+  type DailyFlagInputs,
+} from './daily-log'
 
 const complete: DailyFlagInputs = {
   waterMl: 2500,
@@ -76,5 +84,121 @@ describe('computeDailyFlags', () => {
     expect(computeDailyFlags({ ...complete, journalPagesRead: null }).allComplete).toBe(false)
     expect(computeDailyFlags({ ...complete, foodLogCount: 0 }).allComplete).toBe(false)
     expect(computeDailyFlags({ ...complete, photoExists: false }).allComplete).toBe(false)
+  })
+
+  describe('day-result thresholds (Completed >= 3, Perfect === 5)', () => {
+    it('exposes completedTaskCount / isCompletedDay / isPerfectDay for a perfect day', () => {
+      const f = computeDailyFlags(complete)
+      expect(f.completedTaskCount).toBe(5)
+      expect(f.isCompletedDay).toBe(true)
+      expect(f.isPerfectDay).toBe(true)
+    })
+
+    it('isPerfectDay always equals allComplete', () => {
+      // sweep a few representative combinations
+      const cases: DailyFlagInputs[] = [
+        complete,
+        { ...complete, waterMl: 0 },
+        { ...complete, outdoorWorkoutCompleted: false },
+        { ...complete, waterMl: 0, foodLogCount: 0 },
+      ]
+      for (const c of cases) {
+        const f = computeDailyFlags(c)
+        expect(f.isPerfectDay).toBe(f.allComplete)
+      }
+    })
+
+    it('a 3/5 day (one workout session missing → workout task off, one other off) is completed but not perfect', () => {
+      // drop workout (both) + photo → 3 of 5 remain (water, journal, nutrition)
+      const f = computeDailyFlags({ ...complete, outdoorWorkoutCompleted: false, photoExists: false })
+      expect(f.completedTaskCount).toBe(3)
+      expect(f.isCompletedDay).toBe(true)
+      expect(f.isPerfectDay).toBe(false)
+    })
+
+    it('a 4/5 day is completed but not perfect', () => {
+      const f = computeDailyFlags({ ...complete, photoExists: false })
+      expect(f.completedTaskCount).toBe(4)
+      expect(f.isCompletedDay).toBe(true)
+      expect(f.isPerfectDay).toBe(false)
+    })
+
+    it('a 2/5 day is incomplete', () => {
+      // keep water + journal; drop nutrition, workout, photo
+      const f = computeDailyFlags({
+        ...complete,
+        foodLogCount: 0,
+        outdoorWorkoutCompleted: false,
+        photoExists: false,
+      })
+      expect(f.completedTaskCount).toBe(2)
+      expect(f.isCompletedDay).toBe(false)
+      expect(f.isPerfectDay).toBe(false)
+    })
+  })
+})
+
+describe('computeDayResult (canonical threshold calc)', () => {
+  const OFF: CanonicalTasks = {
+    waterCompleted: false,
+    journalCompleted: false,
+    nutritionCompleted: false,
+    workoutCompleted: false,
+    photoUploaded: false,
+  }
+  const keys = Object.keys(OFF) as (keyof CanonicalTasks)[]
+
+  /** Build a tasks object with the first `n` tasks completed. */
+  const withCount = (n: number): CanonicalTasks => {
+    const t = { ...OFF }
+    for (let i = 0; i < n; i++) t[keys[i]] = true
+    return t
+  }
+
+  it('constants match the product rules', () => {
+    expect(COMPLETED_DAY_THRESHOLD).toBe(3)
+    expect(DAILY_TASK_COUNT).toBe(5)
+  })
+
+  const truthTable: Array<[number, boolean, boolean]> = [
+    [0, false, false],
+    [1, false, false],
+    [2, false, false],
+    [3, true, false],
+    [4, true, false],
+    [5, true, true],
+  ]
+
+  for (const [count, completed, perfect] of truthTable) {
+    it(`${count}/5 → completed=${completed}, perfect=${perfect}`, () => {
+      const r = computeDayResult(withCount(count))
+      expect(r.completedTaskCount).toBe(count)
+      expect(r.isCompletedDay).toBe(completed)
+      expect(r.isPerfectDay).toBe(perfect)
+    })
+  }
+
+  it('perfect implies completed', () => {
+    const r = computeDayResult(withCount(5))
+    expect(r.isPerfectDay && r.isCompletedDay).toBe(true)
+  })
+
+  it('is deterministic — repeated calls give identical results', () => {
+    const tasks = withCount(4)
+    expect(computeDayResult(tasks)).toEqual(computeDayResult(tasks))
+  })
+
+  it('count is independent of WHICH three tasks are done', () => {
+    // every distinct triple of the five tasks is a Completed (not Perfect) day
+    for (let a = 0; a < keys.length; a++)
+      for (let b = a + 1; b < keys.length; b++)
+        for (let c = b + 1; c < keys.length; c++) {
+          const t = { ...OFF }
+          t[keys[a]] = true; t[keys[b]] = true; t[keys[c]] = true
+          const r = computeDayResult(t)
+          expect(r.completedTaskCount).toBe(3)
+          expect(r.isCompletedDay).toBe(true)
+          expect(r.isPerfectDay).toBe(false)
+        }
   })
 })

@@ -10,6 +10,13 @@ export interface DailyFlags {
   outdoorWorkoutCompleted: boolean
   workoutCompleted: boolean
   photoUploaded: boolean
+  /** number of the 5 canonical tasks done (0..5) */
+  completedTaskCount: number
+  /** >= 3 tasks done — Completed Day (counts toward streak/progress) */
+  isCompleted: boolean
+  /** all 5 tasks done — Perfect Day (also a Completed Day). Mirrors allComplete. */
+  isPerfectDay: boolean
+  /** all 5 tasks done (retained, unchanged meaning) */
   allComplete: boolean
 }
 
