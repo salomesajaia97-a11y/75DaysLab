@@ -38,6 +38,8 @@ export interface DailyProgress {
   flags: DailyFlags
   /** historical verified completed days (survives attempt resets) */
   totalCompletedDays: number
+  /** historical Perfect Days (all 5 tasks; derived stat) */
+  perfectDays: number
   /** active challenge summary, or null when none */
   challenge: ChallengeSummary | null
   /** accurately-labeled, server-owned challenge view, or null when none */

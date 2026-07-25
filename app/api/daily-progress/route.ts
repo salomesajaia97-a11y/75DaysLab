@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const [user, dailyLog, waterLogs, challenge, totalCompletedDays] = await Promise.all([
+  const [user, dailyLog, waterLogs, challenge, totalCompletedDays, perfectDays] = await Promise.all([
     User.findById(session.user.id).select('age gender heightCm weightKg goal'),
     DailyLog.findOne({ userId: session.user.id, date }),
     WaterLog.find({ userId: session.user.id, date }),
@@ -75,6 +75,8 @@ export async function GET(req: NextRequest) {
       userId: session.user.id,
       $or: [{ isCompleted: true }, { allComplete: true }],
     }),
+    // Historical Perfect Days (all 5 tasks). Derived stat for the dashboard.
+    DailyLog.countDocuments({ userId: session.user.id, allComplete: true }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + l.amountMl, 0)
@@ -116,6 +118,8 @@ export async function GET(req: NextRequest) {
     flags,
     // Historical verified completed days (survives resets; not calendar days).
     totalCompletedDays,
+    // Historical Perfect Days (all 5 tasks; derived stat).
+    perfectDays,
     // --- active challenge summary (null when none) ---
     challenge: challenge
       ? {
