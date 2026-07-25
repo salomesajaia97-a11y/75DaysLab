@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
   // Five independent, clearly-labeled metrics (reusing the gradient tile style).
   const stats = [
-    { key: 'day',     label: t('dashboard.stat.day'),            num: view.attemptDay,        sub: t('dashboard.stat.of', { n: view.totalDays }), icon: '📅', grad: 'linear-gradient(135deg, #5eb6f7 0%, #2f72d6 100%)', glow: 'rgba(47, 114, 214, 0.35)' },
+    { key: 'day',     label: t('dashboard.stat.day'),            num: view.challengeDay,      sub: t('dashboard.stat.of', { n: view.totalDays }), icon: '📅', grad: 'linear-gradient(135deg, #5eb6f7 0%, #2f72d6 100%)', glow: 'rgba(47, 114, 214, 0.35)' },
     { key: 'done',    label: t('dashboard.stat.completed_days'), num: view.totalCompletedDays, sub: null,                                          icon: '✅', grad: 'linear-gradient(135deg, #5fd6a3 0%, #20a06b 100%)', glow: 'rgba(32, 160, 107, 0.35)' },
     { key: 'streak',  label: t('dashboard.stat.streak'),         num: view.currentStreak,      sub: null,                                          icon: '🔥', grad: 'linear-gradient(135deg, #ff8a4c 0%, #ef4f2b 100%)', glow: 'rgba(239, 79, 43, 0.35)' },
     { key: 'perfect', label: t('dashboard.stat.perfect_days'),   num: perfectDays,             sub: null,                                          icon: '⭐', grad: 'linear-gradient(135deg, #b388ff 0%, #7c4dff 100%)', glow: 'rgba(124, 77, 255, 0.35)' },
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                 </Badge>
               ) : null}
             </div>
-            <StreakCounter day={view.attemptDay} totalDays={view.totalDays} />
+            <StreakCounter day={view.challengeDay} totalDays={view.totalDays} />
           </div>
         </div>
       </ScrollReveal>

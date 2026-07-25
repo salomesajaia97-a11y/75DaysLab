@@ -57,7 +57,24 @@ describe('buildChallengeView', () => {
 
   it('EMPTY_CHALLENGE_VIEW is a safe zero state', () => {
     expect(EMPTY_CHALLENGE_VIEW.attemptDay).toBe(1)
+    expect(EMPTY_CHALLENGE_VIEW.challengeDay).toBe(1)
     expect(EMPTY_CHALLENGE_VIEW.currentStreak).toBe(0)
     expect(EMPTY_CHALLENGE_VIEW.isComplete).toBe(false)
+  })
+
+  describe('challengeDay (calendar-based, independent of attempt/streak)', () => {
+    it('defaults to attemptDay when no calendar day is supplied', () => {
+      const v = buildChallengeView({ totalDays: 75, currentDay: 3, currentStreak: 2, longestStreak: 2 }, 2)
+      expect(v.challengeDay).toBe(3)
+    })
+
+    it('uses the supplied calendar day, independent of attemptDay/streak', () => {
+      // A missed-day reset put the attempt back to Day 1 / streak 0, but the
+      // calendar day keeps climbing.
+      const v = buildChallengeView({ totalDays: 75, currentDay: 1, currentStreak: 0, longestStreak: 5 }, 5, 12)
+      expect(v.attemptDay).toBe(1) // engine attempt day (unchanged)
+      expect(v.currentStreak).toBe(0) // streak (unchanged)
+      expect(v.challengeDay).toBe(12) // calendar day, does NOT reset
+    })
   })
 })

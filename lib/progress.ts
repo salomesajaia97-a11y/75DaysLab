@@ -25,8 +25,14 @@ export function isFutureDay(day: string, today: string): boolean {
 export interface ChallengeView {
   /** the selected challenge length: 30 | 40 | 55 | 75 */
   totalDays: number
-  /** current ATTEMPT day (1..totalDays); resets to 1 on a missed day */
+  /** current ATTEMPT day (1..totalDays); resets to 1 on a missed day. Drives the
+   *  streak engine — NOT the user-facing "Challenge Day" (use challengeDay). */
   attemptDay: number
+  /** CALENDAR days since the challenge started (1..totalDays), monotonic and
+   *  completion-independent — never resets on a missed day. This is the value
+   *  shown as "Challenge Day". Derived from the immutable start anchor in the
+   *  timezone-aware read layer; falls back to attemptDay when not supplied. */
+  challengeDay: number
   /** consecutive complete days in the current attempt */
   currentStreak: number
   /** best streak ever — preserved across resets */
@@ -46,12 +52,19 @@ export interface RawChallenge {
   longestStreak: number
 }
 
-export function buildChallengeView(raw: RawChallenge, totalCompletedDays: number): ChallengeView {
+export function buildChallengeView(
+  raw: RawChallenge,
+  totalCompletedDays: number,
+  /** calendar days since start; defaults to attemptDay for callers that don't
+   *  supply the immutable start anchor (keeps the value present and sane). */
+  challengeDay: number = raw.currentDay
+): ChallengeView {
   const totalDays = raw.totalDays
   const attemptDay = raw.currentDay
   return {
     totalDays,
     attemptDay,
+    challengeDay,
     currentStreak: raw.currentStreak,
     longestStreak: raw.longestStreak,
     totalCompletedDays,
@@ -64,6 +77,7 @@ export function buildChallengeView(raw: RawChallenge, totalCompletedDays: number
 export const EMPTY_CHALLENGE_VIEW: ChallengeView = {
   totalDays: 75,
   attemptDay: 1,
+  challengeDay: 1,
   currentStreak: 0,
   longestStreak: 0,
   totalCompletedDays: 0,
