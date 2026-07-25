@@ -84,7 +84,9 @@ export default function DashboardPage() {
   const flags = progress?.flags
   const tasks = TASK_DEFS.map(d => ({ ...d, done: flags ? flagForTask(d.id, flags) : false }))
   const completedCount = tasks.filter(t => t.done).length
-  const allDone = Boolean(flags) && completedCount === tasks.length
+  // Day status is server-owned (canonical 3/5 & 5/5 thresholds). Perfect ⊂ Completed.
+  const isPerfectDay = Boolean(flags?.isPerfectDay)
+  const isCompletedDay = Boolean(flags?.isCompleted)
 
   // Accurately-labeled, server-owned challenge values. No calendar-day fudging.
   const view = progress?.view ?? EMPTY_CHALLENGE_VIEW
@@ -141,9 +143,16 @@ export default function DashboardPage() {
                 <Badge className="mt-3 bg-green-500/20 text-green-700 border-green-500/30">
                   <Flame className="h-3 w-3 mr-1" /> {t('dashboard.meta.complete')}
                 </Badge>
-              ) : allDone ? (
+              ) : isPerfectDay ? (
                 <Badge className="mt-3 bg-green-500/20 text-green-700 border-green-500/30">
-                  <Flame className="h-3 w-3 mr-1" /> {t('dashboard.day_complete')} 🎉
+                  <Flame className="h-3 w-3 mr-1" /> {t('dashboard.status.perfect_day')} 🎉
+                </Badge>
+              ) : isCompletedDay ? (
+                <Badge className="mt-3 bg-amber-500/20 text-amber-700 border-amber-500/30">
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> {t('dashboard.status.completed_day')}
+                  <span className="ml-1 opacity-80">
+                    · {t('dashboard.status.tasks_completed', { done: completedCount, total: tasks.length })}
+                  </span>
                 </Badge>
               ) : null}
             </div>

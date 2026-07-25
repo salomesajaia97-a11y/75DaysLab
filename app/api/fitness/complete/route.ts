@@ -39,6 +39,10 @@ export async function POST(req: NextRequest) {
     outdoorWorkoutCompleted: log.outdoorWorkoutCompleted,
     workoutCompleted: log.workoutCompleted,
     photoUploaded: log.photoUploaded,
+    // Completed Day (>= 3 tasks) and Perfect Day (all 5). isPerfectDay mirrors
+    // the retained allComplete field.
+    isCompleted: log.isCompleted,
+    isPerfectDay: log.allComplete,
     allComplete: log.allComplete,
   })
 }

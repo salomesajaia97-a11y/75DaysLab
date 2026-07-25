@@ -6,6 +6,7 @@ import { DailyLog } from '@/models/DailyLog'
 import { WaterLog } from '@/models/WaterLog'
 import { Challenge } from '@/models/Challenge'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
+import { computeDayResult } from '@/lib/daily-log'
 import { resolveLogicalToday } from '@/lib/logical-day-context'
 import { isValidDayString, isFutureDay, buildChallengeView } from '@/lib/progress'
 import mongoose from 'mongoose'
@@ -67,8 +68,13 @@ export async function GET(req: NextRequest) {
     WaterLog.find({ userId: session.user.id, date }),
     Challenge.findOne({ userId: session.user.id, isActive: true }),
     // Historical verified completed days — survives attempt resets (never a
-    // calendar-day count). This is the honest "completed days" metric.
-    DailyLog.countDocuments({ userId: session.user.id, allComplete: true }),
+    // calendar-day count). This is the honest "completed days" metric. Counts
+    // Completed Days (>= 3 tasks) plus historically-perfect days recorded before
+    // the isCompleted field existed (allComplete implies completed).
+    DailyLog.countDocuments({
+      userId: session.user.id,
+      $or: [{ isCompleted: true }, { allComplete: true }],
+    }),
   ])
 
   const waterMl = waterLogs.reduce((sum, l) => sum + l.amountMl, 0)
@@ -80,15 +86,25 @@ export async function GET(req: NextRequest) {
     user?.goal
   )
 
-  const flags = {
+  const workoutCompleted = dailyLog?.workoutCompleted ?? false
+  const baseFlags = {
     waterCompleted: dailyLog?.waterCompleted ?? false,
     journalCompleted: dailyLog?.journalCompleted ?? false,
     nutritionCompleted: dailyLog?.nutritionCompleted ?? false,
     structuredWorkoutCompleted: dailyLog?.structuredWorkoutCompleted ?? false,
     outdoorWorkoutCompleted: dailyLog?.outdoorWorkoutCompleted ?? false,
-    workoutCompleted: dailyLog?.workoutCompleted ?? false,
+    workoutCompleted,
     photoUploaded: dailyLog?.photoUploaded ?? false,
     allComplete: dailyLog?.allComplete ?? false,
+  }
+  // Derive the day result from the SAME canonical calc used by the recompute
+  // spine (never a second copy of the 3/5 threshold). isPerfectDay === allComplete.
+  const dayResult = computeDayResult(baseFlags)
+  const flags = {
+    ...baseFlags,
+    completedTaskCount: dayResult.completedTaskCount,
+    isCompleted: dayResult.isCompletedDay,
+    isPerfectDay: dayResult.isPerfectDay,
   }
 
   return NextResponse.json({

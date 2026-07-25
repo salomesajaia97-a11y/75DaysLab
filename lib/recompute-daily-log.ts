@@ -159,6 +159,9 @@ export async function recomputeDailyLog(
     nutritionCompleted: flags.nutritionCompleted,
     photoUploaded: flags.photoUploaded,
     workoutCompleted: flags.workoutCompleted,
+    // Completed Day (>= 3 tasks) — drives streak/progress. allComplete (all 5)
+    // is retained unchanged and equals the Perfect-Day fact.
+    isCompleted: flags.isCompletedDay,
     allComplete: flags.allComplete,
   }
   if (workout?.structuredWorkoutCompleted !== undefined)
@@ -177,7 +180,7 @@ export async function recomputeDailyLog(
   // exists (no active challenge => no-op, exactly as before).
   const advancedChallenge =
     challenge && date === todayStr
-      ? await updateChallengeForDay(challenge, date, flags.allComplete)
+      ? await updateChallengeForDay(challenge, date, flags.isCompletedDay)
       : null
 
   return { log, challenge: advancedChallenge }
