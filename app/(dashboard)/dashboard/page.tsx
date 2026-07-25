@@ -184,7 +184,7 @@ export default function DashboardPage() {
                 </Badge>
               ) : null}
             </div>
-            <StreakCounter day={view.challengeDay} totalDays={view.totalDays} />
+            <StreakCounter day={view.challengeDay} totalDays={view.totalDays} label={t('dashboard.stat.day')} />
           </div>
         </div>
       </ScrollReveal>

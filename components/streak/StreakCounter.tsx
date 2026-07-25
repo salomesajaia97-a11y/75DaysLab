@@ -5,9 +5,13 @@ import { Flame } from 'lucide-react'
 interface StreakCounterProps {
   day: number
   totalDays: number
+  /** Caption under the ring. The ring shows the "N of totalDays" value, so the
+   *  label must name THAT value (e.g. "Challenge Day") — not the streak, which
+   *  has its own metric card. Passed in so it stays i18n-aware. */
+  label: string
 }
 
-export function StreakCounter({ day, totalDays }: StreakCounterProps) {
+export function StreakCounter({ day, totalDays, label }: StreakCounterProps) {
   const percent = Math.min((day / totalDays) * 100, 100)
 
   return (
@@ -51,7 +55,7 @@ export function StreakCounter({ day, totalDays }: StreakCounterProps) {
           <span className="text-xs text-muted-foreground">of {totalDays}</span>
         </div>
       </div>
-      <span className="text-sm font-medium text-muted-foreground">Day Streak</span>
+      <span className="text-sm font-medium text-muted-foreground">{label}</span>
     </div>
   )
 }
