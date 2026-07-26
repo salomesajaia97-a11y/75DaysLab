@@ -8,6 +8,7 @@ import type { MealType } from '@/lib/nutrition-meal'
 import type { FoodEntry } from '@/types'
 import type { FavoriteFood } from '@/lib/favorites'
 import { useFoodLogging, type Macros } from './useFoodLogging'
+import { fileInputProps } from '@/lib/nutrition-scan'
 
 type View = 'menu' | 'text' | 'camera' | 'gallery' | 'favorites'
 
@@ -34,6 +35,9 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
   const [description, setDescription] = useState('')
   const [macros, setMacros] = useState<Macros | null>(null)
   const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined)
+  // Last picked file, kept so "Retry" can re-scan the SAME image without asking
+  // the user to select it again.
+  const [lastFile, setLastFile] = useState<File | undefined>(undefined)
   const [favorites, setFavorites] = useState<FavoriteFood[]>([])
   const [favLoading, setFavLoading] = useState(false)
   const [portalMounted, setPortalMounted] = useState(false)
@@ -46,7 +50,7 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
   useEffect(() => {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setView('menu'); setDescription(''); setMacros(null); setPhotoUrl(undefined)
+      setView('menu'); setDescription(''); setMacros(null); setPhotoUrl(undefined); setLastFile(undefined)
       log.clearError()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -69,7 +73,9 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
   const mealLabel = t(`nutrition.meal_${meal}`)
 
   async function handleFile(file: File | undefined) {
-    if (!file) return
+    // Duplicate-submit guard: ignore new selections while a scan is in flight.
+    if (!file || log.scanning) return
+    setLastFile(file)
     const { macros: m, photoUrl: url } = await log.scanPhoto(file)
     if (m) { setMacros(m); setDescription(m.food ?? 'Scanned meal'); setPhotoUrl(url) }
   }
@@ -157,18 +163,48 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
               )}
 
               {(view === 'camera' || view === 'gallery') && (
-                <label
-                  className="flex items-center justify-center gap-2 rounded-xl py-8 cursor-pointer text-sm"
-                  style={{ background: 'var(--background)', border: '1px dashed var(--border)', color: 'var(--muted-foreground)' }}
-                >
-                  {log.scanning
-                    ? <><Loader2 className="h-4 w-4 animate-spin" /> {t('nutrition.add.scanning')}</>
-                    : <>{view === 'camera' ? <Camera className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />} {t(`recipes.add.${view}_desc`)}</>}
-                  <input
-                    type="file" accept="image/*" {...(view === 'camera' ? { capture: 'environment' as const } : {})}
-                    className="hidden" onChange={e => handleFile(e.target.files?.[0])}
-                  />
-                </label>
+                <>
+                  <label
+                    className="flex items-center justify-center gap-2 rounded-xl py-8 cursor-pointer text-sm"
+                    style={{ background: 'var(--background)', border: '1px dashed var(--border)', color: 'var(--muted-foreground)' }}
+                  >
+                    {log.scanning
+                      ? <><Loader2 className="h-4 w-4 animate-spin" /> {t('nutrition.add.scanning')}</>
+                      : <>{view === 'camera' ? <Camera className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />} {t(`recipes.add.${view}_desc`)}</>}
+                    <input
+                      type="file" {...fileInputProps(view)}
+                      className="hidden" disabled={log.scanning}
+                      onChange={e => handleFile(e.target.files?.[0])}
+                    />
+                  </label>
+
+                  {/* Actionable failure state — never a bare red sentence. The
+                      persistent label above already offers "choose/take another";
+                      here we add Retry (same image) and a manual-entry escape. */}
+                  {log.error && !log.scanning && (
+                    <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--background)', border: '1px solid var(--destructive)' }}>
+                      <p className="text-sm" style={{ color: 'var(--destructive)' }}>{log.error}</p>
+                      <div className="flex gap-2">
+                        {lastFile && (
+                          <button
+                            type="button" onClick={() => handleFile(lastFile)} disabled={log.scanning}
+                            className="flex-1 rounded-xl py-2.5 text-sm font-semibold"
+                            style={{ background: 'var(--foreground)', color: 'var(--primary-foreground)' }}
+                          >
+                            {t('nutrition.add.retry')}
+                          </button>
+                        )}
+                        <button
+                          type="button" onClick={() => { log.clearError(); setView('text') }}
+                          className="flex-1 rounded-xl py-2.5 text-sm font-semibold"
+                          style={{ background: 'var(--muted)', color: 'var(--foreground)' }}
+                        >
+                          {t('nutrition.add.describe_manually')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {view === 'text' && !macros && (
@@ -203,7 +239,9 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
                 </div>
               )}
 
-              {log.error && <p className="text-xs text-destructive">{log.error}</p>}
+              {/* Camera/gallery errors use the rich panel above; text-estimate
+                  errors keep the inline line. */}
+              {log.error && view === 'text' && <p className="text-xs text-destructive">{log.error}</p>}
             </div>
           )}
 

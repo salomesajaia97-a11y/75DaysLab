@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { FoodEntry } from '@/types'
 import type { MealType } from '@/lib/nutrition-meal'
+import { scanErrorMessage, SCAN_FALLBACK_ERROR } from '@/lib/nutrition-scan'
 
 export interface Macros {
   calories: number
@@ -55,11 +56,18 @@ export function useFoodLogging(): UseFoodLogging {
       const fd = new FormData()
       fd.append('image', file)
       const res = await fetch('/api/nutrition/scan', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        // The scan API returns user-safe, secret-free messages; surface them so
+        // the user learns WHY (too large, unsupported, couldn't analyze) instead
+        // of always seeing the same generic line.
+        setError(scanErrorMessage(data?.error))
+        return { macros: null }
+      }
       return { macros: data.macros ?? null, photoUrl: data.photoUrl }
     } catch {
-      setError('Photo scan failed. Try again or describe it.')
+      // Network/opaque failure — no server message to trust.
+      setError(SCAN_FALLBACK_ERROR)
       return { macros: null }
     } finally {
       setScanning(false)
