@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/mongoose'
 import { JournalEntry } from '@/models/JournalEntry'
 import { recomputeDailyLog } from '@/lib/recompute-daily-log'
 import { resolveLogicalToday } from '@/lib/logical-day-context'
+import { isValidCivilDate } from '@/lib/date-key'
 
 /** Sanity bound on pages read (data hygiene). */
 const MAX_PAGES = 100_000
@@ -13,12 +14,17 @@ export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Reject a malformed browse key before it ever reaches the query.
+  const requested = req.nextUrl.searchParams.get('date')
+  if (requested !== null && !isValidCivilDate(requested))
+    return NextResponse.json({ error: 'Invalid date', code: 'invalid_date' }, { status: 400 })
+
   await connectDB()
   // Default to the canonical logical "today" (challenge/user timezone + version)
   // instead of a raw UTC key. An explicit ?date= is a client-supplied browse key
   // and passes through unchanged — query semantics are otherwise untouched.
   const today = await resolveLogicalToday(session.user.id)
-  const date = req.nextUrl.searchParams.get('date') ?? today
+  const date = requested ?? today
   const entry = await JournalEntry.findOne({ userId: session.user.id, date })
 
   return NextResponse.json(entry ?? null)

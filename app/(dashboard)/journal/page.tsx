@@ -1,18 +1,17 @@
 'use client'
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { JournalEntryForm } from '@/components/journal/JournalEntry'
+import { JournalExperience } from '@/components/journal/JournalExperience'
 import { ScrollReveal, Aurora } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 
 export default function JournalPage() {
   const { t } = useLanguage()
-  const [saved, setSaved] = useState(false)
 
   return (
     <div className="relative">
       <Aurora />
-      <div className="relative z-10 max-w-2xl mx-auto space-y-6">
+      <div className="relative z-10 mx-auto max-w-2xl space-y-6">
         <ScrollReveal>
           <div
             className="living-gradient relative overflow-hidden rounded-[2rem] p-7 md:p-8"
@@ -27,16 +26,26 @@ export default function JournalPage() {
             <div className="relative">
               <span className="inline-block h-1.5 w-12 rounded-full mb-4" style={{ background: 'linear-gradient(90deg, #b69cff, #7c5cd6)' }} />
               <h1 className="text-4xl md:text-5xl font-bold leading-[1.05] text-[#2d3142]">{t('journal.title')}</h1>
+              <p className="mt-3 max-w-md text-sm text-[#4a4d63] md:text-base">{t('journal.subtitle')}</p>
             </div>
           </div>
         </ScrollReveal>
+
+        {/* Daily reflection — persistent, editable, browsable. */}
         <ScrollReveal delay={0.08}>
+          <JournalExperience />
+        </ScrollReveal>
+
+        {/* Reading log — the existing challenge task. Untouched by the
+            reflection feature; it is the only thing that can flip
+            `journalCompleted`. */}
+        <ScrollReveal delay={0.16}>
           <Card>
             <CardHeader>
               <CardTitle>{t('journal.card_title')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <JournalEntryForm onSaved={() => setSaved(true)} />
+              <JournalEntryForm onSaved={() => {}} />
             </CardContent>
           </Card>
         </ScrollReveal>

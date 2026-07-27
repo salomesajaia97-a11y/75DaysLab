@@ -22,8 +22,10 @@ export function JournalEntryForm({ existingEntry, onSaved }: JournalEntryFormPro
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0]
-    fetch(`/api/journal?date=${today}`)
+    // No `?date=` on purpose: the server resolves the canonical logical today
+    // (challenge/user timezone + day-key version). Slicing the browser clock
+    // here could load — and then overwrite — the wrong day near midnight.
+    fetch('/api/journal')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && data.bookTitle) {

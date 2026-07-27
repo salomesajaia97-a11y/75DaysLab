@@ -1,3 +1,5 @@
+import type { JournalMood } from '@/lib/journal'
+
 export type Goal = 'lose' | 'gain' | 'maintain' | 'healthy'
 export type FocusArea = 'nutrition' | 'workout' | 'sleep' | 'other'
 export type Gender = 'male' | 'female' | 'other'
@@ -31,9 +33,16 @@ export interface WaterEntry {
 export interface JournalEntry {
   id: string
   date: string
+  /** reading log (challenge task) */
   bookTitle: string
-  pagesRead: number
+  pagesRead?: number
   notes: string
+  /** daily reflection — never an input to challenge completion */
+  mood?: JournalMood
+  title?: string
+  reflection?: string
+  gratitude?: string
+  tomorrowFocus?: string
 }
 
 export interface FoodEntry {
