@@ -42,11 +42,15 @@ export function MoodSelector({ value, onChange, disabled }: MoodSelectorProps) {
     refs.current[next]?.focus()
   }
 
+  // Three across on narrow phones, five from 420px up: five columns inside the
+  // card leave only ~41px each, which cannot hold a long Georgian label
+  // ("ჩვეულებრივ") without breaking it mid-word and is a cramped touch target.
+  // Three columns give ~73px and wrap on word boundaries.
   return (
     <div
       role="radiogroup"
       aria-label={t('journal.mood.label')}
-      className="grid grid-cols-5 gap-1.5 sm:gap-2"
+      className="grid grid-cols-3 gap-1.5 min-[420px]:grid-cols-5 sm:gap-2"
     >
       {JOURNAL_MOODS.map((mood, i) => {
         const selected = value === mood
@@ -66,7 +70,7 @@ export function MoodSelector({ value, onChange, disabled }: MoodSelectorProps) {
             onKeyDown={(e) => onKeyDown(e, i)}
             onClick={() => onChange(selected ? null : mood)}
             className={cn(
-              'relative flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center transition-colors',
+              'relative flex min-h-[4.25rem] min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1 py-2 text-center transition-colors',
               'outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring',
               'disabled:pointer-events-none disabled:opacity-50',
               selected
@@ -85,9 +89,13 @@ export function MoodSelector({ value, onChange, disabled }: MoodSelectorProps) {
             <span aria-hidden className="text-xl leading-none">
               {MOOD_FACE[mood]}
             </span>
+            {/* `overflow-wrap: anywhere` (not `break-word`) is required: it also
+                shrinks the flex item's min-content size, so a long unbroken
+                Georgian label like "ჩვეულებრივ" wraps inside its tile instead
+                of spilling across the neighbouring moods. */}
             <span
               className={cn(
-                'text-[0.62rem] leading-tight break-words sm:text-[0.7rem]',
+                'w-full [overflow-wrap:anywhere] text-[0.62rem] leading-tight sm:text-[0.7rem]',
                 selected ? 'font-semibold text-foreground' : 'text-muted-foreground'
               )}
             >
