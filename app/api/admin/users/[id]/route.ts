@@ -39,7 +39,7 @@ export async function PATCH(
     update.role = role
   }
 
-  const user = await User.findByIdAndUpdate(id, update, { new: true })
+  const user = await User.findByIdAndUpdate(id, update, { returnDocument: 'after' })
     .select('username email role planId planAssignedAt')
     .lean()
 

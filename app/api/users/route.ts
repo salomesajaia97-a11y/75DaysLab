@@ -25,7 +25,7 @@ export async function PATCH(req: NextRequest) {
   const safe = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)))
 
   await connectDB()
-  const user = await User.findByIdAndUpdate(session.user.id, safe, { new: true }).select(
+  const user = await User.findByIdAndUpdate(session.user.id, safe, { returnDocument: 'after' }).select(
     '-passwordHash'
   )
 

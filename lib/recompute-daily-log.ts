@@ -200,7 +200,7 @@ async function upsertDailyLog(
     const doc = await DailyLog.findOneAndUpdate(
       filter,
       { $set: update },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
     )
     if (doc) return doc
   } catch (err) {
@@ -208,7 +208,7 @@ async function upsertDailyLog(
     // Lost the insert race — fall through to a plain update on the now-existing doc.
   }
 
-  const doc = await DailyLog.findOneAndUpdate(filter, { $set: update }, { new: true })
+  const doc = await DailyLog.findOneAndUpdate(filter, { $set: update }, { returnDocument: 'after' })
   if (!doc) throw new Error(`DailyLog upsert failed for ${userId} ${date}`)
   return doc
 }

@@ -157,6 +157,52 @@ export const VISION_MODELS = [
   'meta-llama/llama-4-maverick',
 ]
 
+// Same reasoning as VISION_MODELS, for the coach/food-log text path.
+// `meta-llama/llama-3.1-8b-instruct` used to be first here and was measurably
+// unfit for macro estimation: across a 10-case benchmark it landed in a sane
+// calorie range 1/10 times, returned wildly inconsistent numbers for identical
+// input, and — worst — sometimes omitted the <macros> tag entirely, which makes
+// the app log a 0-calorie meal. gemini-3.5-flash-lite always emits the tag and
+// is consistent run to run, so it leads. llama is kept only as a last resort.
+export const TEXT_MODELS = [
+  'google/gemini-3.5-flash-lite',
+  'google/gemini-3.1-flash-lite',
+  'meta-llama/llama-3.1-8b-instruct',
+]
+
+/**
+ * Runs the coach prompt through TEXT_MODELS, returning the first non-empty
+ * reply. Throws only if every model failed, so callers keep their own
+ * error handling for a total outage.
+ */
+export async function completeCoachChat(
+  systemPrompt: string,
+  message: string,
+  maxTokens: number
+): Promise<string> {
+  let lastError = 'no models attempted'
+  for (const model of TEXT_MODELS) {
+    try {
+      const completion = await openRouterClient.chat.completions.create({
+        model,
+        max_tokens: maxTokens,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message },
+        ],
+      })
+      const raw = completion.choices[0]?.message?.content ?? ''
+      if (raw) return raw
+      lastError = 'empty response'
+      console.error(`[completeCoachChat] ${model}: empty response, trying next model`)
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err)
+      console.error(`[completeCoachChat] ${model}:`, lastError)
+    }
+  }
+  throw new Error(lastError)
+}
+
 const PHOTO_SYSTEM = `You are a nutrition vision estimator. Look at the food photo and estimate its nutrition for the full portion shown.
 Reply with ONLY this tag and nothing else:
 <macros>{"calories":0,"proteinG":0,"carbsG":0,"fatG":0,"food":"short description"}</macros>

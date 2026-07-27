@@ -68,8 +68,13 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
 
   const mealLabel = t(`nutrition.meal_${meal}`)
 
+  // Every new attempt clears the previous result first. Without this, a failed
+  // re-scan leaves the last photo's macros on screen next to the error message,
+  // with an active "Log to <meal>" button — so the user can log food they never
+  // photographed.
   async function handleFile(file: File | undefined) {
     if (!file) return
+    setMacros(null); setPhotoUrl(undefined); setDescription('')
     const { macros: m, photoUrl: url } = await log.scanPhoto(file)
     if (m) { setMacros(m); setDescription(m.food ?? 'Scanned meal'); setPhotoUrl(url) }
   }
@@ -77,6 +82,7 @@ export function AddFoodSheet({ meal, open, onClose, onLogged }: AddFoodSheetProp
   async function handleEstimate() {
     const text = description.trim()
     if (!text) return
+    setMacros(null); setPhotoUrl(undefined)
     const m = await log.estimateText(text)
     if (m) setMacros(m)
   }

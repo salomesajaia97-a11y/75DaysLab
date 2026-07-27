@@ -47,7 +47,7 @@ export async function PATCH(
   const body = await req.json()
   await connectDB()
 
-  const doc = await meta.model.findByIdAndUpdate(id, body, { new: true })
+  const doc = await meta.model.findByIdAndUpdate(id, body, { returnDocument: 'after' })
   if (!doc) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ doc })

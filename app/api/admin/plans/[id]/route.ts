@@ -20,7 +20,7 @@ export async function PATCH(
   const body = await req.json()
   await connectDB()
 
-  const plan = await Plan.findByIdAndUpdate(id, body, { new: true })
+  const plan = await Plan.findByIdAndUpdate(id, body, { returnDocument: 'after' })
   if (!plan) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({ plan })

@@ -30,7 +30,7 @@ export async function PATCH(req: Request) {
   const doc = await SiteConfig.findOneAndUpdate(
     {},
     { theme, updatedBy: session.user.id },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   )
 
   revalidateTag('site-config', 'max')
