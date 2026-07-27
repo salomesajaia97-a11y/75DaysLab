@@ -62,6 +62,8 @@ const REQUIRED_KEYS = [
   'journal.history.no_text',
 ]
 
+const dictGe = (key: string): string => ge[key as keyof typeof ge] ?? ''
+
 /** `{name}` placeholders used by the provider's interpolate(). */
 function placeholders(value: string): string[] {
   return [...value.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort()
@@ -92,6 +94,32 @@ describe('interpolation parity', () => {
         placeholders(en[key as keyof typeof en] ?? '')
       )
     }
+  })
+})
+
+describe('feature naming', () => {
+  it('is "Journal" in English, everywhere the feature is named', () => {
+    expect(en['nav.journal']).toBe('Journal')
+    expect(en['journal.title']).toBe('Journal')
+  })
+
+  it('is "დღიური" in Georgian, everywhere the feature is named', () => {
+    expect(ge['nav.journal']).toBe('დღიური')
+    expect(ge['journal.title']).toBe('დღიური')
+  })
+
+  it('never uses a rejected Georgian name for the feature', () => {
+    // "ჯურნალი" is a transliteration, and "კითხვა და დღიური" mixed the reading
+    // task into the feature name. Neither may appear in any Georgian string.
+    const offenders = Object.entries(ge)
+      .filter(([, v]) => typeof v === 'string' && /ჯურნალი|კითხვა და დღიური/.test(v))
+      .map(([k]) => k)
+    expect(offenders).toEqual([])
+  })
+
+  it('never leaves the Latin word "Journal" in a Georgian Journal string', () => {
+    const offenders = REQUIRED_KEYS.filter((k) => /journal/i.test(dictGe(k)))
+    expect(offenders).toEqual([])
   })
 })
 

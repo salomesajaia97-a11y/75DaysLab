@@ -163,7 +163,7 @@
   "water.card_title": "Today's Water Intake",
   "water.goal_desc": "Daily goal: {ml} ml — calculated from your profile",
 
-  "journal.title": "Reading & Journal",
+  "journal.title": "Journal",
   "journal.card_title": "Today's Reading",
 
   "nutrition.title": "Nutrition",
@@ -457,7 +457,7 @@
   "journal.log_more": "Log more",
   "journal.save_failed": "Failed to save",
   "journal.save_failed_retry": "Failed to save. Try again.",
-  "journal.subtitle": "Log what you read, then reflect on how the day actually went.",
+  "journal.subtitle": "Reflect on how the day actually went — and log what you read.",
   "journal.day.today": "Today",
   "journal.day.prev": "Previous day",
   "journal.day.next": "Next day",

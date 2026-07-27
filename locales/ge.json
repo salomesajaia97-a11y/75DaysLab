@@ -163,7 +163,7 @@
   "water.card_title": "დღევანდელი წყლის მოხმარება",
   "water.goal_desc": "დღიური ნორმა: {ml} მლ — გამოთვლილია შენი პროფილიდან",
 
-  "journal.title": "კითხვა და დღიური",
+  "journal.title": "დღიური",
   "journal.card_title": "დღევანდელი კითხვა",
 
   "nutrition.title": "კვება",
@@ -457,7 +457,7 @@
   "journal.log_more": "კიდევ აღრიცხვა",
   "journal.save_failed": "შენახვა ვერ მოხერხდა",
   "journal.save_failed_retry": "შენახვა ვერ მოხერხდა. სცადე თავიდან.",
-  "journal.subtitle": "ჩაინიშნე რა წაიკითხე და დაფიქრდი, როგორ ჩაიარა დღემ.",
+  "journal.subtitle": "დაფიქრდი, როგორ ჩაიარა დღემ — და ჩაინიშნე რა წაიკითხე.",
   "journal.day.today": "დღეს",
   "journal.day.prev": "წინა დღე",
   "journal.day.next": "მომდევნო დღე",

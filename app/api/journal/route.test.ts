@@ -85,14 +85,17 @@ describe('POST /api/journal (reading log) — contract unchanged', () => {
 
     const [filter, update] = findOneAndUpdate.mock.calls[0]
     expect(filter).toEqual({ userId: USER_A, date: TODAY })
-    expect(update).toEqual({ bookTitle: 'Deep Work', pagesRead: 24, notes: 'ch2' })
+    // An explicit $set, never a replacement document — a replacement would wipe
+    // the reflection half of the same row.
+    expect(update).toEqual({ $set: { bookTitle: 'Deep Work', pagesRead: 24, notes: 'ch2' } })
     expect(recomputeDailyLog).toHaveBeenCalledWith(USER_A, TODAY, undefined, expect.any(Function))
   })
 
   it('does not write any reflection field', async () => {
     await POST(postReq({ bookTitle: 'Deep Work', pagesRead: 24, mood: 'great', reflection: 'x' }))
     const [, update] = findOneAndUpdate.mock.calls[0]
-    expect(update).not.toHaveProperty('mood')
-    expect(update).not.toHaveProperty('reflection')
+    expect(Object.keys(update.$set).sort()).toEqual(['bookTitle', 'notes', 'pagesRead'])
+    expect(update.$set).not.toHaveProperty('mood')
+    expect(update.$set).not.toHaveProperty('reflection')
   })
 })
