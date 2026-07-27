@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   const entry = await JournalEntry.findOneAndUpdate(
     { userId: session.user.id, date },
     { bookTitle: bookTitle.trim(), pagesRead, notes: notes ?? '' },
-    { upsert: true, new: true }
+    { upsert: true, returnDocument: 'after' }
   )
 
   // Update the daily completion spine (non-fatal — the journal entry is already saved).

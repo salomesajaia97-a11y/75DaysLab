@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { connectDB } from '@/lib/mongoose'
 import { User } from '@/models/User'
-import { openRouterClient, buildSystemPrompt, parseMacros } from '@/lib/ai'
+import { buildSystemPrompt, parseMacros, completeCoachChat } from '@/lib/ai'
 import type { WeatherContext, ProgressContext } from '@/lib/ai'
 import { classifyIntent, parsePantryItems, extractPriceTerm } from '@/lib/ai/intent'
 import { matchIngredients } from '@/lib/grocery/match'
@@ -165,26 +165,11 @@ export async function POST(req: NextRequest) {
   // Recipes need room for a full ingredient list + numbered steps.
   const maxTokens = webRecipeContext || recipeRequest ? 900 : 512
 
-  // NOTE: OpenRouter removed/throttled the `:free` model slugs (404 "unavailable for
-  // free" / 429 rate-limited upstream), which made every AI call fail and silently
-  // log 0-calorie entries. Use the paid (and very cheap) slug, which is reliable.
-  const model = 'meta-llama/llama-3.1-8b-instruct'
-
+  // Model selection and slug-retirement fallback both live in TEXT_MODELS
+  // (lib/ai.ts) so the coach and the photo scanner degrade the same way.
   let rawText: string
   try {
-    const completion = await openRouterClient.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
-      max_tokens: maxTokens,
-    })
-    rawText = completion.choices[0]?.message?.content ?? ''
-    if (!rawText) {
-      console.error('[LabAI] Empty response from OpenRouter')
-      return NextResponse.json({ error: 'LabAI is unavailable, try again.' }, { status: 502 })
-    }
+    rawText = await completeCoachChat(systemPrompt, message, maxTokens)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[LabAI] OpenRouter error:', msg)

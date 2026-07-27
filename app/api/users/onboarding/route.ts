@@ -66,7 +66,7 @@ export async function onboard(req: NextRequest, clock: Clock = systemClock): Pro
       focusArea,
       onboardingComplete: true,
     },
-    { new: true }
+    { returnDocument: 'after' }
   ).catch(() => null)
 
   if (!user) {

@@ -144,9 +144,64 @@ export function parseMacros(responseText: string): { message: string; macros: Ma
   }
 }
 
-// Paid slug — the `:free` vision model was pulled by OpenRouter (404/429), which
-// silently broke photo scanning. Paid llama-3.2-11b-vision is cheap and reliable.
-const VISION_MODEL = 'meta-llama/llama-3.2-11b-vision-instruct'
+// OpenRouter retires model slugs without warning, and each retirement has
+// silently broken photo scanning: the `:free` vision model went 404/429, then
+// `meta-llama/llama-3.2-11b-vision-instruct` started returning
+// `{"error":{"message":"No endpoints found for ...","code":404}}`.
+// So try a chain of paid vision models instead of trusting one slug — a
+// retirement or a garbled reply now degrades to the next model.
+// Ordered by measured latency + output reliability on real food photos.
+export const VISION_MODELS = [
+  'google/gemini-3.5-flash-lite',
+  'google/gemini-3.1-flash-lite',
+  'meta-llama/llama-4-maverick',
+]
+
+// Same reasoning as VISION_MODELS, for the coach/food-log text path.
+// `meta-llama/llama-3.1-8b-instruct` used to be first here and was measurably
+// unfit for macro estimation: across a 10-case benchmark it landed in a sane
+// calorie range 1/10 times, returned wildly inconsistent numbers for identical
+// input, and — worst — sometimes omitted the <macros> tag entirely, which makes
+// the app log a 0-calorie meal. gemini-3.5-flash-lite always emits the tag and
+// is consistent run to run, so it leads. llama is kept only as a last resort.
+export const TEXT_MODELS = [
+  'google/gemini-3.5-flash-lite',
+  'google/gemini-3.1-flash-lite',
+  'meta-llama/llama-3.1-8b-instruct',
+]
+
+/**
+ * Runs the coach prompt through TEXT_MODELS, returning the first non-empty
+ * reply. Throws only if every model failed, so callers keep their own
+ * error handling for a total outage.
+ */
+export async function completeCoachChat(
+  systemPrompt: string,
+  message: string,
+  maxTokens: number
+): Promise<string> {
+  let lastError = 'no models attempted'
+  for (const model of TEXT_MODELS) {
+    try {
+      const completion = await openRouterClient.chat.completions.create({
+        model,
+        max_tokens: maxTokens,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message },
+        ],
+      })
+      const raw = completion.choices[0]?.message?.content ?? ''
+      if (raw) return raw
+      lastError = 'empty response'
+      console.error(`[completeCoachChat] ${model}: empty response, trying next model`)
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err)
+      console.error(`[completeCoachChat] ${model}:`, lastError)
+    }
+  }
+  throw new Error(lastError)
+}
 
 const PHOTO_SYSTEM = `You are a nutrition vision estimator. Look at the food photo and estimate its nutrition for the full portion shown.
 Reply with ONLY this tag and nothing else:
@@ -154,27 +209,38 @@ Reply with ONLY this tag and nothing else:
 Use realistic estimates. If the image is not food, set all numbers to 0 and food to "not food".`
 
 export async function parseFoodPhoto(imageUrl: string): Promise<MacroData | null> {
-  try {
-    const completion = await openRouterClient.chat.completions.create({
-      model: VISION_MODEL,
-      max_tokens: 256,
-      messages: [
-        { role: 'system', content: PHOTO_SYSTEM },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Estimate the nutrition of this food.' },
-            { type: 'image_url', image_url: { url: imageUrl } },
-          ] as never,
-        },
-      ],
-    })
-    const raw = completion.choices[0]?.message?.content ?? ''
-    const { macros } = parseMacros(raw)
-    if (!macros || macros.food === 'not food') return null
-    return macros
-  } catch (err) {
-    console.error('[parseFoodPhoto]', err instanceof Error ? err.message : String(err))
-    return null
+  for (const model of VISION_MODELS) {
+    try {
+      const completion = await openRouterClient.chat.completions.create({
+        model,
+        max_tokens: 256,
+        messages: [
+          { role: 'system', content: PHOTO_SYSTEM },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Estimate the nutrition of this food.' },
+              { type: 'image_url', image_url: { url: imageUrl } },
+            ] as never,
+          },
+        ],
+      })
+      const raw = completion.choices[0]?.message?.content ?? ''
+      const { macros } = parseMacros(raw)
+
+      // "not food" is a real verdict from a working model, not a failure —
+      // stop here rather than asking the next model the same question.
+      if (macros?.food === 'not food') return null
+      if (macros) return macros
+
+      console.error(`[parseFoodPhoto] ${model}: unparseable reply, trying next model`)
+    } catch (err) {
+      console.error(
+        `[parseFoodPhoto] ${model}:`,
+        err instanceof Error ? err.message : String(err)
+      )
+    }
   }
+  console.error('[parseFoodPhoto] all vision models failed')
+  return null
 }
