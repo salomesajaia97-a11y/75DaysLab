@@ -189,6 +189,8 @@
   "nutrition.add.scanning": "Scanning…",
   "nutrition.add.log_to": "Log to {meal}",
   "nutrition.add.no_favorites": "No favorites yet. Log some food and it'll show up here.",
+  "nutrition.add.retry": "Retry",
+  "nutrition.add.describe_manually": "Describe it instead",
 
   "cycle.title": "Cycle Tracker",
   "cycle.card_title": "Menstrual Calendar",
