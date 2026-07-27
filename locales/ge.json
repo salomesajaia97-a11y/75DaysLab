@@ -189,6 +189,8 @@
   "nutrition.add.scanning": "სკანირება…",
   "nutrition.add.log_to": "დაამატე — {meal}",
   "nutrition.add.no_favorites": "ჯერ ფავორიტები არ გაქვს. დაამატე საკვები და აქ გამოჩნდება.",
+  "nutrition.add.retry": "ხელახლა ცდა",
+  "nutrition.add.describe_manually": "აღწერე ხელით",
 
   "cycle.title": "ციკლის ტრეკერი",
   "cycle.card_title": "მენსტრუაციის კალენდარი",
