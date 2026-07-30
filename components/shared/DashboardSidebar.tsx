@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Droplets, BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot } from 'lucide-react'
+import { BookOpen, Utensils, Camera, Users, Calendar, LayoutDashboard, LogOut, Dumbbell, Shield, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 import { performLogout } from '@/lib/auth-client'
@@ -18,7 +18,6 @@ export function DashboardSidebar() {
   const links = [
     { href: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard, color: '#ef4f2b' },
     { href: '/fitness',   labelKey: 'nav.fitness',   icon: Dumbbell,        color: '#20a06b' },
-    { href: '/water',     labelKey: 'nav.water',     icon: Droplets,        color: '#2f72d6' },
     { href: '/journal',   labelKey: 'nav.journal',   icon: BookOpen,        color: '#7c5cd6' },
     { href: '/nutrition', labelKey: 'nav.nutrition', icon: Utensils,        color: '#e8930f' },
     { href: '/cycle',     labelKey: 'nav.cycle',     icon: Calendar,        color: '#e14682' },

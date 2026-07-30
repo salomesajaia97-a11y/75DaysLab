@@ -13,7 +13,6 @@ import { EMPTY_CHALLENGE_VIEW } from '@/lib/progress'
 import { percentComplete, type DayStatus, type DaySummary } from '@/lib/day-status'
 import { addDays } from '@/lib/streak'
 import type { UserProfile } from '@/types'
-import { WorkoutCard } from '@/components/workout/WorkoutCard'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 import { useLanguage } from '@/lib/i18n'
 import { useSession } from 'next-auth/react'
@@ -78,7 +77,7 @@ export default function DashboardPage() {
 
   // Server-authoritative daily + challenge state. This is the ONLY source of
   // truth for completion, streak, and day — localStorage is never consulted here.
-  const { data: progress, loading, refetch } = useDailyProgress()
+  const { data: progress, loading } = useDailyProgress()
   // Read-only recent history (last 7 days). Re-fetches alongside a completion.
   const { data: historyData, loading: historyLoading } = useProgressHistory(7, progress?.flags.completedTaskCount ?? 0)
 
@@ -238,15 +237,13 @@ export default function DashboardPage() {
       </div>
 
       <ScrollReveal delay={0.1}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+        <Card className="flex flex-col">
           <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.hydration')}</CardTitle></CardHeader>
-          <CardContent className="flex justify-center py-2">
+          <CardContent className="flex flex-1 items-center justify-center py-2">
             <WaterTracker consumedMl={consumedMl} goalMl={waterGoal} />
           </CardContent>
         </Card>
-
-        <WorkoutCard onBothComplete={refetch} />
 
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-base">{t('dashboard.todays_tasks')}</CardTitle></CardHeader>
