@@ -153,8 +153,6 @@
   "fitness.min": "45 წუთი",
   "fitness.done": "დასრულდა დღეს",
   "fitness.not_done": "ჯერ არ გაკეთებულა",
-  "fitness.this_week": "ეს კვირა",
-  "fitness.dot_legend": "ზედა წერტილი = შიდა · ქვედა წერტილი = გარე",
   "fitness.stat.sessions": "სესია ამ კვირაში",
   "fitness.stat.full_days": "სრული დღეები ამ კვირაში",
   "fitness.stat.completion": "შესრულების მაჩვენებელი",

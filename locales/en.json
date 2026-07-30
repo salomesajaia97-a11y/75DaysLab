@@ -153,8 +153,6 @@
   "fitness.min": "45 min",
   "fitness.done": "Completed today",
   "fitness.not_done": "Not done yet",
-  "fitness.this_week": "This Week",
-  "fitness.dot_legend": "Top dot = indoor · Bottom dot = outdoor",
   "fitness.stat.sessions": "Sessions This Week",
   "fitness.stat.full_days": "Full Days This Week",
   "fitness.stat.completion": "Completion Rate",

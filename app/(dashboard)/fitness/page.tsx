@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { CheckCircle2, Circle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { useLanguage } from '@/lib/i18n'
 import { useFitnessProgress } from '@/hooks/useFitnessProgress'
 import { OutdoorWorkout } from '@/components/fitness/OutdoorWorkout'
@@ -15,10 +15,8 @@ import type { ExerciseFocus } from '@/lib/fitness/exerciseLottieRegistry'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 
 export default function FitnessPage() {
-  const { t, locale } = useLanguage()
-  const dateLocale = locale === 'ge' ? 'ka' : 'en'
-  const { days, today, dayState, todayState, totalSessions, fullDays, completionRate } =
-    useFitnessProgress()
+  const { t } = useLanguage()
+  const { todayState, totalSessions, fullDays, completionRate } = useFitnessProgress()
 
   const [focus, setFocus] = useState<FocusAreaDef['id'] | null>(null)
   const focusFilter: ExerciseFocus | null =
@@ -82,40 +80,6 @@ export default function FitnessPage() {
           })}
         </div>
       </div>
-      </ScrollReveal>
-
-      {/* 7-day grid */}
-      <ScrollReveal>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t('fitness.this_week')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-2">
-            {days.map(day => {
-              const s = dayState[day]
-              const isToday = day === today
-              const dayLabel = new Date(day + 'T12:00:00').toLocaleDateString(dateLocale, { weekday: 'short' })
-              return (
-                <div key={day} className="flex flex-col items-center gap-1.5">
-                  <span className={`text-[10px] font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
-                    {dayLabel}
-                  </span>
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.structured ? 'bg-primary' : 'bg-muted'}`}
-                    title={t('fitness.indoor')}
-                  />
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full transition-colors ${s?.outdoor ? 'bg-primary' : 'bg-muted'}`}
-                    title={t('fitness.outdoor')}
-                  />
-                </div>
-              )
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground mt-3">{t('fitness.dot_legend')}</p>
-        </CardContent>
-      </Card>
       </ScrollReveal>
 
       {/* Stats */}
