@@ -213,48 +213,6 @@ describe('saving', () => {
   })
 })
 
-describe('history', () => {
-  it('loads the selected historical date into the editor', async () => {
-    await renderReady()
-    const row = await screen.findByRole('button', { name: /Rough one/ })
-    fireEvent.click(row)
-
-    await waitFor(() => expect(reflectionInput().value).toBe('Slept badly.'))
-    expect(titleInput().value).toBe('Rough one')
-    expect(screen.getByRole('radio', { name: 'journal.mood.low' })).toHaveAttribute(
-      'aria-checked',
-      'true'
-    )
-    expect(screen.queryByText('journal.day.today')).not.toBeInTheDocument()
-    expect(fetchMock).toHaveBeenCalledWith(`/api/journal/reflection?date=${PAST}`)
-  })
-
-  it('shows an empty-history state rather than a blank panel', async () => {
-    fetchMock.mockImplementation((url: string) =>
-      Promise.resolve(
-        url.startsWith('/api/journal/history')
-          ? json(200, { today: TODAY, entries: [] })
-          : json(200, dayPayload(TODAY, TODAY_ENTRY))
-      )
-    )
-    await renderReady()
-    expect(await screen.findByText('journal.history.empty_title')).toBeInTheDocument()
-  })
-
-  it('offers a retry when history fails to load', async () => {
-    fetchMock.mockImplementation((url: string) =>
-      Promise.resolve(
-        url.startsWith('/api/journal/history')
-          ? json(500, { error: 'nope' })
-          : json(200, dayPayload(TODAY, TODAY_ENTRY))
-      )
-    )
-    await renderReady()
-    expect(await screen.findByText('journal.history.failed')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'journal.history.retry' })).toBeInTheDocument()
-  })
-})
-
 describe('the day itself failing to load', () => {
   it('shows an actionable error with a retry instead of a blank screen', async () => {
     fetchMock.mockImplementation(() => Promise.resolve(json(500, { error: 'nope' })))

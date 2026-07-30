@@ -15,7 +15,6 @@ import {
 } from '@/lib/journal'
 import { JournalDayHeader, type JournalDayStatus } from './JournalDayHeader'
 import { ReflectionForm } from './ReflectionForm'
-import { JournalHistory } from './JournalHistory'
 
 /** How long the "saved" confirmation stays on screen (ms). */
 const SUCCESS_MS = 4000
@@ -49,7 +48,6 @@ export function JournalExperience() {
   const [saving, setSaving] = useState(false)
   const [saveErrorCode, setSaveErrorCode] = useState<string | null>(null)
   const [justSaved, setJustSaved] = useState(false)
-  const [refreshKey, setRefreshKey] = useState(0)
 
   /** Dirty drafts for days the user navigated away from, keyed by date. */
   const stashRef = useRef(new Map<string, ReflectionDraft>())
@@ -174,7 +172,6 @@ export function JournalExperience() {
       setRestored(false)
       stashRef.current.delete(date)
       setJustSaved(true)
-      setRefreshKey((k) => k + 1)
     } catch {
       setSaveErrorCode('network')
     } finally {
@@ -299,15 +296,6 @@ export function JournalExperience() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('journal.history.title')}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <JournalHistory selectedDate={date} onSelect={selectDate} refreshKey={refreshKey} />
         </CardContent>
       </Card>
     </div>
