@@ -80,7 +80,7 @@ export function ParkMap({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-2xl border border-border"
+      className="relative mx-auto w-full max-w-[260px] overflow-hidden rounded-2xl border border-border sm:max-w-[300px]"
       style={{ aspectRatio: `${MAP_VIEW.w} / ${MAP_VIEW.h}` }}
     >
       <svg
@@ -114,9 +114,10 @@ export function ParkMap({
           {Array.from({ length: 9 }, (_, i) => (
             <line key={`v${i}`} x1={(i + 1) * 10} y1="0" x2={(i + 1) * 10} y2={MAP_VIEW.h} />
           ))}
-          {Array.from({ length: 9 }, (_, i) => (
-            <line key={`h${i}`} x1="0" y1={(i + 1) * 9.8} x2={MAP_VIEW.w} y2={(i + 1) * 9.8} />
-          ))}
+          {Array.from({ length: 9 }, (_, i) => {
+            const y = ((i + 1) * MAP_VIEW.h) / 10
+            return <line key={`h${i}`} x1="0" y1={y} x2={MAP_VIEW.w} y2={y} />
+          })}
         </g>
 
         {/* Mtkvari */}
@@ -274,24 +275,28 @@ export function ParkMap({
                 <circle
                   cx={x}
                   cy={y}
-                  r={isSel ? 2.4 : 1.8}
+                  r={isSel ? 2.2 : 1.6}
                   fill={isSel ? 'var(--primary)' : 'var(--background)'}
                   stroke={isSel ? 'var(--background)' : 'var(--primary)'}
-                  strokeWidth="0.9"
+                  strokeWidth="0.8"
                 />
               )}
-              <text
-                x={x + (p.labelDx ?? 0)}
-                y={y + (p.labelDy ?? (isRec ? 4.4 : 5))}
-                fontSize="3"
-                fontWeight={isRec || isSel ? 700 : 500}
-                fill="var(--foreground)"
-                fillOpacity={isRec || isSel ? 1 : 0.75}
-                textAnchor={p.labelAnchor ?? anchorFor(x)}
-                className="pointer-events-none select-none"
-              >
-                {label}
-              </text>
+              {/* Fifteen labels at this size would be soup — only the pin and
+                  the chosen spot are named; the rest answer on hover/focus. */}
+              <title>{locale === 'ge' ? p.nameGe : p.name}</title>
+              {(isRec || isSel) && (
+                <text
+                  x={x + (p.labelDx ?? 0)}
+                  y={y + (p.labelDy ?? (isRec ? 4.4 : 5))}
+                  fontSize="3.4"
+                  fontWeight={700}
+                  fill="var(--foreground)"
+                  textAnchor={p.labelAnchor ?? anchorFor(x)}
+                  className="pointer-events-none select-none"
+                >
+                  {label}
+                </text>
+              )}
             </g>
           )
         })}

@@ -9,6 +9,7 @@ import {
   isInsideMap,
   project,
   recommendPark,
+  searchPlaces,
   sortParks,
   unproject,
   type LatLon,
@@ -17,6 +18,72 @@ import {
 const VAKE = findPark('vake-park')!
 const RIKE = findPark('rike-park')!
 const LISI = findPark('lisi-lake')!
+
+describe('the curated dataset', () => {
+  it('covers every requested spot with unique slugs and a district', () => {
+    const slugs = TBILISI_PARKS.map(p => p.slug)
+    expect(new Set(slugs).size).toBe(slugs.length)
+    for (const required of [
+      'vake-park',
+      'lisi-lake',
+      'turtle-lake',
+      'mziuri-park',
+      'rike-park',
+      'dedaena-park',
+      'nine-april-park',
+      'vera-park',
+      'saburtalo-central-park',
+      'kikvidze-park',
+      'mushtaidi-park',
+      'digomi-forest-park',
+      'gldani-park',
+      'temka-park',
+      'botanical-garden',
+    ]) {
+      expect(slugs).toContain(required)
+    }
+    for (const park of TBILISI_PARKS) {
+      expect(park.district.length).toBeGreaterThan(0)
+      expect(park.districtGe.length).toBeGreaterThan(0)
+      expect(park.blurbGe.length).toBeGreaterThan(0)
+    }
+  })
+})
+
+describe('searchPlaces', () => {
+  it('ignores queries shorter than two characters', () => {
+    expect(searchPlaces('v')).toEqual([])
+  })
+
+  it('ranks a prefix match on the neighbourhood first', () => {
+    expect(searchPlaces('gldan')[0].name).toBe('Gldani')
+    expect(searchPlaces('saburt')[0].name).toBe('Saburtalo')
+  })
+
+  it('matches Georgian input', () => {
+    expect(searchPlaces('ვაკე')[0].name).toBe('Vake')
+    expect(searchPlaces('ისანი')[0].name).toBe('Isani')
+  })
+
+  it('ignores case, spacing and hyphens', () => {
+    expect(searchPlaces('vazha pshavela')[0].name).toBe('Vazha-Pshavela')
+  })
+
+  it('finds parks too, flagged as such', () => {
+    const hit = searchPlaces('turtle').find(h => h.isPark)
+    expect(hit?.name).toBe('Turtle Lake')
+  })
+
+  it('returns coordinates usable for distance', () => {
+    const [hit] = searchPlaces('vake')
+    expect(haversineKm(hit, findPark('vake-park')!)).toBeLessThan(2)
+  })
+
+  it('caps the result count', () => {
+    expect(searchPlaces('a', 3).length).toBeLessThanOrEqual(3)
+    expect(searchPlaces('park', 3).length).toBeLessThanOrEqual(3)
+  })
+})
 
 describe('haversineKm', () => {
   it('is zero for the same point', () => {
@@ -101,7 +168,8 @@ describe('sortParks', () => {
     const atLisi: LatLon = { lat: LISI.lat, lon: LISI.lon }
     const sorted = sortParks(TBILISI_PARKS, { badWeather: false, tempC: 18, userLoc: atLisi })
     expect(sorted[0].slug).toBe('lisi-lake')
-    expect(sorted.at(-1)!.slug).toBe('rike-park')
+    // Temka sits across the city on the eastern edge — always last from Lisi.
+    expect(sorted.at(-1)!.slug).toBe('temka-park')
   })
 
   it('puts rain-friendly spots first with no location on a wet day', () => {

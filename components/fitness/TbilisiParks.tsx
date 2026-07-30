@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  ChevronDown,
   Crosshair,
   LocateFixed,
   MapPin,
@@ -23,18 +24,26 @@ import {
   sortParks,
   type LatLon,
   type ParkActivity,
+  type PlaceHit,
   type TbilisiPark,
 } from '@/lib/fitness/parks'
+import { LocationSearch } from './LocationSearch'
 import { ParkMap } from './ParkMap'
 import { WalkTimer } from './WalkTimer'
 
 const LOC_KEY = '75lab_fitness_user_loc'
 
-type LocSource = 'gps' | 'map'
+/** How many cards show before "show all" — keeps the section compact. */
+const COLLAPSED_COUNT = 6
+
+type LocSource = 'gps' | 'map' | 'search'
 type GeoState = 'idle' | 'locating' | 'denied' | 'unavailable'
 
 interface StoredLoc extends LatLon {
   source: LocSource
+  /** Place name for search hits, so the badge can name where you are. */
+  label?: string
+  labelGe?: string
 }
 
 function activityLabel(a: ParkActivity, t: (k: string) => string): string {
@@ -83,6 +92,7 @@ export function TbilisiParks({
   const [geo, setGeo] = useState<GeoState>('idle')
   const [pickMode, setPickMode] = useState(false)
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
 
   // Restore the last known location after mount (hydration-safe).
   useEffect(() => {
@@ -123,6 +133,21 @@ export function TbilisiParks({
     [persist],
   )
 
+  const pickFromSearch = useCallback(
+    (hit: PlaceHit) => {
+      persist({
+        lat: hit.lat,
+        lon: hit.lon,
+        source: 'search',
+        label: hit.name,
+        labelGe: hit.nameGe,
+      })
+      setPickMode(false)
+      setGeo('idle')
+    },
+    [persist],
+  )
+
   const userLoc: LatLon | null = loc ? { lat: loc.lat, lon: loc.lon } : null
   const recInput = useMemo(
     () => ({ badWeather, tempC, userLoc: userLoc }),
@@ -132,6 +157,19 @@ export function TbilisiParks({
 
   const recommendation = useMemo(() => recommendPark(recInput), [recInput])
   const parks = useMemo(() => sortParks(TBILISI_PARKS, recInput), [recInput])
+
+  // Collapsed by default so fifteen spots don't push the page over — the
+  // recommended and chosen spots are always in view regardless of ordering.
+  const visibleParks = useMemo(() => {
+    if (showAll) return parks
+    const head = parks.slice(0, COLLAPSED_COUNT)
+    const pinned = parks.filter(
+      p =>
+        (p.slug === selectedSlug || p.slug === recommendation?.park.slug) &&
+        !head.includes(p),
+    )
+    return [...head, ...pinned]
+  }, [parks, showAll, selectedSlug, recommendation?.park.slug])
 
   const selected = selectedSlug ? findPark(selectedSlug) : undefined
   /** The timer's spot: the explicit pick, else today's recommendation. */
@@ -165,6 +203,11 @@ export function TbilisiParks({
         {badWeather ? t('fitness.parks_bad_note') : t('fitness.parks_good_note')}
       </p>
 
+      {/* Type where you are — resolves against the local Tbilisi gazetteer */}
+      <div className="mb-2">
+        <LocationSearch onPick={pickFromSearch} />
+      </div>
+
       {/* Location controls */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         <Button
@@ -188,7 +231,11 @@ export function TbilisiParks({
         {loc && (
           <>
             <Badge variant="outline" className="text-[10px]">
-              {loc.source === 'gps' ? t('fitness.loc_from_gps') : t('fitness.loc_from_map')}
+              {loc.source === 'gps'
+                ? t('fitness.loc_from_gps')
+                : loc.source === 'search'
+                  ? ((locale === 'ge' ? loc.labelGe : loc.label) ?? t('fitness.loc_from_search'))
+                  : t('fitness.loc_from_map')}
             </Badge>
             <Button size="xs" variant="ghost" onClick={() => persist(null)}>
               <X className="h-3 w-3" />
@@ -246,7 +293,7 @@ export function TbilisiParks({
       )}
 
       <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {parks.map(park => {
+        {visibleParks.map(park => {
           const isRec = park.slug === recommendation?.park.slug
           const isSel = park.slug === selectedSlug
           const dist = distanceFor(park)
@@ -297,7 +344,10 @@ export function TbilisiParks({
                   </span>
                 </div>
 
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1 text-[11px] text-muted-foreground/80">
+                  {locale === 'ge' ? park.districtGe : park.district}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                   {locale === 'ge' ? park.blurbGe : park.blurb}
                 </p>
               </button>
@@ -305,6 +355,21 @@ export function TbilisiParks({
           )
         })}
       </ul>
+
+      {parks.length > COLLAPSED_COUNT && (
+        <Button
+          size="xs"
+          variant="ghost"
+          className="mt-2 w-full"
+          onClick={() => setShowAll(v => !v)}
+          aria-expanded={showAll}
+        >
+          <ChevronDown className={`h-3 w-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+          {showAll
+            ? t('fitness.parks_show_less')
+            : t('fitness.parks_show_all', { n: parks.length })}
+        </Button>
+      )}
 
       {/* Always available below the list — defaults to the recommended spot
           until the user picks another, and starting the clock pins the choice. */}
