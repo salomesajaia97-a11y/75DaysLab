@@ -9,6 +9,7 @@ import {
   isInsideMap,
   project,
   recommendPark,
+  recommendParks,
   searchPlaces,
   sortParks,
   unproject,
@@ -195,6 +196,42 @@ describe('recommendPark', () => {
 
   it('returns null for an empty candidate list', () => {
     expect(recommendPark({ badWeather: false, tempC: 20, userLoc: null }, [])).toBeNull()
+  })
+})
+
+describe('recommendParks', () => {
+  it('returns a shortlist ordered by distance, closest first', () => {
+    const atVazhaPshavela = searchPlaces('vazha pshavela')[0]
+    const list = recommendParks(
+      { badWeather: false, tempC: 24, userLoc: atVazhaPshavela },
+      TBILISI_PARKS,
+      3,
+    )
+    expect(list).toHaveLength(3)
+    expect(list[0].park.slug).toBe('saburtalo-central-park')
+    const distances = list.map(r => r.distanceKm!)
+    expect([...distances].sort((a, b) => a - b)).toEqual(distances)
+  })
+
+  it('never repeats a park and agrees with recommendPark on the top pick', () => {
+    const atIsani = searchPlaces('isani')[0]
+    const input = { badWeather: false, tempC: 24, userLoc: atIsani }
+    const list = recommendParks(input, TBILISI_PARKS, 4)
+    expect(new Set(list.map(r => r.park.slug)).size).toBe(4)
+    expect(list[0].park.slug).toBe(recommendPark(input)!.park.slug)
+  })
+
+  it('still ranks by weather when no location is set', () => {
+    const list = recommendParks({ badWeather: true, tempC: 8, userLoc: null }, TBILISI_PARKS, 3)
+    expect(list.every(r => r.distanceKm === null)).toBe(true)
+    expect(list[0].park.rainFriendly).toBe(true)
+  })
+
+  it('handles counts at the edges', () => {
+    const input = { badWeather: false, tempC: 20, userLoc: null }
+    expect(recommendParks(input, TBILISI_PARKS, 0)).toEqual([])
+    expect(recommendParks(input, [], 3)).toEqual([])
+    expect(recommendParks(input, TBILISI_PARKS, 99)).toHaveLength(TBILISI_PARKS.length)
   })
 })
 

@@ -38,6 +38,8 @@ interface ParkMapProps {
   selectedSlug: string | null
   /** Weather + location pick — gets the custom highlighted pin. */
   recommendedSlug: string | null
+  /** Runners-up on the shortlist — ringed, so the options read at a glance. */
+  alternateSlugs?: string[]
   userLoc: LatLon | null
   /** While true, a click anywhere on the map sets the user's location. */
   pickMode: boolean
@@ -54,6 +56,7 @@ export function ParkMap({
   parks,
   selectedSlug,
   recommendedSlug,
+  alternateSlugs = [],
   userLoc,
   pickMode,
   onPickLocation,
@@ -220,6 +223,7 @@ export function ParkMap({
           const { x, y } = project(p)
           const isRec = p.slug === recommendedSlug
           const isSel = p.slug === selectedSlug
+          const isAlt = alternateSlugs.includes(p.slug)
           const label = locale === 'ge' ? p.mapLabelGe : p.mapLabel
           return (
             <g
@@ -272,25 +276,40 @@ export function ParkMap({
                   </circle>
                 </>
               ) : (
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isSel ? 2.2 : 1.6}
-                  fill={isSel ? 'var(--primary)' : 'var(--background)'}
-                  stroke={isSel ? 'var(--background)' : 'var(--primary)'}
-                  strokeWidth="0.8"
-                />
+                <>
+                  {isAlt && (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="3.4"
+                      fill="none"
+                      stroke="var(--primary)"
+                      strokeWidth="0.5"
+                      strokeOpacity="0.45"
+                      strokeDasharray="1.6 1.2"
+                    />
+                  )}
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isSel ? 2.2 : 1.6}
+                    fill={isSel ? 'var(--primary)' : 'var(--background)'}
+                    stroke={isSel ? 'var(--background)' : 'var(--primary)'}
+                    strokeWidth="0.8"
+                  />
+                </>
               )}
               {/* Fifteen labels at this size would be soup — only the pin and
                   the chosen spot are named; the rest answer on hover/focus. */}
               <title>{locale === 'ge' ? p.nameGe : p.name}</title>
-              {(isRec || isSel) && (
+              {(isRec || isSel || isAlt) && (
                 <text
                   x={x + (p.labelDx ?? 0)}
                   y={y + (p.labelDy ?? (isRec ? 4.4 : 5))}
-                  fontSize="3.4"
-                  fontWeight={700}
+                  fontSize={isRec || isSel ? 3.4 : 3}
+                  fontWeight={isRec || isSel ? 700 : 500}
                   fill="var(--foreground)"
+                  fillOpacity={isRec || isSel ? 1 : 0.75}
                   textAnchor={p.labelAnchor ?? anchorFor(x)}
                   className="pointer-events-none select-none"
                 >

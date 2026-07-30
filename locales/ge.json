@@ -318,6 +318,8 @@
   "fitness.rec_park_mild": "შესანიშნავი ამინდია გრძელი მარშრუტისთვის — გირჩევთ {park}-ს და მის ღია მწვანე ბილიკს.",
   "fitness.rec_park_dist": "შენგან {dist}-ითაა დაშორებული.",
   "fitness.rec_park_badge": "რეკომენდებული",
+  "fitness.rec_park_alts": "ასევე ახლოსაა",
+  "fitness.rec_park_alt_badge": "ახლო ვარიანტი",
   "fitness.rec_park_choose": "აქ ვისეირნებ",
   "fitness.park_selected": "არჩეული ადგილი",
   "fitness.park_distance_away": "{dist} მანძილზე",

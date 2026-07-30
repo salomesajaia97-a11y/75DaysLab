@@ -318,6 +318,8 @@
   "fitness.rec_park_mild": "Great weather for a long one — we recommend {park} and its open green route.",
   "fitness.rec_park_dist": "It's {dist} from you.",
   "fitness.rec_park_badge": "Recommended",
+  "fitness.rec_park_alts": "Also close to you",
+  "fitness.rec_park_alt_badge": "Nearby option",
   "fitness.rec_park_choose": "Walk here",
   "fitness.park_selected": "Chosen spot",
   "fitness.park_distance_away": "{dist} away",

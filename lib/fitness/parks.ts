@@ -668,12 +668,41 @@ export function recommendPark(
   input: RecommendationInput,
   parks: TbilisiPark[] = TBILISI_PARKS,
 ): ParkRecommendation | null {
-  if (parks.length === 0) return null
+  return recommendParks(input, parks, 1)[0] ?? null
+}
 
-  const pool = input.userLoc ? nearbyPool(parks, input) : parks
-  const best = pool.reduce((a, b) => (scorePark(b, input) > scorePark(a, input) ? b : a))
-  const distanceKm = input.userLoc ? haversineKm(input.userLoc, best) : null
-  return { park: best, reason: reasonFor(best, input, distanceKm), distanceKm }
+/**
+ * A ranked shortlist rather than a single answer: the top pick first, then the
+ * next-closest alternatives. With a location known the order is by distance
+ * (weather still decides between spots that are equally close); without one it
+ * falls back to the weather score.
+ */
+export function recommendParks(
+  input: RecommendationInput,
+  parks: TbilisiPark[] = TBILISI_PARKS,
+  count = 3,
+): ParkRecommendation[] {
+  if (parks.length === 0 || count <= 0) return []
+
+  const loc = input.userLoc
+  let ranked: TbilisiPark[]
+
+  if (loc) {
+    // Pick the head from the tie-band pool, then continue outwards by distance.
+    const pool = nearbyPool(parks, input)
+    const head = pool.reduce((a, b) => (scorePark(b, input) > scorePark(a, input) ? b : a))
+    const rest = parks
+      .filter(p => p.slug !== head.slug)
+      .sort((a, b) => haversineKm(loc, a) - haversineKm(loc, b))
+    ranked = [head, ...rest]
+  } else {
+    ranked = [...parks].sort((a, b) => scorePark(b, input) - scorePark(a, input))
+  }
+
+  return ranked.slice(0, count).map(park => {
+    const distanceKm = loc ? haversineKm(loc, park) : null
+    return { park, reason: reasonFor(park, input, distanceKm), distanceKm }
+  })
 }
 
 /** Parks sorted by distance when a location is known, else weather-first. */

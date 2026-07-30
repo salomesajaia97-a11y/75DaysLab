@@ -20,7 +20,7 @@ import {
   formatDistance,
   haversineKm,
   isInsideMap,
-  recommendPark,
+  recommendParks,
   sortParks,
   type LatLon,
   type ParkActivity,
@@ -155,7 +155,10 @@ export function TbilisiParks({
     [badWeather, tempC, loc?.lat, loc?.lon], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  const recommendation = useMemo(() => recommendPark(recInput), [recInput])
+  // A shortlist, not a single answer — the top pick plus the next closest.
+  const recommendations = useMemo(() => recommendParks(recInput, TBILISI_PARKS, 3), [recInput])
+  const recommendation = recommendations[0] ?? null
+  const alternates = recommendations.slice(1)
   const parks = useMemo(() => sortParks(TBILISI_PARKS, recInput), [recInput])
 
   // Collapsed by default so fifteen spots don't push the page over — the
@@ -261,6 +264,7 @@ export function TbilisiParks({
         parks={TBILISI_PARKS}
         selectedSlug={selectedSlug}
         recommendedSlug={recommendation?.park.slug ?? null}
+        alternateSlugs={alternates.map(a => a.park.slug)}
         userLoc={offMap ? null : userLoc}
         pickMode={pickMode}
         onPickLocation={pickOnMap}
@@ -287,6 +291,36 @@ export function TbilisiParks({
                   {t('fitness.rec_park_choose')}
                 </Button>
               )}
+
+              {alternates.length > 0 && (
+                <div className="mt-2.5 border-t border-foreground/10 pt-2">
+                  <p className="text-[11px] font-medium text-foreground/60">
+                    {t('fitness.rec_park_alts')}
+                  </p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {alternates.map(alt => (
+                      <button
+                        key={alt.park.slug}
+                        type="button"
+                        onClick={() => setSelectedSlug(alt.park.slug)}
+                        aria-pressed={selectedSlug === alt.park.slug}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                          selectedSlug === alt.park.slug
+                            ? 'border-foreground/40 bg-background font-medium'
+                            : 'border-foreground/15 bg-background/70 hover:bg-background'
+                        }`}
+                      >
+                        {locale === 'ge' ? alt.park.nameGe : alt.park.name}
+                        {alt.distanceKm !== null && (
+                          <span className="ml-1 text-foreground/50">
+                            {formatDistance(alt.distanceKm)}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -295,6 +329,7 @@ export function TbilisiParks({
       <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
         {visibleParks.map(park => {
           const isRec = park.slug === recommendation?.park.slug
+          const isAlt = alternates.some(a => a.park.slug === park.slug)
           const isSel = park.slug === selectedSlug
           const dist = distanceFor(park)
           return (
@@ -326,6 +361,11 @@ export function TbilisiParks({
                     <Badge className="text-[10px]">
                       <Sparkles className="h-2.5 w-2.5" />
                       {t('fitness.rec_park_badge')}
+                    </Badge>
+                  )}
+                  {isAlt && !isSel && (
+                    <Badge variant="secondary" className="text-[10px]">
+                      {t('fitness.rec_park_alt_badge')}
                     </Badge>
                   )}
                   {isSel && (
