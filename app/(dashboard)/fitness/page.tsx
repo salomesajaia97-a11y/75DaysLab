@@ -5,12 +5,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useLanguage } from '@/lib/i18n'
 import { useFitnessProgress } from '@/hooks/useFitnessProgress'
 import { OutdoorWorkout } from '@/components/fitness/OutdoorWorkout'
-import { WorkoutPlanWizard } from '@/components/fitness/WorkoutPlanWizard'
-import { TrainingPlanCard } from '@/components/fitness/TrainingPlanCard'
 import { FocusAreaChips } from '@/components/fitness/FocusAreaChips'
 import { ExerciseLibrary } from '@/components/fitness/ExerciseLibrary'
 import { FitnessReports } from '@/components/fitness/FitnessReports'
-import { TRAINING_PLANS, type FocusAreaDef } from '@/lib/fitness/workoutPlans'
+import type { FocusAreaDef } from '@/lib/fitness/workoutPlans'
 import type { ExerciseFocus } from '@/lib/fitness/exerciseLottieRegistry'
 import { ScrollReveal, Pop, Aurora, CountUp, Tilt } from '@/components/shared/Motion'
 
@@ -106,23 +104,6 @@ export default function FitnessPage() {
 
       {/* Outdoor workout section */}
       <ScrollReveal><OutdoorWorkout /></ScrollReveal>
-
-      {/* Workout Plan Wizard */}
-      <ScrollReveal><WorkoutPlanWizard /></ScrollReveal>
-
-      {/* Recommended Training Plans */}
-      <ScrollReveal>
-        <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            {t('fitness.recommended_plans')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {TRAINING_PLANS.map(plan => (
-              <TrainingPlanCard key={plan.id} plan={plan} />
-            ))}
-          </div>
-        </div>
-      </ScrollReveal>
 
       {/* Focus Areas + Exercise Library */}
       <ScrollReveal>
