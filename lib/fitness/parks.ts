@@ -606,12 +606,21 @@ function scorePark(park: TbilisiPark, input: RecommendationInput): number {
 
   if (park.lit) score += 0.4
 
-  // Proximity dominates once we know where the user is — a great park 6 km
-  // away is not the one they will actually walk to today.
-  if (userLoc) score -= Math.min(haversineKm(userLoc, park), 12) * 0.9
+  // No distance term here — with a location known, proximity is applied as a
+  // hard filter in `recommendPark`, not as points weather can outbid.
+  if (userLoc) score -= Math.min(haversineKm(userLoc, park), 12) * 0.05
 
   return score
 }
+
+/**
+ * Spots effectively as close as the nearest one. Weather decides only inside
+ * this band — a shadier park a few hundred metres further never displaces the
+ * closest one, because "which is closest" is the question a walker asks.
+ */
+const TIE_BAND_KM = 0.05
+/** How far out of the way a sheltered spot may be when it is raining. */
+const RAIN_DETOUR_KM = 1
 
 function reasonFor(
   park: TbilisiPark,
@@ -626,6 +635,32 @@ function reasonFor(
 }
 
 /**
+ * The nearest spot plus anything within `TIE_BAND_KM` of it. When it rains and
+ * nothing in that band is sheltered, a rain-friendly spot up to
+ * `RAIN_DETOUR_KM` further is allowed in — a soaking is worth a short detour.
+ */
+function nearbyPool(parks: TbilisiPark[], input: RecommendationInput): TbilisiPark[] {
+  const loc = input.userLoc
+  if (!loc) return parks
+
+  const ranked = parks
+    .map(park => ({ park, km: haversineKm(loc, park) }))
+    .sort((a, b) => a.km - b.km)
+
+  const nearestKm = ranked[0].km
+  const pool = ranked.filter(r => r.km <= nearestKm + TIE_BAND_KM)
+
+  if (input.badWeather && !pool.some(r => r.park.rainFriendly)) {
+    const sheltered = ranked.find(
+      r => r.park.rainFriendly && r.km <= nearestKm + RAIN_DETOUR_KM,
+    )
+    if (sheltered) return [sheltered.park]
+  }
+
+  return pool.map(r => r.park)
+}
+
+/**
  * Pick one spot from weather + location. Returns the winner plus the reason
  * to render, so the copy always explains itself.
  */
@@ -634,7 +669,9 @@ export function recommendPark(
   parks: TbilisiPark[] = TBILISI_PARKS,
 ): ParkRecommendation | null {
   if (parks.length === 0) return null
-  const best = parks.reduce((a, b) => (scorePark(b, input) > scorePark(a, input) ? b : a))
+
+  const pool = input.userLoc ? nearbyPool(parks, input) : parks
+  const best = pool.reduce((a, b) => (scorePark(b, input) > scorePark(a, input) ? b : a))
   const distanceKm = input.userLoc ? haversineKm(input.userLoc, best) : null
   return { park: best, reason: reasonFor(best, input, distanceKm), distanceKm }
 }

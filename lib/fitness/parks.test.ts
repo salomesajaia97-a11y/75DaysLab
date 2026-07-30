@@ -154,6 +154,41 @@ describe('recommendPark', () => {
     expect(rec.distanceKm).toBeCloseTo(0, 3)
   })
 
+  it('recommends the closest spot, not a nicer one further away', () => {
+    // Reported case: standing on Vazha-Pshavela, Saburtalo Central Park is
+    // 1.2 km away and Mziuri 1.4 km — shade must not outrank that gap.
+    const atVazhaPshavela = searchPlaces('vazha pshavela')[0]
+    const rec = recommendPark({ badWeather: false, tempC: 30, userLoc: atVazhaPshavela })!
+    expect(rec.park.slug).toBe('saburtalo-central-park')
+
+    const nearest = sortParks(TBILISI_PARKS, {
+      badWeather: false,
+      tempC: 30,
+      userLoc: atVazhaPshavela,
+    })[0]
+    expect(rec.park.slug).toBe(nearest.slug)
+  })
+
+  it('never picks a spot more than 50 m further than the nearest', () => {
+    for (const place of ['gldani', 'isani', 'didube', 'sololaki', 'varketili']) {
+      const loc = searchPlaces(place)[0]
+      const rec = recommendPark({ badWeather: false, tempC: 22, userLoc: loc })!
+      const nearestKm = Math.min(...TBILISI_PARKS.map(p => haversineKm(loc, p)))
+      expect(rec.distanceKm!).toBeLessThanOrEqual(nearestKm + 0.05 + 1e-9)
+    }
+  })
+
+  it('accepts a short detour to a sheltered spot when it rains', () => {
+    // Turtle Lake is the nearest spot to Bagebi but has no shelter.
+    const atBagebi = searchPlaces('bagebi')[0]
+    const dry = recommendPark({ badWeather: false, tempC: 18, userLoc: atBagebi })!
+    expect(dry.park.rainFriendly).toBe(false)
+
+    const wet = recommendPark({ badWeather: true, tempC: 12, userLoc: atBagebi })!
+    expect(wet.park.rainFriendly).toBe(true)
+    expect(wet.distanceKm!).toBeLessThanOrEqual(dry.distanceKm! + 1 + 1e-9)
+  })
+
   it('reports no distance when the location is unknown', () => {
     expect(recommendPark({ badWeather: false, tempC: 20, userLoc: null })!.distanceKm).toBeNull()
   })
