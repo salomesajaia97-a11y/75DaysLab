@@ -17,6 +17,7 @@ import { GEORGIAN_CITIES, DEFAULT_CITY_ID, findCity } from '@/lib/fitness/cities
 import { scopedKey } from '@/lib/storage'
 import { StepTracker } from './StepTracker'
 import { TbilisiParks } from './TbilisiParks'
+import type { TbilisiPark } from '@/lib/fitness/parks'
 import type { WeatherPayload } from '@/app/api/fitness/weather/route'
 
 const CITY_KEY = '75lab_fitness_city'
@@ -173,8 +174,25 @@ export function OutdoorWorkout() {
         {/* Step counter */}
         <StepTracker />
 
-        {/* Tbilisi-only parks block */}
-        {showParks && <TbilisiParks badWeather={isBad} />}
+        {/* Tbilisi-only parks block — map, location, recommendation, walk timer */}
+        {showParks && (
+          <TbilisiParks
+            badWeather={isBad}
+            tempC={weather?.tempC ?? null}
+            outdoorDone={done}
+            onWalkFinished={(park: TbilisiPark, minutes: number) =>
+              markComplete({
+                kind: 'outdoor',
+                source: 'outdoor',
+                title: t('fitness.walk_log_title', {
+                  park: locale === 'ge' ? park.nameGe : park.name,
+                }),
+                exerciseSlugs: [],
+                minutes,
+              })
+            }
+          />
+        )}
 
         {/* Mark outdoor session complete → feeds weekly progress + stats */}
         <Button
