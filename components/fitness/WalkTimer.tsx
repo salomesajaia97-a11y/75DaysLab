@@ -44,6 +44,8 @@ interface WalkTimerProps {
   park: TbilisiPark
   /** Called with the walked minutes when the user finishes the session. */
   onFinish: (park: TbilisiPark, minutes: number) => void
+  /** Fires when the clock starts, so the parent can pin this spot as chosen. */
+  onStart?: (park: TbilisiPark) => void
   /** True once the outdoor slot is logged for today — locks the finish action. */
   alreadyLogged: boolean
 }
@@ -53,7 +55,7 @@ interface WalkTimerProps {
  * timestamps (not tick counting) so background tabs and reloads stay accurate,
  * and the in-flight session is persisted per user.
  */
-export function WalkTimer({ park, onFinish, alreadyLogged }: WalkTimerProps) {
+export function WalkTimer({ park, onFinish, onStart, alreadyLogged }: WalkTimerProps) {
   const { t, locale } = useLanguage()
   const [accumulatedMs, setAccumulatedMs] = useState(0)
   const [startedAt, setStartedAt] = useState<number | null>(null)
@@ -104,12 +106,15 @@ export function WalkTimer({ park, onFinish, alreadyLogged }: WalkTimerProps) {
   const toggle = useCallback(() => {
     if (startedAt === null) {
       setStartedAt(Date.now())
+      // Lock the spot in: the walk is now tied to it, even if the weather
+      // refresh would otherwise move the recommendation elsewhere.
+      onStart?.(park)
     } else {
       setAccumulatedMs(a => a + Math.max(0, Date.now() - startedAt))
       setStartedAt(null)
     }
     setNow(Date.now())
-  }, [startedAt])
+  }, [startedAt, onStart, park])
 
   const reset = useCallback(() => {
     setStartedAt(null)

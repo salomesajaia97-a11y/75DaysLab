@@ -134,6 +134,8 @@ export function TbilisiParks({
   const parks = useMemo(() => sortParks(TBILISI_PARKS, recInput), [recInput])
 
   const selected = selectedSlug ? findPark(selectedSlug) : undefined
+  /** The timer's spot: the explicit pick, else today's recommendation. */
+  const timerPark = selected ?? recommendation?.park
   const offMap = userLoc !== null && !isInsideMap(userLoc)
 
   const distanceFor = (park: TbilisiPark): string | null =>
@@ -304,9 +306,16 @@ export function TbilisiParks({
         })}
       </ul>
 
-      {selected && (
+      {/* Always available below the list — defaults to the recommended spot
+          until the user picks another, and starting the clock pins the choice. */}
+      {timerPark && (
         <div className="mt-3">
-          <WalkTimer park={selected} onFinish={onWalkFinished} alreadyLogged={outdoorDone} />
+          <WalkTimer
+            park={timerPark}
+            onFinish={onWalkFinished}
+            onStart={p => setSelectedSlug(p.slug)}
+            alreadyLogged={outdoorDone}
+          />
         </div>
       )}
     </div>
